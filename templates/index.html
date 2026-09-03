@@ -3999,28 +3999,28 @@
           : (seasons[0]?.season_num ?? 1);
         const activeSeason = seasons.find(s => s.season_num === activeSeasonNum) || seasons[0];
 
-        // Pillar Badge styles
-        let dlBadge = `<span class="px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> ${col.download.label}</span>`;
+        // 3 Pillar Interactive Badges
+        let dlBadge = `<span class="px-2.5 py-1 rounded-lg bg-zinc-900 text-zinc-400 border border-zinc-800 text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> ${col.download.label}</span>`;
         if (col.download.state === 'complete') {
-          dlBadge = `<span class="px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ${col.download.label}</span>`;
+          dlBadge = `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ${col.download.label}</span>`;
         } else if (col.download.state === 'partial') {
-          dlBadge = `<span class="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> ${col.download.label}</span>`;
+          dlBadge = `<span class="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> ${col.download.label}</span>`;
         }
 
-        let syncBadge = `<span class="px-2.5 py-1 rounded-xl bg-zinc-800 text-zinc-400 border border-zinc-700 font-bold text-xs font-mono">${col.sync.label}</span>`;
+        let syncBadge = `<button onclick="syncShowSubtitles('${col.title}', this)" class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 text-xs font-mono transition cursor-pointer flex items-center gap-1.5" title="Bấm để đồng bộ">${col.sync.label}</button>`;
         if (col.sync.state === 'synced_both') {
-          syncBadge = `<span class="px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> ${col.sync.label}</span>`;
+          syncBadge = `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ${col.sync.label}</span>`;
         } else if (col.sync.state === 'only_nas') {
-          syncBadge = `<span class="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold text-xs font-mono">${col.sync.label}</span>`;
+          syncBadge = `<span class="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-mono">${col.sync.label}</span>`;
         } else if (col.sync.state === 'only_gdrive') {
-          syncBadge = `<span class="px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold text-xs font-mono">${col.sync.label}</span>`;
+          syncBadge = `<span class="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-mono">${col.sync.label}</span>`;
         }
 
-        let subBadge = `<span class="px-2.5 py-1 rounded-xl bg-zinc-800 text-zinc-400 border border-zinc-700 font-bold text-xs font-mono">${col.subtitle.label}</span>`;
+        let subBadge = `<button onclick="sendTranslateBatchToAgent('${col.title}', 'btn-col-trans-${col.id}')" id="btn-col-trans-${col.id}" class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-purple-950 text-zinc-400 hover:text-purple-300 border border-zinc-800 hover:border-purple-500/30 text-xs font-mono transition cursor-pointer flex items-center gap-1.5" title="Bấm để bắt đầu dịch">${col.subtitle.label}</button>`;
         if (col.subtitle.state === 'complete') {
-          subBadge = `<span class="px-2.5 py-1 rounded-xl bg-purple-500/10 text-purple-300 border border-purple-500/30 font-bold text-xs font-mono">${col.subtitle.label}</span>`;
+          subBadge = `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ${col.subtitle.label}</span>`;
         } else if (col.subtitle.state === 'translating') {
-          subBadge = `<span class="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 font-bold text-xs font-mono animate-pulse">${col.subtitle.label}</span>`;
+          subBadge = `<button onclick="sendTranslateBatchToAgent('${col.title}', 'btn-col-trans-${col.id}')" id="btn-col-trans-${col.id}" class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-mono transition cursor-pointer flex items-center gap-1.5 animate-pulse" title="Bấm để tiếp tục dịch">${col.subtitle.label}</button>`;
         }
 
         // Season tabs & episode table if expanded
@@ -4093,7 +4093,7 @@
             `;
 
           detailHtml = `
-            <div class="mt-4 pt-4 border-t border-zinc-800/80 space-y-3 bg-zinc-950/60 p-4 rounded-2xl">
+            <div class="mt-3 pt-3 border-t border-zinc-800/80 space-y-3 bg-zinc-950/60 p-4 rounded-2xl">
               <div class="flex items-center justify-between gap-3 flex-wrap">
                 <div class="flex items-center gap-1.5 overflow-x-auto custom-scroll">
                   ${seasonTabsHtml}
@@ -4110,29 +4110,27 @@
         }
 
         return `
-          <div class="p-4 sm:p-5 rounded-3xl bg-zinc-950/80 border border-zinc-800/80 hover:border-amber-500/30 transition shadow-lg space-y-3">
+          <div class="p-3.5 sm:p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 hover:border-amber-500/30 transition shadow-lg space-y-2">
             <!-- Main Card Row -->
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <!-- Left: Poster + Title + Tags -->
+            <div class="flex items-center justify-between gap-4">
+              <!-- Left: Poster + Title + Meta + 3 Interactive Pillars -->
               <div class="flex items-center gap-3.5 min-w-0 flex-1">
-                <div class="w-16 h-24 sm:w-20 sm:h-28 rounded-2xl bg-zinc-900 bg-cover bg-center shrink-0 border border-zinc-700/60 shadow-md flex items-center justify-center text-3xl overflow-hidden" style="background-image: url('${col.poster}')">
+                <div class="w-14 h-20 sm:w-16 sm:h-24 rounded-xl bg-zinc-900 bg-cover bg-center shrink-0 border border-zinc-700/60 shadow-md flex items-center justify-center text-2xl overflow-hidden" style="background-image: url('${col.poster}')">
                   ${!col.poster ? '🎬' : ''}
                 </div>
-                <div class="space-y-1.5 min-w-0 flex-1">
+                <div class="space-y-1 min-w-0 flex-1">
+                  <!-- Title & Meta Line -->
                   <div class="flex items-center gap-2 flex-wrap">
-                    <span class="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${col.type === 'movie' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
-                      ${col.type === 'movie' ? '🎬 MOVIE' : '📺 TV SERIES'}
+                    <h3 class="font-bold text-sm sm:text-base text-white truncate cursor-pointer hover:text-amber-400 transition" onclick="toggleCollectionDetail('${col.id}')" title="${col.title}">
+                      ${col.title}
+                    </h3>
+                    <span class="text-[11px] text-zinc-500 font-mono shrink-0">
+                      ${col.type === 'movie' ? '🎬 Phim Lẻ' : '📺 Series'} ${col.year ? `• ${col.year}` : ''}
                     </span>
-                    ${col.year ? `<span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono text-[10px]">${col.year}</span>` : ''}
-                    ${col.tvdb_id ? `<span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono text-[10px]">{tvdb-${col.tvdb_id}}</span>` : ''}
                   </div>
-                  <h3 class="font-bold text-base sm:text-lg text-white truncate group-hover:text-amber-400 transition" title="${col.title}">
-                    ${col.title}
-                  </h3>
-                  <div class="text-xs text-zinc-400 truncate">${col.vn_title !== col.title ? col.vn_title : ''}</div>
                   
-                  <!-- 3 Pillar Status Badges Row -->
-                  <div class="pt-1 flex items-center gap-2 flex-wrap">
+                  <!-- 3 Pillar Interactive Badges -->
+                  <div class="pt-0.5 flex items-center gap-1.5 flex-wrap">
                     ${dlBadge}
                     ${syncBadge}
                     ${subBadge}
@@ -4140,15 +4138,9 @@
                 </div>
               </div>
 
-              <!-- Right Actions: Sync, Dịch, Chi tiết Toggle -->
-              <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-800/80 shrink-0">
-                <button onclick="syncShowSubtitles('${col.title}', this)" class="px-3 py-2 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-sm shrink-0" title="Đồng bộ phụ đề và dữ liệu lên NAS & Drive">
-                  <span>⚡</span> Sync Kho
-                </button>
-                <button onclick="sendTranslateBatchToAgent('${col.title}', 'btn-col-trans-${col.id}')" id="btn-col-trans-${col.id}" class="px-3 py-2 bg-purple-600/10 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-sm shrink-0" title="Dịch tự động các tập còn thiếu">
-                  <span>🚀</span> Dịch Sub
-                </button>
-                <button onclick="toggleCollectionDetail('${col.id}')" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm shrink-0">
+              <!-- Right: Single Toggle Detail Button -->
+              <div class="shrink-0">
+                <button onclick="toggleCollectionDetail('${col.id}')" class="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-sm">
                   <span>${isExpanded ? '▲ Thu Gọn' : '▼ Chi Tiết'}</span>
                 </button>
               </div>
