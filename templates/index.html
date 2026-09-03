@@ -4054,12 +4054,12 @@
                 <table class="w-full text-left text-xs text-zinc-300">
                   <thead class="bg-zinc-950 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-zinc-800">
                     <tr>
-                      <th class="px-3 py-2.5 w-20">Tập</th>
-                      <th class="px-3 py-2.5">Tên File / Tiêu Đề</th>
-                      <th class="px-3 py-2.5 text-center w-24">📥 Local</th>
-                      <th class="px-3 py-2.5 text-center w-24">🖥️ NAS</th>
-                      <th class="px-3 py-2.5 text-center w-24">☁️ Drive</th>
-                      <th class="px-3 py-2.5 text-center w-28">🇻🇳 Vietsub</th>
+                      <th class="px-3 py-2.5 w-16 sm:w-20">Tập</th>
+                      <th class="px-3 py-2.5 max-w-[220px] sm:max-w-xs">Tên Tập</th>
+                      <th class="px-3 py-2.5 text-center w-24">Local</th>
+                      <th class="px-3 py-2.5 text-center w-24">NAS</th>
+                      <th class="px-3 py-2.5 text-center w-28">Google Drive</th>
+                      <th class="px-3 py-2.5 text-center w-36">Phụ Đề</th>
                       <th class="px-3 py-2.5 text-right w-28">Thao Tác</th>
                     </tr>
                   </thead>
@@ -4078,33 +4078,72 @@
                         ? `<span class="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-400 font-bold text-[10px] border border-blue-500/20">✓ Có Trên Drive</span>`
                         : `<span class="px-2 py-0.5 rounded-lg bg-zinc-900 text-zinc-500 text-[10px]">⚪ Chưa Có</span>`;
 
+                      const langBadges = [...new Set(subFiles.map(s => s.lang.toUpperCase()))];
+                      const langDisplay = langBadges.length > 0 
+                        ? langBadges.map(l => `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${l === 'VI' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'}">${l}</span>`).join(' ')
+                        : '';
+
                       const subPill = subFiles.length > 0
-                        ? `<button onclick="toggleEpisodeSubtitles('${col.id}', '${ep.key}')" class="px-2 py-0.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 font-bold text-[10px] border border-purple-500/30 font-mono transition flex items-center gap-1 mx-auto cursor-pointer" title="Bấm để xem ${subFiles.length} file phụ đề"><span>🇻🇳</span> ${subFiles.length} Sub <span id="arrow-sub-${col.id}-${ep.key}">▾</span></button>`
-                        : `<span class="px-2 py-0.5 rounded-lg bg-zinc-900 text-zinc-500 text-[10px]">⚪ Chưa Dịch</span>`;
+                        ? `<button onclick="toggleEpisodeSubtitles('${col.id}', '${ep.key}')" class="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 font-mono text-[10px] transition flex items-center gap-1.5 mx-auto cursor-pointer shadow-sm" title="Bấm để xem danh sách ${subFiles.length} file phụ đề">
+                            <span class="flex items-center gap-1">${langDisplay}</span>
+                            <span class="text-zinc-500 font-bold">(${subFiles.length})</span>
+                            <span id="arrow-sub-${col.id}-${ep.key}" class="text-amber-400 font-bold">▾</span>
+                          </button>`
+                        : `<span class="px-2 py-0.5 rounded-lg bg-zinc-900 text-zinc-500 text-[10px]">⚪ Chưa Có</span>`;
 
                       const subFilesHtml = subFiles.length > 0 ? `
-                        <tr id="subfiles-${col.id}-${ep.key}" class="hidden bg-zinc-950/70 border-b border-zinc-800/40">
-                          <td colspan="7" class="px-4 py-2">
-                            <div class="pl-4 sm:pl-6 border-l-2 border-purple-500/40 space-y-1.5 my-1">
-                              <div class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                                📄 File Phụ Đề Đính Kèm (${subFiles.length}):
-                              </div>
-                              <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                ${subFiles.map(sf => `
-                                  <div class="flex items-center justify-between gap-2 text-xs py-1 px-2.5 rounded-lg bg-zinc-900/80 border border-zinc-800/70">
-                                    <div class="flex items-center gap-1.5 min-w-0">
-                                      <span class="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold ${sf.lang === 'vi' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'} uppercase shrink-0">
-                                        ${sf.lang.toUpperCase()} • ${sf.format.toUpperCase()}
-                                      </span>
-                                      <span class="font-mono text-zinc-300 text-[11px] truncate" title="${sf.name}">${sf.name}</span>
-                                      <span class="text-[10px] text-zinc-500 font-mono shrink-0">${sf.size_kb} KB</span>
-                                    </div>
-                                    <a href="/api/subtitles/vtt?path=${encodeURIComponent(sf.path)}" target="_blank" class="px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-[10px] font-medium text-zinc-300 hover:text-white border border-zinc-700 transition shrink-0" title="Mở xem chuẩn WebVTT">
-                                      👁️ Xem VTT
-                                    </a>
-                                  </div>
-                                `).join('')}
-                              </div>
+                        <tr id="subfiles-${col.id}-${ep.key}" class="hidden bg-zinc-950/80 border-b border-zinc-800/40">
+                          <td colspan="7" class="p-0">
+                            <div class="bg-zinc-950/90 pl-3 sm:pl-6 border-l-2 border-purple-500/50">
+                              <table class="w-full text-left text-xs text-zinc-400">
+                                <tbody class="divide-y divide-zinc-900">
+                                  ${subFiles.map(sf => {
+                                    const isVi = sf.lang === 'vi';
+                                    const langLabel = isVi ? 'VIETSUB' : sf.lang.toUpperCase();
+                                    const formatBadge = sf.format.toUpperCase();
+                                    return `
+                                      <tr class="hover:bg-zinc-900/40 transition">
+                                        <td class="px-3 py-1.5 w-16 sm:w-20 font-mono">
+                                          <span class="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono ${isVi ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'} uppercase">
+                                            .${formatBadge}
+                                          </span>
+                                        </td>
+                                        <td class="px-3 py-1.5 max-w-[220px] sm:max-w-xs">
+                                          <div class="font-mono text-zinc-300 text-[11px] truncate flex items-center gap-1.5" title="${sf.name}">
+                                            <span>📄</span>
+                                            <span class="truncate">${sf.name}</span>
+                                          </div>
+                                        </td>
+                                        <td class="px-3 py-1.5 text-center w-24">
+                                          <span class="px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-400 font-mono text-[10px] border border-zinc-800">
+                                            ${sf.size_kb} KB
+                                          </span>
+                                        </td>
+                                        <td class="px-3 py-1.5 text-center w-24">
+                                          ${ep.in_nas 
+                                            ? `<span class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono text-[10px] border border-emerald-500/20">✓ Có</span>` 
+                                            : `<span class="px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-500 text-[10px]">⚪ Chưa</span>`}
+                                        </td>
+                                        <td class="px-3 py-1.5 text-center w-28">
+                                          ${ep.in_gdrive 
+                                            ? `<span class="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono text-[10px] border border-blue-500/20">✓ Có</span>` 
+                                            : `<span class="px-1.5 py-0.5 rounded bg-zinc-900 text-zinc-500 text-[10px]">⚪ Chưa</span>`}
+                                        </td>
+                                        <td class="px-3 py-1.5 text-center w-36">
+                                          <span class="px-2 py-0.5 rounded-lg ${isVi ? 'bg-purple-500/10 text-purple-300 border border-purple-500/30' : 'bg-zinc-900 text-zinc-400 border border-zinc-800'} text-[10px] font-mono font-bold">
+                                            ${langLabel}
+                                          </span>
+                                        </td>
+                                        <td class="px-3 py-1.5 text-right w-28">
+                                          <a href="/api/subtitles/vtt?path=${encodeURIComponent(sf.path)}" target="_blank" class="px-2 py-0.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-[10px] font-semibold text-zinc-300 hover:text-white border border-zinc-700/80 transition inline-flex items-center gap-1 shadow-sm" title="Xem định dạng WebVTT">
+                                            <span>👁️</span> VTT
+                                          </a>
+                                        </td>
+                                      </tr>
+                                    `;
+                                  }).join('')}
+                                </tbody>
+                              </table>
                             </div>
                           </td>
                         </tr>
@@ -4112,16 +4151,18 @@
 
                       return `
                         <tr class="hover:bg-zinc-900/60 transition">
-                          <td class="px-3 py-2 font-mono font-bold text-amber-400">${ep.key}</td>
-                          <td class="px-3 py-2 font-medium text-white truncate max-w-xs" title="${ep.name}">${ep.name}</td>
-                          <td class="px-3 py-2 text-center">${dlPill}</td>
-                          <td class="px-3 py-2 text-center">${nasPill}</td>
-                          <td class="px-3 py-2 text-center">${drivePill}</td>
-                          <td class="px-3 py-2 text-center">${subPill}</td>
-                          <td class="px-3 py-2 text-right">
+                          <td class="px-3 py-2 font-mono font-bold text-amber-400 w-16 sm:w-20">${ep.key}</td>
+                          <td class="px-3 py-2 max-w-[220px] sm:max-w-xs">
+                            <div class="font-medium text-white truncate" title="${ep.name}">${ep.name}</div>
+                          </td>
+                          <td class="px-3 py-2 text-center w-24">${dlPill}</td>
+                          <td class="px-3 py-2 text-center w-24">${nasPill}</td>
+                          <td class="px-3 py-2 text-center w-28">${drivePill}</td>
+                          <td class="px-3 py-2 text-center w-36">${subPill}</td>
+                          <td class="px-3 py-2 text-right w-28">
                             <div class="flex items-center justify-end gap-1.5">
-                              ${!ep.has_vi_sub ? `<button onclick="confirmTranslateSingleEpisode('${col.title}', '${ep.key}')" class="px-2 py-1 bg-purple-600/10 hover:bg-purple-600 text-purple-300 hover:text-white rounded-lg transition text-[10px] font-bold border border-purple-500/20">Dịch</button>` : ''}
-                              ${ep.has_vi_sub ? `<button onclick="openDownloadSubtitlesModal('${col.title}', '${ep.key}')" class="px-2 py-1 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded-lg transition text-[10px] font-bold border border-emerald-500/20">Tải Sub</button>` : ''}
+                              ${!ep.has_vi_sub ? `<button onclick="confirmTranslateSingleEpisode('${col.title}', '${ep.key}')" class="px-2.5 py-1 bg-purple-600/10 hover:bg-purple-600 text-purple-300 hover:text-white rounded-lg transition text-[10px] font-bold border border-purple-500/20">Dịch</button>` : ''}
+                              ${ep.has_vi_sub ? `<button onclick="openDownloadSubtitlesModal('${col.title}', '${ep.key}')" class="px-2.5 py-1 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded-lg transition text-[10px] font-bold border border-emerald-500/20">Tải Sub</button>` : ''}
                             </div>
                           </td>
                         </tr>
