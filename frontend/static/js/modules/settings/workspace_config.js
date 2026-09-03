@@ -199,7 +199,8 @@ import { showToast } from '../../core/toast.js';
         if (document.getElementById('cfg-target-drive')) document.getElementById('cfg-target-drive').checked = targets.includes('drive');
         if (document.getElementById('cfg-target-nas')) document.getElementById('cfg-target-nas').checked = targets.includes('nas');
         if (document.getElementById('cfg-auto-purge')) document.getElementById('cfg-auto-purge').checked = cfg.auto_purge !== false;
-        if (document.getElementById('cfg-agy-profile')) document.getElementById('cfg-agy-profile').value = cfg.agy_cli_profile || 'auto';
+        window.currentAgyProfile = cfg.agy_cli_profile || 'auto';
+        if (document.getElementById('cfg-agy-profile')) document.getElementById('cfg-agy-profile').value = window.currentAgyProfile;
 
         // Update NAS glance card in library view
         const nasPathEl = document.getElementById('nas-path-display');
@@ -213,6 +214,50 @@ import { showToast } from '../../core/toast.js';
         if (nasDsmEl) nasDsmEl.href = `http://${host}:5000`;
       } catch (e) {
         console.error("Error fetching settings:", e);
+      }
+    }
+
+    // Switch the active Antigravity CLI instance immediately, without waiting for "Lưu Cấu Hình".
+    // agent_bridge re-reads agy_cli_profile on every dispatch, so persisting it is enough for the
+    // next command to land on the newly selected instance.
+    async function switchAgyProfile(profile) {
+      const select = document.getElementById('cfg-agy-profile');
+      const labels = {
+        auto: '🔄 Tự Động (agy2 → agy)',
+        agy2: '⚡ agy2 (Secondary)',
+        agy: '🛡️ agy (Primary)'
+      };
+      const prev = window.currentAgyProfile || 'auto';
+      if (profile === prev) return;
+      if (select) select.disabled = true;
+
+      try {
+        // Read-modify-write: /api/settings replaces the whole config, so never POST a partial object.
+        const cur = await fetch('/api/settings').then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          return r.json();
+        });
+        cur.agy_cli_profile = profile;
+
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(cur)
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || `HTTP ${res.status}`);
+
+        window.currentAgyProfile = profile;
+        showToast(`⚡ Đã chuyển sang ${labels[profile] || profile}. Lệnh kế tiếp sẽ chạy trên instance này.`, 'success', 3000);
+
+        // Refresh the CLI service badge so the console reflects the new instance right away
+        if (typeof window.checkAllServicesStatus === 'function') window.checkAllServicesStatus();
+        if (typeof window.updateCliToggleBtn === 'function') window.updateCliToggleBtn();
+      } catch (e) {
+        if (select) select.value = prev;
+        showToast(`❌ Không đổi được CLI instance: ${e.message}`, 'error', 4000);
+      } finally {
+        if (select) select.disabled = false;
       }
     }
 
@@ -299,6 +344,7 @@ import { showToast } from '../../core/toast.js';
 
 
 export {
+  switchAgyProfile,
   ensureCliService,
   startAria2Daemon,
   checkAllServicesStatus,

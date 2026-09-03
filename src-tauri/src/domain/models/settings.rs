@@ -50,6 +50,10 @@ pub struct AppSettings {
     pub sync_transfers: u32,
     #[serde(default = "default_auto_purge")]
     pub auto_purge: bool,
+    /// Which Antigravity CLI instance dispatches agent commands: "auto" | "agy2" | "agy".
+    /// agent_bridge re-reads this on every dispatch, so a change takes effect on the next command.
+    #[serde(default = "default_agy_profile")]
+    pub agy_cli_profile: String,
 }
 
 fn default_provider() -> String {
@@ -100,6 +104,9 @@ fn default_sync_transfers() -> u32 {
 fn default_auto_purge() -> bool {
     true
 }
+fn default_agy_profile() -> String {
+    "auto".to_string()
+}
 
 impl Default for AppSettings {
     fn default() -> Self {
@@ -128,6 +135,7 @@ impl Default for AppSettings {
             sync_targets: default_sync_targets(),
             sync_transfers: default_sync_transfers(),
             auto_purge: default_auto_purge(),
+            agy_cli_profile: default_agy_profile(),
         }
     }
 }

@@ -58,12 +58,12 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <label class="block text-zinc-400 font-medium mb-1">CLI Instance Mặc Định:</label>
-                <select id="cfg-agy-profile" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-emerald-500 font-medium">
+                <select id="cfg-agy-profile" onchange="switchAgyProfile(this.value)" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-emerald-500 font-medium disabled:opacity-50 disabled:cursor-wait">
                   <option value="auto">🔄 Tự Động (Ưu tiên agy2 - Secondary, tự fallback agy - Primary)</option>
                   <option value="agy2">⚡ agy2 (Secondary Instance - ~/.antigravity-instances/secondary)</option>
                   <option value="agy">🛡️ agy (Primary Instance - ~/.gemini)</option>
                 </select>
-                <p class="text-[10px] text-zinc-500 mt-1">Khi bấm Dịch Phụ Đề trên web, lệnh sẽ được đẩy trực tiếp vào CLI đã chọn để chạy ngầm và cập nhật tiến độ.</p>
+                <p class="text-[10px] text-zinc-500 mt-1">Đổi lựa chọn là chuyển instance ngay lập tức, không cần bấm Lưu Cấu Hình. Lệnh kế tiếp (Dịch Phụ Đề, Sync…) sẽ chạy trên CLI vừa chọn; tác vụ đang chạy dở vẫn ở lại instance cũ cho tới khi xong.</p>
               </div>
 
               <div class="p-3.5 rounded-2xl bg-zinc-950/80 border border-zinc-800 flex flex-col justify-between">
