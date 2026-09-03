@@ -1,0 +1,7 @@
+{
+  "host": "0.0.0.0",
+  "port": 8888,
+  "drive_remote": "gdrive:",
+  "drive_folder": "Phim/TV Shows",
+  "torbox_api_token": ""
+}
