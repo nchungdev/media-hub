@@ -265,55 +265,57 @@ class TunnelManager:
             try:
                 proc = subprocess.Popen(
                     cmd,
-                    stdout=subprocess.PIPE,
+                    stdin=subprocess.DEVNULL,
+                    stdout=log_out,
                     stderr=subprocess.STDOUT,
-                    text=True,
-                    bufsize=1,
-                    start_new_session=True  # Detached process so app restarts don't kill it
+                    start_new_session=True  # Fully detached session immune to SIGHUP/SIGPIPE
                 )
                 self._proc = proc
             except Exception as e:
                 self._error = f"Không khởi chạy được cloudflared: {e}"
-                log_out.close()
+                try:
+                    log_out.close()
+                except Exception:
+                    pass
                 return {
                     "success": False,
                     "error": self._error,
                     "status": self.get_status()
                 }
 
-            # Discover public URL from stdout stream
+            # Discover public URL by reading the tail of log file
             discovered_url = None
             start_time = time.time()
             url_regex = re.compile(r"https://(?!api\.)[a-zA-Z0-9-]+\.trycloudflare\.com")
 
-            while time.time() - start_time < 15:
-                if proc.poll() is not None:
-                    self._error = f"Tiến trình cloudflared thoát sớm với mã lỗi {proc.returncode}"
-                    self._proc = None
-                    log_out.close()
-                    return {
-                        "success": False,
-                        "error": self._error,
-                        "status": self.get_status()
-                    }
-
-                line = proc.stdout.readline()
-                if line:
-                    clean_l = line.strip()
-                    if clean_l:
-                        self._logs.append(clean_l)
-                        log_out.write(clean_l + "\n")
-                        log_out.flush()
-                        m = url_regex.search(clean_l)
-                        if m:
-                            discovered_url = m.group(0)
-                            break
-                else:
-                    time.sleep(0.1)
+            try:
+                with open(self._log_file, "r", encoding="utf-8", errors="ignore") as rf:
+                    rf.seek(0, os.SEEK_END)
+                    while time.time() - start_time < 20:
+                        if proc.poll() is not None:
+                            self._error = f"Tiến trình cloudflared thoát sớm với mã lỗi {proc.returncode}"
+                            self._proc = None
+                            return {
+                                "success": False,
+                                "error": self._error,
+                                "status": self.get_status()
+                            }
+                        line = rf.readline()
+                        if line:
+                            clean_l = line.strip()
+                            if clean_l:
+                                self._logs.append(clean_l)
+                                m = url_regex.search(clean_l)
+                                if m:
+                                    discovered_url = m.group(0)
+                                    break
+                        else:
+                            time.sleep(0.2)
+            except Exception as e:
+                self._error = f"Lỗi khi đọc URL từ log: {e}"
 
             if not discovered_url:
                 self.stop()
-                log_out.close()
                 self._error = "Hết thời gian chờ nhận URL Public từ Cloudflare Edge."
                 return {
                     "success": False,
@@ -324,30 +326,7 @@ class TunnelManager:
             self._url = discovered_url
             self._started_at = time.strftime("%Y-%m-%d %H:%M:%S")
             self._save_state(proc.pid)
-
-            # Continue piping remaining logs to persistent log file in background
-            def _log_forwarder(p, out_f):
-                try:
-                    for raw_l in iter(p.stdout.readline, ""):
-                        l = raw_l.strip()
-                        if l:
-                            self._logs.append(l)
-                            out_f.write(l + "\n")
-                            out_f.flush()
-                except Exception:
-                    pass
-                finally:
-                    try:
-                        out_f.close()
-                    except Exception:
-                        pass
-
-            self._reader_thread = threading.Thread(
-                target=_log_forwarder,
-                args=(proc, log_out),
-                daemon=True
-            )
-            self._reader_thread.start()
+            self._start_tail_thread()
 
             return {
                 "success": True,

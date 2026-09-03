@@ -102,17 +102,25 @@ impl ITunnelService for TunnelService {
 
         let _ = self.stop();
 
+        let log_file = self.state_file.with_file_name("tunnel.log");
+        let log_out = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&log_file)
+            .map_err(|e| format!("Không mở được log file: {}", e))?;
+        let log_err = log_out.try_clone().map_err(|e| format!("Không clone được log file handle: {}", e))?;
+
         let child = Command::new(&bin)
             .args(["tunnel", "--url", &format!("http://127.0.0.1:{}", port)])
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
+            .stdin(std::process::Stdio::null())
+            .stdout(std::process::Stdio::from(log_out))
+            .stderr(std::process::Stdio::from(log_err))
             .spawn()
             .map_err(|e| format!("Không khởi chạy được cloudflared: {}", e))?;
 
         let pid = child.id();
-        std::thread::sleep(std::time::Duration::from_millis(1500));
+        std::thread::sleep(std::time::Duration::from_millis(2000));
 
-        let log_file = self.state_file.with_file_name("tunnel.log");
         let mut discovered_url = None;
 
         if log_file.exists() {
