@@ -832,7 +832,7 @@
                 Tất Cả (<span id="tbcount-all">25</span>)
               </button>
               <button onclick="filterTorboxStatus('cached')" id="tbfilter-cached" class="torbox-filter-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
-                🟢 Đã Tải Xong / Cached (<span id="tbcount-cached">25</span>)
+                ⚡ Cached Cloud (<span id="tbcount-cached">25</span>)
               </button>
               <button onclick="filterTorboxStatus('active')" id="tbfilter-active" class="torbox-filter-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
                 ⚡ Đang Tải (<span id="tbcount-active">0</span>)
@@ -3457,12 +3457,12 @@
         
         let statusBadge = '';
         if (isCompleted) {
-          statusBadge = `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold text-[10px] whitespace-nowrap flex items-center gap-1.5 justify-center"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đã Tải Xong 100%</span>`;
+          statusBadge = `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold text-[10px] whitespace-nowrap flex items-center gap-1.5 justify-center"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ⚡ Cached Cloud</span>`;
         } else if (t.download_state === 'downloading' || (t.progress > 0 && t.progress < 1)) {
           const pct = Math.round((t.progress || 0) * 100);
-          statusBadge = `<span class="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold text-[10px] animate-pulse whitespace-nowrap flex items-center gap-1.5 justify-center"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping"></span> Đang Tải ${pct}%</span>`;
+          statusBadge = `<span class="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/30 font-bold text-[10px] animate-pulse whitespace-nowrap flex items-center gap-1.5 justify-center"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping"></span> ⚡ Đang Kéo ${pct}%</span>`;
         } else if (isQueued) {
-          statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-zinc-800 text-zinc-400 border border-zinc-700 font-medium text-[10px] whitespace-nowrap">Hàng Đợi</span>`;
+          statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-zinc-800 text-zinc-400 border border-zinc-700 font-medium text-[10px] whitespace-nowrap">⏳ Hàng Đợi</span>`;
         } else {
           statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-zinc-800/80 text-zinc-400 border border-zinc-700/60 font-medium text-[10px] whitespace-nowrap">Sẵn Sàng</span>`;
         }
