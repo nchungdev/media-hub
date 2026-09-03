@@ -22,11 +22,12 @@ pub fn run() {
         .unwrap_or(8888);
 
     // Start Embedded High-Performance Rust Axum Server on Port 8888
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         if let Err(e) = start_server(port, server_state).await {
             eprintln!("[Rust Server] Error running Axum server: {}", e);
         }
     });
+
 
 
     let daemon_mgr = DaemonManager::new();
