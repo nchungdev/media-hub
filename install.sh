@@ -8,7 +8,6 @@ set -e
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BIN_SOURCE="$DIR/bin/media-hub"
 TARGET_DIR="${HOME}/.local/bin"
-ELECTRON_DIR="$DIR/electron"
 APP_TARGET="${HOME}/Applications"
 
 export PATH="/Users/chungnh/.local/share/fnm/node-versions/v24.20.0/installation/bin:$HOME/.local/bin:$PATH"
@@ -23,10 +22,11 @@ ln -sf "$BIN_SOURCE" "$TARGET_DIR/media-hub"
 chmod +x "$BIN_SOURCE"
 echo "✅ Đã tạo liên kết CLI tại: $TARGET_DIR/media-hub"
 
-# 2. Setup Electron Desktop App if dist exists
-if [ -d "$ELECTRON_DIR/dist/mac-arm64/Media Hub.app" ]; then
-  cp -R "$ELECTRON_DIR/dist/mac-arm64/Media Hub.app" "$APP_TARGET/"
-  echo "✅ Đã cài đặt ứng dụng Desktop vào: $APP_TARGET/Media Hub.app"
+# 2. Setup Native Desktop App (Tauri & Rust 12MB bundle)
+TAURI_APP="$DIR/src-tauri/target/release/bundle/macos/Media Hub.app"
+if [ -d "$TAURI_APP" ]; then
+  cp -R "$TAURI_APP" "$APP_TARGET/"
+  echo "✅ Đã cài đặt ứng dụng Native Desktop (Rust & Tauri 2.0) vào: $APP_TARGET/Media Hub.app (12MB)"
 fi
 
 # 3. Check PATH

@@ -14,7 +14,7 @@ while [ -h "$SOURCE" ]; do
 done
 BIN_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 APP_DIR="$( cd -P "$BIN_DIR/.." >/dev/null 2>&1 && pwd )"
-ELECTRON_DIR="$APP_DIR/electron"
+TAURI_DIR="$APP_DIR/src-tauri"
 SERVER_SCRIPT="$APP_DIR/scripts/server.py"
 
 DEFAULT_PORT=8888
