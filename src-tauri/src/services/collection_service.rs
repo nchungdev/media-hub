@@ -94,76 +94,13 @@ impl CollectionService {
                                     total_videos += 1;
                                     let video_stem =
                                         ep_path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-                                    let mut sub_files = Vec::new();
-                                    let mut has_vi = false;
-                                    let mut has_eng = false;
-                                    let mut sub_types = Vec::new();
-
-                                    if let Ok(dir_entries) = fs::read_dir(&sub_path) {
-                                        for de in dir_entries.flatten() {
-                                            let p = de.path();
-                                            let fname = p
-                                                .file_name()
-                                                .and_then(|n| n.to_str())
-                                                .unwrap_or("");
-                                            if fname.starts_with(video_stem)
-                                                && (fname.ends_with(".ass")
-                                                    || fname.ends_with(".srt")
-                                                    || fname.ends_with(".vtt"))
-                                            {
-                                                let is_vi = fname.contains(".vi.")
-                                                    || fname.ends_with(".vi.ass")
-                                                    || fname.ends_with(".vi.srt")
-                                                    || fname.ends_with(".vi.vtt");
-                                                let is_en = fname.contains(".en.")
-                                                    || fname.contains(".eng.")
-                                                    || fname.ends_with(".en.ass")
-                                                    || fname.ends_with(".en.srt");
-                                                let lang = if is_vi {
-                                                    "vi"
-                                                } else if is_en {
-                                                    "en"
-                                                } else {
-                                                    "other"
-                                                };
-                                                let format = if fname.ends_with(".ass") {
-                                                    "ass"
-                                                } else if fname.ends_with(".srt") {
-                                                    "srt"
-                                                } else {
-                                                    "vtt"
-                                                };
-                                                let size_kb = p
-                                                    .metadata()
-                                                    .map(|m| (m.len() as f32 / 1024.0).round())
-                                                    .unwrap_or(0.0);
-
-                                                if is_vi {
-                                                    has_vi = true;
-                                                    if !sub_types
-                                                        .contains(&format!(".vi.{}", format))
-                                                    {
-                                                        sub_types.push(format!(".vi.{}", format));
-                                                    }
-                                                }
-                                                if is_en {
-                                                    has_eng = true;
-                                                }
-
-                                                sub_files.push(crate::domain::models::collection::SubtitleFileInfo {
-                                                    name: fname.to_string(),
-                                                    path: p.to_string_lossy().to_string(),
-                                                    lang: lang.to_string(),
-                                                    format: format.to_string(),
-                                                    size_kb,
-                                                });
-                                            }
-                                        }
-                                    }
+                                    let (sub_files, has_vi, has_eng, sub_types) =
+                                        Self::scan_companion_subtitles(video_stem, &sub_path);
 
                                     if has_vi {
                                         total_vi_subs += 1;
                                     }
+
 
                                     season.episodes.push(EpisodeInfo {
                                         key: ep_name.to_string(),
@@ -250,24 +187,21 @@ impl CollectionService {
                 },
                 subtitle: SubtitleStatus {
                     state: sub_state.to_string(),
-                    label: if percent == 100 {
-                        "🎉 100% Vietsub".to_string()
-                    } else if percent > 0 {
-                        format!("⏳ {}% Vietsub", percent)
-                    } else {
-                        "⚪ Chưa Dịch".to_string()
+                    label: match percent {
+                        100 => "🎉 100% Vietsub".to_string(),
+                        p if p > 0 => format!("⏳ {}% Vietsub", p),
+                        _ => "⚪ Chưa Dịch".to_string(),
                     },
-                    color: if percent == 100 {
-                        "text-emerald-400".to_string()
-                    } else if percent > 0 {
-                        "text-amber-400".to_string()
-                    } else {
-                        "text-zinc-400".to_string()
+                    color: match percent {
+                        100 => "text-emerald-400".to_string(),
+                        p if p > 0 => "text-amber-400".to_string(),
+                        _ => "text-zinc-400".to_string(),
                     },
                     completed: total_vi_subs,
                     total: total_eps,
                     percent,
                 },
+
                 has_glossary: path.join("glossary.json").exists(),
                 has_progress: path.join("PROGRESS.md").exists(),
                 local_path: Some(path.to_string_lossy().to_string()),
@@ -276,6 +210,43 @@ impl CollectionService {
         }
 
         items
+    }
+
+    fn scan_companion_subtitles(
+        video_stem: &str,
+        dir_path: &Path,
+    ) -> (Vec<crate::domain::models::collection::SubtitleFileInfo>, bool, bool, Vec<String>) {
+        let mut sub_files = Vec::new();
+        let mut has_vi = false;
+        let mut has_eng = false;
+        let mut sub_types = Vec::new();
+
+        if let Ok(dir_entries) = fs::read_dir(dir_path) {
+            for de in dir_entries.flatten() {
+                let p = de.path();
+                let fname = p.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                if fname.starts_with(video_stem) && (fname.ends_with(".ass") || fname.ends_with(".srt") || fname.ends_with(".vtt")) {
+                    let is_vi = fname.contains(".vi.") || fname.ends_with(".vi.ass") || fname.ends_with(".vi.srt") || fname.ends_with(".vi.vtt");
+                    let is_en = fname.contains(".en.") || fname.contains(".eng.") || fname.ends_with(".en.ass") || fname.ends_with(".en.srt");
+                    let lang = if is_vi { "vi" } else if is_en { "en" } else { "other" };
+                    let format = if fname.ends_with(".ass") { "ass" } else if fname.ends_with(".srt") { "srt" } else { "vtt" };
+                    let size_kb = p.metadata().map(|m| (m.len() as f32 / 1024.0).round()).unwrap_or(0.0);
+
+                    if is_vi {
+                        has_vi = true;
+                        let st = format!(".vi.{}", format);
+                        if !sub_types.contains(&st) { sub_types.push(st); }
+                    }
+                    if is_en { has_eng = true; }
+
+                    sub_files.push(crate::domain::models::collection::SubtitleFileInfo {
+                        name: fname.to_string(), path: p.to_string_lossy().to_string(),
+                        lang: lang.to_string(), format: format.to_string(), size_kb,
+                    });
+                }
+            }
+        }
+        (sub_files, has_vi, has_eng, sub_types)
     }
 }
 
@@ -300,23 +271,11 @@ impl ICollectionService for CollectionService {
         all_items.extend(Self::scan_directory(&movie_dir, "movie"));
 
         let total_items = all_items.len();
-        let total_series = all_items
-            .iter()
-            .filter(|i| i.media_type == "series")
-            .count();
+        let total_series = all_items.iter().filter(|i| i.media_type == "series").count();
         let total_movies = all_items.iter().filter(|i| i.media_type == "movie").count();
-        let downloaded_full = all_items
-            .iter()
-            .filter(|i| i.download.state == "complete")
-            .count();
-        let synced_both = all_items
-            .iter()
-            .filter(|i| i.sync.state == "synced_both")
-            .count();
-        let sub_complete = all_items
-            .iter()
-            .filter(|i| i.subtitle.state == "complete")
-            .count();
+        let downloaded_full = all_items.iter().filter(|i| i.download.state == "complete").count();
+        let synced_both = all_items.iter().filter(|i| i.sync.state == "synced_both").count();
+        let sub_complete = all_items.iter().filter(|i| i.subtitle.state == "complete").count();
 
         let resp = CollectionsResponse {
             collections: all_items,
@@ -338,3 +297,5 @@ impl ICollectionService for CollectionService {
         resp
     }
 }
+
+

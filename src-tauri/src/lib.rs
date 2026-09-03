@@ -7,16 +7,27 @@ use infrastructure::daemon::daemon_mgr::DaemonManager;
 use infrastructure::server::{start_server, state::AppState};
 use std::sync::Arc;
 
+pub async fn run_server_headless(port: u16) -> Result<(), Box<dyn std::error::Error>> {
+    let app_state = Arc::new(AppState::new());
+    start_server(port, app_state).await
+}
+
 pub fn run() {
     let app_state = Arc::new(AppState::new());
     let server_state = app_state.clone();
 
-    // Start Embedded High-Performance Rust Axum Server on Port 8889
+    let port = std::env::var("MEDIA_HUB_PORT")
+        .ok()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or(8888);
+
+    // Start Embedded High-Performance Rust Axum Server on Port 8888
     tokio::spawn(async move {
-        if let Err(e) = start_server(8889, server_state).await {
+        if let Err(e) = start_server(port, server_state).await {
             eprintln!("[Rust Server] Error running Axum server: {}", e);
         }
     });
+
 
     let daemon_mgr = DaemonManager::new();
 
