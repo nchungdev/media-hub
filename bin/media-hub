@@ -211,36 +211,80 @@ cmd_tunnel() {
   shift || true
 
   python3 -c "
-import sys
-sys.path.append('$APP_DIR/scripts')
-from core.tunnel import tunnel_mgr
-
+import sys, json, urllib.request, urllib.error
+server_url = 'http://$DEFAULT_HOST:$DEFAULT_PORT'
 sub = '$subcmd'
+
+def api_call(path, data=None):
+    url = f'{server_url}{path}'
+    req = urllib.request.Request(url, headers={'Content-Type': 'application/json'})
+    if data is not None:
+        req.data = json.dumps(data).encode('utf-8')
+    try:
+        with urllib.request.urlopen(req, timeout=15) as res:
+            return json.loads(res.read().decode('utf-8'))
+    except Exception:
+        return None
+
+# Try server API first
+status = api_call('/api/tunnel/status')
+
 if sub == 'start':
-    res = tunnel_mgr.start(8888)
-    if res.get('success'):
-        print(f'🌐 Cloudflare Tunnel Online: {res.get(\"url\")}')
+    if status:
+        res = api_call('/api/tunnel/start', {'port': $DEFAULT_PORT}) or {}
+        if res.get('success'):
+            print(f'🌐 Cloudflare Tunnel Online: {res.get(\"url\")}')
+        else:
+            print(f'❌ Lỗi: {res.get(\"error\")}')
     else:
-        print(f'❌ Lỗi: {res.get(\"error\")}')
+        sys.path.append('$APP_DIR/scripts')
+        from core.tunnel import tunnel_mgr
+        res = tunnel_mgr.start($DEFAULT_PORT)
+        if res.get('success'):
+            print(f'🌐 Cloudflare Tunnel Online: {res.get(\"url\")}')
+        else:
+            print(f'❌ Lỗi: {res.get(\"error\")}')
+
 elif sub == 'stop':
-    res = tunnel_mgr.stop()
-    print(res.get('message', 'Đã tắt tunnel'))
+    if status:
+        res = api_call('/api/tunnel/stop', {}) or {}
+        print(res.get('message', 'Đã tắt tunnel'))
+    else:
+        sys.path.append('$APP_DIR/scripts')
+        from core.tunnel import tunnel_mgr
+        res = tunnel_mgr.stop()
+        print(res.get('message', 'Đã tắt tunnel'))
+
 elif sub == 'url':
-    st = tunnel_mgr.get_status()
-    if st.get('running') and st.get('url'):
+    st = status
+    if not st:
+        sys.path.append('$APP_DIR/scripts')
+        from core.tunnel import tunnel_mgr
+        st = tunnel_mgr.get_status()
+    if st and st.get('running') and st.get('url'):
         print(st.get('url'))
     else:
         print('Offline')
+
 elif sub == 'open':
-    st = tunnel_mgr.get_status()
-    url = st.get('url')
+    st = status
+    if not st:
+        sys.path.append('$APP_DIR/scripts')
+        from core.tunnel import tunnel_mgr
+        st = tunnel_mgr.get_status()
+    url = st.get('url') if st else None
     if url:
         import subprocess
         subprocess.run(['open', url])
     else:
         print('Tunnel chưa chạy. Chạy: media-hub tunnel start')
+
 else:
-    st = tunnel_mgr.get_status()
+    st = status
+    if not st:
+        sys.path.append('$APP_DIR/scripts')
+        from core.tunnel import tunnel_mgr
+        st = tunnel_mgr.get_status()
     print('========================================')
     print(' Cloudflare Quick Tunnel (TryCloudflare)')
     print('========================================')
