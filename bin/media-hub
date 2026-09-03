@@ -121,21 +121,26 @@ cmd_start() {
 }
 
 cmd_desktop() {
-  echo "🖥️ Đang khởi chạy Antigravity Media Hub Electron Desktop App..."
-  if [ ! -d "$ELECTRON_DIR/node_modules" ]; then
-    echo "📦 Đang cài đặt gói Electron (lần đầu tiên)..."
-    (cd "$ELECTRON_DIR" && npm install)
+  if [ -d "$HOME/Applications/Media Hub.app" ]; then
+    echo "🦀 Đang mở Antigravity Media Hub Native Desktop App (Rust & Tauri 2.0)..."
+    open -a "Media Hub"
+  else
+    echo "🦀 Đang khởi chạy Antigravity Media Hub Desktop App (Tauri & Rust)..."
+    (cd "$APP_DIR/src-tauri" && source "$HOME/.cargo/env" && cargo run)
   fi
-  (cd "$ELECTRON_DIR" && npm start)
 }
 
 cmd_build() {
-  echo "📦 Đang đóng gói Media Hub thành macOS Native App (.dmg & .app)..."
-  if [ ! -d "$ELECTRON_DIR/node_modules" ]; then
-    (cd "$ELECTRON_DIR" && npm install)
+  echo "📦 Đang đóng gói Media Hub thành macOS Native App (Tauri & Rust)..."
+  (cd "$APP_DIR" && export PATH="/Users/chungnh/.local/share/fnm/node-versions/v24.20.0/installation/bin:$PATH:$HOME/.cargo/env:$HOME/.cargo/bin" && npx @tauri-apps/cli build --no-sign)
+  local app_bundle="$APP_DIR/src-tauri/target/release/bundle/macos/Media Hub.app"
+  local dmg_out="$APP_DIR/src-tauri/target/release/bundle/Media Hub-2.5.0-arm64.dmg"
+  if [ -d "$app_bundle" ]; then
+    hdiutil create -volname "Media Hub" -srcfolder "$app_bundle" -ov -format UDZO "$dmg_out" 2>/dev/null || true
   fi
-  (cd "$ELECTRON_DIR" && npm run build)
-  echo "🎉 Đóng gói hoàn tất! File cài đặt nằm tại: $ELECTRON_DIR/dist"
+  echo "🎉 Đóng gói hoàn tất!"
+  echo "   - App Bundle: $app_bundle (12MB)"
+  echo "   - DMG File:   $dmg_out (4MB)"
 }
 
 cmd_stop() {

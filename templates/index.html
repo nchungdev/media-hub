@@ -2360,29 +2360,47 @@
   </div>
 
   <script>
-    // Desktop Native App Bridge (Clean Architecture Adapter Pattern)
+    // Desktop Native App Bridge (Clean Architecture Adapter Pattern for Tauri 2 & Electron)
     window.desktopBridge = {
-      isDesktop: !!(window.electronAPI && window.electronAPI.isElectron),
+      isTauri: !!(window.__TAURI__ && window.__TAURI__.core),
+      isElectron: !!(window.electronAPI && window.electronAPI.isElectron),
+      get isDesktop() { return this.isTauri || this.isElectron; },
       async init() {
         if (!this.isDesktop) return;
         try {
           const row = document.getElementById('sidebar-desktop-row');
           const badge = document.getElementById('sidebar-desktop-badge');
           if (row) row.style.display = 'flex';
-          const infoRes = await window.electronAPI.app.getInfo();
-          if (infoRes && infoRes.success && badge) {
-            badge.innerText = `v${infoRes.data.version} (v${infoRes.data.electronVersion})`;
+          
+          if (this.isTauri) {
+            const info = await window.__TAURI__.core.invoke('get_app_info');
+            if (badge && info) {
+              badge.innerText = `v${info.version} (🦀 Rust)`;
+              badge.className = "font-mono text-[9px] text-orange-400 font-bold";
+            }
+          } else if (this.isElectron) {
+            const infoRes = await window.electronAPI.app.getInfo();
+            if (infoRes && infoRes.success && badge) {
+              badge.innerText = `v${infoRes.data.version} (Electron)`;
+            }
           }
         } catch (_) {}
       },
       async openExternal(url) {
-        if (this.isDesktop && window.electronAPI.system) {
+        if (this.isTauri) {
+          try {
+            return await window.__TAURI__.core.invoke('open_external', { url });
+          } catch (_) {}
+        } else if (this.isElectron && window.electronAPI.system) {
           return await window.electronAPI.system.openExternal(url);
         }
         window.open(url, '_blank');
       },
       async writeClipboard(text) {
-        if (this.isDesktop && window.electronAPI.system) {
+        if (this.isTauri) {
+          if (navigator.clipboard) await navigator.clipboard.writeText(text);
+          return;
+        } else if (this.isElectron && window.electronAPI.system) {
           return await window.electronAPI.system.writeClipboard(text);
         }
         if (navigator.clipboard) {
@@ -2390,7 +2408,7 @@
         }
       },
       async showNotification(title, body) {
-        if (this.isDesktop && window.electronAPI.system) {
+        if (this.isElectron && window.electronAPI.system) {
           return await window.electronAPI.system.showNotification({ title, body });
         }
         if (window.Notification && Notification.permission === 'granted') {
