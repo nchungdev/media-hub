@@ -267,8 +267,8 @@ impl CollectionsManager {
                 },
                 subtitle: SubtitleStatus {
                     state: sub_state.to_string(),
-                    label: if percent == 100 { "🎉 Trọn Bộ Vietsub".to_string() } else { format!("⏳ {}% (Đang dịch)", percent) },
-                    color: if percent == 100 { "text-emerald-400".to_string() } else { "text-amber-400".to_string() },
+                    label: if percent == 100 { "🎉 100% Vietsub".to_string() } else if percent > 0 { format!("⏳ {}% Vietsub", percent) } else { "⚪ Chưa Dịch".to_string() },
+                    color: if percent == 100 { "text-emerald-400".to_string() } else if percent > 0 { "text-amber-400".to_string() } else { "text-zinc-400".to_string() },
                     completed: total_vi_subs,
                     total: total_eps,
                     percent,

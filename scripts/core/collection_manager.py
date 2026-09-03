@@ -264,7 +264,7 @@ class MediaCollectionManager:
                 dl_color = "amber"
             else:
                 dl_state = "cloud"
-                dl_label = "☁️ Đám Mây (Sẵn sàng tải)"
+                dl_label = "☁️ Đám Mây"
                 dl_color = "blue"
 
             # Pillar 2: Sync Status
@@ -274,30 +274,30 @@ class MediaCollectionManager:
                 sync_color = "emerald"
             elif in_nas:
                 sync_state = "only_nas"
-                sync_label = "🟡 Chỉ Có NAS"
+                sync_label = "🟡 Chỉ NAS"
                 sync_color = "amber"
             elif in_gdrive:
                 sync_state = "only_gdrive"
-                sync_label = "🔵 Chỉ Có Drive"
+                sync_label = "🔵 Chỉ Drive"
                 sync_color = "blue"
             else:
                 sync_state = "unsynced"
-                sync_label = "⚪ Chưa Lên Kho"
+                sync_label = "⚪ Chưa có trên NAS"
                 sync_color = "zinc"
 
             # Pillar 3: Subtitle Status
             sub_percent = round((vietsub_count / total_eps * 100) if total_eps > 0 else 0, 1)
             if sub_percent >= 100:
                 sub_state = "complete"
-                sub_label = f"🎉 Trọn Bộ Vietsub ({vietsub_count}/{total_eps})"
+                sub_label = "🎉 100% Vietsub"
                 sub_color = "emerald"
             elif vietsub_count > 0:
                 sub_state = "translating"
-                sub_label = f"⏳ {vietsub_count}/{total_eps} tập ({sub_percent}%)"
+                sub_label = f"⏳ {sub_percent}% Vietsub"
                 sub_color = "amber"
             else:
                 sub_state = "missing"
-                sub_label = "⚪ Chưa Dịch Vietsub"
+                sub_label = "⚪ Chưa Dịch"
                 sub_color = "zinc"
 
             # Group episodes by Season
