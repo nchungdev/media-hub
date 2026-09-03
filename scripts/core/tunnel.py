@@ -185,7 +185,8 @@ class TunnelManager:
             # URL Discovery in main thread with 15s timeout
             discovered_url = None
             start_time = time.time()
-            url_regex = re.compile(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com")
+            # Use negative lookahead to ignore api.trycloudflare.com
+            url_regex = re.compile(r"https://(?!api\.)[a-zA-Z0-9-]+\.trycloudflare\.com")
 
             while time.time() - start_time < 15:
                 if proc.poll() is not None:

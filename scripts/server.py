@@ -37,6 +37,8 @@ from core.library_builder import LibraryBuilder
 from core.job_store import JobStore
 from core.sync_worker import SyncWorker
 from core.tunnel import tunnel_mgr
+from core.quota_guard import quota_guard
+from core.collection_manager import collection_mgr
 
 # Initialize Core Managers
 torbox_mgr = TorBoxManager()
@@ -1044,6 +1046,10 @@ class MediaHubHandler(BaseHTTPRequestHandler):
             sessions = agent_bridge._load_media_sessions()
             return self._send_json(sessions)
 
+        # 5.5 REST API: Translation Quota Guard Status (/api/agent/quota_status)
+        elif path == "/api/agent/quota_status":
+            return self._send_json(quota_guard.get_status())
+
         # 10. REST API: Live Dashboard Overview & Machine Health (/api/dashboard/overview)
         elif path == "/api/dashboard/overview":
             data = get_cached_overview_data()
@@ -1055,6 +1061,13 @@ class MediaHubHandler(BaseHTTPRequestHandler):
         # 11. REST API: Cloudflare Quick Tunnel Status (/api/tunnel/status)
         elif path == "/api/tunnel/status":
             return self._send_json(tunnel_mgr.get_status())
+
+        # 12. REST API: Unified Media Collections (/api/media/collections)
+        elif path == "/api/media/collections":
+            query_params = urllib.parse.parse_qs(parsed_url.query)
+            refresh = query_params.get("refresh", ["0"])[0].lower() in ["1", "true"]
+            data = collection_mgr.get_collections(force_refresh=refresh)
+            return self._send_json(data)
 
         # 9. REST API: Cross-Storage Scan & Compare (GDrive vs NAS vs Local)
         elif path == "/api/library/cross_check":
@@ -1653,6 +1666,24 @@ class MediaHubHandler(BaseHTTPRequestHandler):
         elif path == "/api/agent/service/ensure":
             res = agent_bridge.ensure_service()
             return self._send_json(res)
+
+        # 3.4c API: Quota Guard Config (/api/agent/quota_config)
+        elif path == "/api/agent/quota_config":
+            daily = req_data.get("daily_limit")
+            weekly = req_data.get("weekly_limit")
+            updated = quota_guard.update_limits(daily_limit=daily, weekly_limit=weekly)
+            return self._send_json({"success": True, "quota": updated})
+
+        # 3.4d API: Quota Guard Reset (/api/agent/quota_reset)
+        elif path == "/api/agent/quota_reset":
+            scope = req_data.get("scope", "all")
+            reset_st = quota_guard.reset_quota(scope=scope)
+            return self._send_json({"success": True, "message": f"Đã reset bộ đếm Quota ({scope})", "quota": reset_st})
+
+        # 3.4e API: Refresh Media Collections (/api/media/collections/refresh)
+        elif path == "/api/media/collections/refresh":
+            data = collection_mgr.get_collections(force_refresh=True)
+            return self._send_json({"success": True, "data": data})
 
 
         # 3.5 API: Native Directory Picker (/api/fs/choose_directory)

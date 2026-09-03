@@ -77,7 +77,7 @@
           <div class="px-3 pb-1.5 text-[9px] font-bold uppercase tracking-wider text-zinc-500 flex items-center justify-between">
             <span>QUY TRÌNH CHÍNH</span>
           </div>
-                    <nav class="space-y-1 text-xs font-semibold">
+          <nav class="space-y-1 text-xs font-semibold">
             <!-- 1. Home / Tổng Quan -->
             <button onclick="setTab('home')" id="tab-btn-home" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer bg-blue-600/10 text-blue-400 border border-blue-500/20 font-bold shadow-sm group">
               <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
@@ -87,40 +87,31 @@
               <span id="tab-dot-home" class="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>
             </button>
 
-            <!-- 2. Downloader (Direct / Aria2 / TorBox) -->
+            <!-- 2. Quản Lý Tải Xuống (Pure Downloader) -->
             <button onclick="setTab('torbox')" id="tab-btn-torbox" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-white hover:bg-zinc-900 group">
               <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
                 <span class="text-base shrink-0">📥</span>
                 <span id="tab-label-torbox" class="text-xs text-zinc-300 group-hover:text-white font-bold truncate">Quản Lý Tải Xuống</span>
               </div>
               <div class="flex items-center gap-1.5 shrink-0 pointer-events-none">
-                <span class="px-1.5 py-0.2 text-[9px] bg-purple-500/10 text-purple-400 rounded border border-purple-500/20 font-mono" id="sidebar-tb-count">32</span>
+                <span class="px-1.5 py-0.2 text-[9px] bg-purple-500/10 text-purple-400 rounded border border-purple-500/20 font-mono" id="sidebar-tb-count">--</span>
                 <span id="tab-dot-torbox" class="w-1.5 h-1.5 rounded-full bg-blue-400 hidden"></span>
               </div>
             </button>
 
-            <!-- 3. Cloud Librarian -->
-            <button onclick="setTab('gdrive')" id="tab-btn-gdrive" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-white hover:bg-zinc-900 group">
+            <!-- 3. Bộ Sưu Tập Media (Unified Collection: Movies + TV Series + 3 Trạng Thái) -->
+            <button onclick="setTab('collection')" id="tab-btn-collection" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-white hover:bg-zinc-900 group">
               <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
-                <span class="text-base shrink-0">🏷️</span>
-                <span id="tab-label-gdrive" class="text-xs text-zinc-300 group-hover:text-white font-bold truncate">Quản Lý Thư Viện</span>
+                <span class="text-base shrink-0">🎬</span>
+                <span id="tab-label-collection" class="text-xs text-zinc-300 group-hover:text-white font-bold truncate">Bộ Sưu Tập Media</span>
               </div>
               <div class="flex items-center gap-1.5 shrink-0 pointer-events-none">
-                <span class="px-1.5 py-0.2 text-[9px] bg-amber-500/10 text-amber-400 rounded border border-amber-500/20 font-mono">31</span>
-                <span id="tab-dot-gdrive" class="w-1.5 h-1.5 rounded-full bg-blue-400 hidden"></span>
+                <span class="px-1.5 py-0.2 text-[9px] bg-amber-500/10 text-amber-400 rounded border border-amber-500/20 font-mono" id="sidebar-collection-count">--</span>
+                <span id="tab-dot-collection" class="w-1.5 h-1.5 rounded-full bg-blue-400 hidden"></span>
               </div>
             </button>
 
-            <!-- 4. Sync & Auto-Purge -->
-            <button onclick="setTab('pipelines')" id="tab-btn-pipelines" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-white hover:bg-zinc-900 group">
-              <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
-                <span class="text-base shrink-0">📤</span>
-                <span id="tab-label-pipelines" class="text-xs text-zinc-300 group-hover:text-white font-bold truncate">Đồng Bộ</span>
-              </div>
-              <span id="tab-dot-pipelines" class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
-            </button>
-
-            <!-- 5. Subtitle Studio / Dịch Thuật Phụ Đề Tab -->
+            <!-- 4. Subtitle Studio / Dịch Thuật Phụ Đề Tab -->
             <button onclick="setTab('subtitles')" id="tab-btn-subtitles" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-white hover:bg-zinc-900 group">
               <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
                 <span class="text-base shrink-0">🌐</span>
@@ -236,6 +227,10 @@
         <div class="flex items-center justify-between pt-1 border-t border-zinc-800/60" id="sidebar-tunnel-row">
           <span class="text-zinc-400 flex items-center gap-1"><span>🌐</span> Remote:</span>
           <span id="sidebar-tunnel-badge" onclick="setTab('settings')" class="cursor-pointer font-mono text-[9px] text-zinc-500 hover:text-amber-400 transition" title="Bấm để xem/bật Remote Tunnel">Offline</span>
+        </div>
+        <div class="flex items-center justify-between pt-1 border-t border-zinc-800/60" id="sidebar-desktop-row" style="display: none;">
+          <span class="text-zinc-400 flex items-center gap-1"><span>🖥️</span> Desktop:</span>
+          <span id="sidebar-desktop-badge" class="font-mono text-[9px] text-blue-400 font-bold">Electron Native</span>
         </div>
       </div>
     </div>
@@ -528,7 +523,7 @@
               <h3 class="font-bold text-xs sm:text-sm text-white flex items-center gap-2">
                 <span>🎬</span> Media Đã Thêm Gần Đây (Recently Added & Synced)
               </h3>
-              <button onclick="setTab('gdrive')" class="text-xs text-blue-400 hover:text-blue-300 font-semibold">
+              <button onclick="setTab('collection')" class="text-xs text-blue-400 hover:text-blue-300 font-semibold">
                 Xem toàn bộ kho ➔
               </button>
             </div>
@@ -537,7 +532,7 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5" id="home-recent-media-grid">
               
               <!-- 1. The Three-Eyed One -->
-              <div onclick="setTab('gdrive'); openPlexDetail('320122')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-amber-500/50 p-2.5 transition space-y-2">
+              <div onclick="setTab('collection')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-amber-500/50 p-2.5 transition space-y-2">
                 <div class="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 relative">
                   <img src="/api/poster?tvdb=320122" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
                   <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-amber-500 text-black font-mono text-[9px] font-black">480p DVD</span>
@@ -550,7 +545,7 @@
               </div>
 
               <!-- 2. Black Jack -->
-              <div onclick="setTab('gdrive'); openPlexDetail('78864')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-blue-500/50 p-2.5 transition space-y-2">
+              <div onclick="setTab('collection')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-blue-500/50 p-2.5 transition space-y-2">
                 <div class="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 relative">
                   <img src="/api/poster?tvdb=78864" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
                   <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-purple-600 text-white font-mono text-[9px] font-bold">1080p BDRip</span>
@@ -563,7 +558,7 @@
               </div>
 
               <!-- 3. Monster -->
-              <div onclick="setTab('gdrive'); openPlexDetail('74599')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-blue-500/50 p-2.5 transition space-y-2">
+              <div onclick="setTab('collection')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-blue-500/50 p-2.5 transition space-y-2">
                 <div class="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 relative">
                   <img src="/api/poster?tvdb=74599" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
                   <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-blue-600 text-white font-mono text-[9px] font-bold">1080p BluRay</span>
@@ -576,7 +571,7 @@
               </div>
 
               <!-- 4. Young Kindaichi -->
-              <div onclick="setTab('gdrive'); openPlexDetail('79354')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-blue-500/50 p-2.5 transition space-y-2">
+              <div onclick="setTab('collection')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-blue-500/50 p-2.5 transition space-y-2">
                 <div class="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 relative">
                   <img src="/api/poster?tvdb=79354" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
                   <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-emerald-600 text-white font-mono text-[9px] font-bold">480p DVD</span>
@@ -589,7 +584,7 @@
               </div>
 
               <!-- 5. WUKONG -->
-              <div onclick="setTab('gdrive'); openPlexDetail('454526')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-blue-500/50 p-2.5 transition space-y-2">
+              <div onclick="setTab('collection')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-blue-500/50 p-2.5 transition space-y-2">
                 <div class="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 relative">
                   <img src="/api/poster?tvdb=454526" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
                   <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-amber-600 text-white font-mono text-[9px] font-bold">1080p WEB-DL</span>
@@ -830,29 +825,20 @@
               </div>
             </div>
 
-            <!-- Row 2: Status Sub-Filter (Filter by Storage Location & Progress) -->
+            <!-- Row 2: Status Sub-Filter (Filter purely by Download Progress) -->
             <div id="status-filter-container" class="flex items-center gap-1 bg-zinc-950/80 p-1 rounded-xl border border-zinc-800/80 text-xs font-semibold overflow-x-auto custom-scroll max-w-full">
-              <span class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider px-2 shrink-0">Trạng Thái:</span>
+              <span class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider px-2 shrink-0">Trạng Thái Tải:</span>
               <button onclick="filterTorboxStatus('all')" id="tbfilter-all" class="torbox-filter-btn px-3 py-1.5 rounded-lg bg-zinc-800 text-white font-bold transition shadow-sm shrink-0">
                 Tất Cả (<span id="tbcount-all">25</span>)
               </button>
-              <button onclick="filterTorboxStatus('drive')" id="tbfilter-drive" class="torbox-filter-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
-                Đã Có Trên Drive (<span id="tbcount-drive">21</span>)
-              </button>
-              <button onclick="filterTorboxStatus('nas')" id="tbfilter-nas" class="torbox-filter-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
-                Đã Có Trên NAS (<span id="tbcount-nas">21</span>)
-              </button>
-              <button onclick="filterTorboxStatus('both')" id="tbfilter-both" class="torbox-filter-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
-                Cả Drive & NAS (<span id="tbcount-both">21</span>)
-              </button>
-              <button onclick="filterTorboxStatus('unsynced')" id="tbfilter-unsynced" class="torbox-filter-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
-                Chưa Lên Kho (<span id="tbcount-unsynced">4</span>)
+              <button onclick="filterTorboxStatus('cached')" id="tbfilter-cached" class="torbox-filter-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                🟢 Đã Tải Xong / Cached (<span id="tbcount-cached">25</span>)
               </button>
               <button onclick="filterTorboxStatus('active')" id="tbfilter-active" class="torbox-filter-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
-                Đang Tải (<span id="tbcount-active">0</span>)
+                ⚡ Đang Tải (<span id="tbcount-active">0</span>)
               </button>
               <button onclick="filterTorboxStatus('queued')" id="tbfilter-queued" class="torbox-filter-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
-                Hàng Đợi (<span id="tbcount-queued">0</span>)
+                ⏳ Hàng Đợi (<span id="tbcount-queued">0</span>)
               </button>
             </div>
           </div>
@@ -870,25 +856,10 @@
                 <div id="torbox-batch-toolbar" class="hidden items-center gap-2 bg-zinc-900 border border-purple-500/30 rounded-xl px-3 py-1 text-xs shadow-md">
                   <span class="text-zinc-300 font-semibold font-mono text-[11px]" id="torbox-selected-count">0 chọn</span>
                   <div class="h-3.5 w-px bg-zinc-800 mx-0.5"></div>
-                  <button onclick="syncSelectedTorbox('drive')" class="px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 rounded-lg transition font-semibold">
-                    Sync Drive
-                  </button>
-                  <button onclick="syncSelectedTorbox('nas')" class="px-2 py-1 bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white border border-amber-500/30 rounded-lg transition font-semibold">
-                    Sync NAS
-                  </button>
                   <button onclick="deleteSelectedTorbox()" class="px-2 py-1 text-red-400 hover:bg-red-500/20 rounded-lg transition font-semibold">
-                    Xóa
+                    Xóa Khỏi Hàng Đợi
                   </button>
                 </div>
-
-                <!-- Global Sync All Buttons on Table Header -->
-                <button onclick="syncAllTorrents('drive')" class="px-3.5 py-1.5 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 font-bold text-xs rounded-xl transition shadow-sm shrink-0" title="Tự động đồng bộ toàn bộ torrents lên Google Drive">
-                  Sync Tất Cả Drive
-                </button>
-
-                <button onclick="syncAllTorrents('nas')" class="px-3.5 py-1.5 bg-amber-600/10 hover:bg-amber-600 text-amber-400 hover:text-white border border-amber-500/30 font-bold text-xs rounded-xl transition shadow-sm shrink-0" title="Tự động đồng bộ toàn bộ torrents lên NAS Storage">
-                  Sync Tất Cả NAS
-                </button>
               </div>
             </div>
 
@@ -903,7 +874,7 @@
                     <th class="px-3 py-3 w-60 sm:w-72 lg:w-80">Tên Phim / Torrent</th>
                     <th class="px-3 py-3 w-24 whitespace-nowrap">Dung Lượng</th>
                     <th class="px-3 py-3 w-36 whitespace-nowrap text-center">Trạng Thái</th>
-                    <th class="px-3 py-3 text-right whitespace-nowrap">Đồng Bộ & Thao Tác</th>
+                    <th class="px-3 py-3 text-right whitespace-nowrap">Thao Tác Tải Xuống</th>
                   </tr>
                 </thead>
                 <tbody id="torbox-tbody" class="divide-y divide-zinc-800/60">
@@ -919,261 +890,136 @@
 
       </div>
 
-      <!-- ==================== TAB 3: GOOGLE DRIVE MEDIA BROWSER ==================== -->
-      <div id="tab-gdrive" class="hidden space-y-0">
+      <!-- ==================== TAB 3: BỘ SƯU TẬP MEDIA (UNIFIED COLLECTION) ==================== -->
+      <div id="tab-collection" class="hidden space-y-0">
         
-        <!-- Pinned Library View Header (Sticky Top-0 Flush) -->
-        <div id="gdrive-header-library" class="sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 desktop-titlebar-pad flex flex-wrap items-center justify-between gap-3 shadow-sm app-drag-region">
+        <!-- Pinned Header (Sticky Top-0 Flush) -->
+        <div class="sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 desktop-titlebar-pad flex flex-wrap items-center justify-between gap-3 shadow-sm app-drag-region">
           <div class="flex items-center gap-3 app-no-drag">
             <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-base border border-amber-500/20 shadow-inner shrink-0">
-              📁
+              🎬
             </div>
             <div>
               <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="font-bold text-sm sm:text-base text-white">Quản Lý Thư Viện</h3>
-                <span class="px-2 py-0.5 text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full font-mono">2 KHO LƯU TRỮ</span>
+                <h3 class="font-bold text-sm sm:text-base text-white">Bộ Sưu Tập Media</h3>
+                <span id="collection-kpi-badge" class="px-2 py-0.5 text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-full font-mono">-- Mục</span>
               </div>
-              <p class="text-xs text-zinc-400 hidden sm:block">Kho lưu trữ đám mây ☁️ Google Drive (gdrive:Phim) & Máy chủ nội bộ 🖥️ NAS Storage (/srv/mergerfs/MainPool/Phim)</p>
+              <p class="text-xs text-zinc-400 hidden sm:block">Quản lý thống nhất Movies & TV Series • Giám sát 3 trạng thái Tải - Sync - Subtitle từng tập</p>
             </div>
           </div>
 
           <div class="flex items-center gap-2 flex-wrap app-no-drag">
-            <button onclick="openCrossStorageModal()" class="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-blue-600/20 flex items-center gap-1.5 shrink-0">
-              <span>🔄</span> <span class="hidden sm:inline">So Sánh &</span> Đồng Bộ Cloud
+            <button onclick="openCrossStorageModal()" class="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" title="Đối chiếu chi tiết 3 kho lưu trữ">
+              <span>⚖️</span> So Sánh Kho
             </button>
-            <input type="text" id="plex-search" oninput="filterPlexShows()" placeholder="🔍 Tìm kiếm..." class="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 w-32 sm:w-48">
-            <button onclick="refreshLibraryIndex()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded-xl transition shadow-md shadow-amber-500/20 flex items-center gap-1 shrink-0">
-              <span>⚡</span> <span class="hidden sm:inline">Quét</span> Lại
-            </button>
-            <button onclick="buildLibraryMetadata()" id="btn-build-meta" class="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-purple-600/20 flex items-center gap-1.5 shrink-0" title="Tải poster/fanart/NFO còn thiếu từ TMDb và ghi vào thư viện">
-              <span>🖼️</span> <span class="hidden sm:inline">Dựng</span> Metadata
+            <button onclick="loadMediaCollections(true)" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded-xl transition shadow-md shadow-amber-500/20 flex items-center gap-1.5 shrink-0">
+              <span id="btn-icon-col-refresh">🔄</span> Làm Mới
             </button>
           </div>
         </div>
 
-        <!-- Library index summary + metadata build progress -->
-        <div id="library-index-bar" class="mx-3 sm:mx-4 mb-3 p-3 rounded-2xl bg-zinc-950/70 border border-zinc-800 text-[11px] font-mono text-zinc-400 hidden">
-          <div class="flex items-center justify-between gap-3 flex-wrap">
-            <span id="library-index-stats">—</span>
-            <span id="library-build-state" class="text-purple-300"></span>
-          </div>
-          <div id="library-build-barwrap" class="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-purple-500/20 mt-2 hidden">
-            <div id="library-build-bar" class="bg-gradient-to-r from-purple-500 to-fuchsia-400 h-full rounded-full transition-all duration-500" style="width:0%"></div>
-          </div>
-          <div id="library-build-log" class="mt-2 space-y-0.5 max-h-40 overflow-y-auto"></div>
-        </div>
-
-        <!-- Pinned Show Detail Top Header (Sticky Top-0 Flush) -->
-        <div id="gdrive-header-show" class="hidden sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 desktop-titlebar-pad flex flex-wrap items-center justify-between gap-3 shadow-sm app-drag-region">
-          <div class="flex items-center gap-2.5 sm:gap-3 app-no-drag">
-            <button onclick="backToPlexLibrary()" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-bold text-amber-400 transition flex items-center gap-1 shadow-sm shrink-0">
-              <span>←</span> <span class="hidden sm:inline">Quay Lại</span>
-            </button>
-            <div class="h-5 w-px bg-zinc-800 hidden sm:block"></div>
-            <div>
-              <div class="flex items-center gap-1.5 sm:gap-2">
-                <h3 class="font-bold text-xs sm:text-sm text-white truncate max-w-[150px] sm:max-w-md" id="header-show-title">Tên Phim</h3>
-                <span class="px-1.5 py-0.2 text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded shrink-0" id="header-show-badge">1080p</span>
+        <div class="p-4 sm:p-6 pb-28 lg:pb-10 space-y-4 w-full">
+          
+          <!-- KPI Summary Cards (4 Pillars) -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-lg shrink-0 border border-amber-500/20">
+                🎬
               </div>
-              <p class="text-[10px] text-zinc-400 hidden sm:block" id="header-show-subtitle">Google Drive Storage • Đã chuẩn hóa tập</p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <button onclick="triggerPlexScan()" class="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-300 rounded-xl transition flex items-center gap-1 shadow-sm">
-              <span>⚡</span> <span class="hidden sm:inline">Quét Lại</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="p-4 sm:p-6 pb-28 lg:pb-10 space-y-5 w-full">
-          <!-- VIEW 1: PLEX LIBRARY VIEW -->
-          <div id="plex-view-library" class="space-y-4">
-            
-                        <!-- ==================== 2 INTERACTIVE STORAGE CARDS (2 CỤC KHO LƯU TRỮ) ==================== -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 text-xs">
-              
-              <!-- CỤC 1: Google Drive Cloud -->
-              <div onclick="selectStorageSource('gdrive')" id="storage-card-gdrive" class="p-5 rounded-3xl bg-emerald-950/30 border-2 border-emerald-500 ring-4 ring-emerald-500/10 shadow-xl cursor-pointer transition relative overflow-hidden group hover:scale-[1.01]">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="flex items-center gap-3.5">
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-2xl border border-emerald-500/30 shrink-0 shadow-inner">
-                      ☁️
-                    </div>
-                    <div>
-                      <div class="flex items-center gap-2">
-                        <h4 class="font-bold text-white text-sm sm:text-base">Google Drive</h4>
-                        <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold font-mono">Cloud</span>
-                      </div>
-                      <p class="text-xs text-zinc-400 mt-0.5">Kho media đám mây tốc độ cao • Chuẩn hóa TheTVDB</p>
-                      <div class="text-[11px] text-emerald-400 font-mono mt-1 flex items-center gap-1">
-                        <span>📁</span> gdrive:Phim
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="flex flex-col items-end gap-1.5 shrink-0">
-                    <span id="gdrive-active-indicator" class="px-2.5 py-1 rounded-full bg-emerald-500 text-black font-bold text-[10px] shadow-md flex items-center gap-1">
-                      <span>✓</span> Đang Xem
-                    </span>
-                    <span class="text-[10px] text-zinc-400 font-mono" id="gdrive-shows-count">31 Shows</span>
-                  </div>
-                </div>
-
-                <div class="mt-4 pt-3 border-t border-emerald-500/20 flex items-center justify-between text-zinc-400 text-[11px]">
-                  <span class="text-emerald-400/90 font-medium">👉 Bấm để duyệt danh sách phim trên Google Drive</span>
-                  <span class="text-xs">📂</span>
-                </div>
+              <div class="min-w-0">
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Bộ Sưu Tập</div>
+                <div class="text-base font-bold text-white font-mono" id="col-kpi-total">--</div>
+                <div class="text-[10px] text-zinc-400 truncate" id="col-kpi-types">-- Series • -- Movies</div>
               </div>
-
-              <!-- CỤC 2: NAS Storage Server -->
-              <div onclick="selectStorageSource('nas')" id="storage-card-nas" class="p-5 rounded-3xl bg-zinc-900/60 border border-zinc-800/80 hover:border-amber-500/50 shadow-md cursor-pointer transition relative overflow-hidden group hover:scale-[1.01] opacity-75 hover:opacity-100">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="flex items-center gap-3.5">
-                    <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-2xl border border-amber-500/20 shrink-0 shadow-inner">
-                      🖥️
-                    </div>
-                    <div>
-                      <div class="flex items-center gap-2">
-                        <h4 class="font-bold text-white text-sm sm:text-base">NAS Storage</h4>
-                        <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold font-mono">MergerFS</span>
-                      </div>
-                      <p class="text-xs text-zinc-400 mt-0.5">Máy chủ lưu trữ gia đình • Sẵn sàng phát Plex & Jellyfin</p>
-                      <div class="text-[11px] text-amber-400 font-mono mt-1 flex items-center gap-1">
-                        <span>📁</span> /srv/mergerfs/MainPool/Phim
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="flex flex-col items-end gap-1.5 shrink-0">
-                    <span id="nas-active-indicator" class="px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-400 font-medium text-[10px] flex items-center gap-1">
-                      Bấm để xem
-                    </span>
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                      <a href="http://192.168.1.37:32400/web" target="_blank" onclick="event.stopPropagation()" class="px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500 text-amber-300 hover:text-black font-semibold text-[10px] transition border border-amber-500/20 shadow-sm flex items-center gap-1" title="Mở Plex Web">
-                        <span>🎬</span> Plex
-                      </a>
-                      <a href="http://192.168.1.37:8096" target="_blank" onclick="event.stopPropagation()" class="px-2.5 py-1 rounded-xl bg-purple-500/10 hover:bg-purple-500 text-purple-300 hover:text-white font-semibold text-[10px] transition border border-purple-500/20 shadow-sm flex items-center gap-1" title="Mở Jellyfin Web">
-                        <span>🍿</span> Jellyfin
-                      </a>
-                      <a href="http://192.168.1.37:8080" target="_blank" onclick="event.stopPropagation()" class="px-2.5 py-1 rounded-xl bg-blue-500/10 hover:bg-blue-500 text-blue-300 hover:text-white font-semibold text-[10px] transition border border-blue-500/20 shadow-sm flex items-center gap-1" title="Mở FileBrowser Web">
-                        <span>📁</span> FileBrowser
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-4 pt-3 border-t border-zinc-800/80 flex items-center justify-between text-zinc-400 text-[11px]">
-                  <span class="text-amber-400/90 font-medium">👉 Bấm để duyệt danh sách phim trên NAS Storage</span>
-                  <span class="text-xs">📂</span>
-                </div>
-              </div>
-
             </div>
 
-            <!-- ==================== MEDIA LIST CONTAINER (Hiển thị kho đã chọn) ==================== -->
-            <div id="storage-media-list-container" class="space-y-4 pt-2">
-              
-              <!-- Current Active Storage Header Bar -->
-              <div class="flex flex-wrap items-center justify-between gap-3 text-xs bg-zinc-900/60 p-3.5 rounded-2xl border border-zinc-800">
-                <div class="flex items-center gap-2">
-                  <span class="text-base" id="active-storage-icon">☁️</span>
-                  <div>
-                    <span class="font-bold text-white text-xs" id="active-storage-title">Đang Duyệt: Google Drive (gdrive:Phim)</span>
-                    <span class="text-zinc-500 text-[10px] ml-2" id="active-storage-subtitle">• 17 Phim hiển thị</span>
-                  </div>
-                </div>
-
-                <!-- Format Filter Pills -->
-                <div class="flex items-center gap-1.5 overflow-x-auto custom-scroll text-xs">
-                  <button onclick="filterPlexTag('all')" class="plex-filter-btn px-3 py-1 rounded-lg bg-[#e5a00d] text-black font-bold transition shadow shrink-0" id="pfilter-all">Tất Cả</button>
-                  <button onclick="filterPlexTag('1080p')" class="plex-filter-btn px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition shrink-0" id="pfilter-1080p">🎬 1080p</button>
-                  <button onclick="filterPlexTag('480p')" class="plex-filter-btn px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition shrink-0" id="pfilter-480p">📺 480p</button>
-                  <button onclick="filterPlexTag('anime')" class="plex-filter-btn px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition shrink-0" id="pfilter-anime">🎌 Anime</button>
-                  <button onclick="filterPlexTag('live')" class="plex-filter-btn px-3 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition shrink-0" id="pfilter-live">🎥 Live Action</button>
-                </div>
+            <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-lg shrink-0 border border-blue-500/20">
+                📥
               </div>
+              <div class="min-w-0">
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Tải Xuống (Video)</div>
+                <div class="text-base font-bold text-blue-400 font-mono" id="col-kpi-download">--</div>
+                <div class="text-[10px] text-zinc-400 truncate">Video cục bộ sẵn sàng</div>
+              </div>
+            </div>
 
-              <!-- Poster Grid -->
-              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-3 sm:gap-4" id="plex-poster-grid">
-                <!-- Populated by JS -->
+            <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-lg shrink-0 border border-emerald-500/20">
+                ☁️
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Đồng Bộ An Toàn</div>
+                <div class="text-base font-bold text-emerald-400 font-mono" id="col-kpi-synced">--</div>
+                <div class="text-[10px] text-emerald-400/80 truncate">🟢 Đã có cả NAS & Drive</div>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold text-lg shrink-0 border border-purple-500/20">
+                🌐
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Phụ Đề Vietsub</div>
+                <div class="text-base font-bold text-purple-400 font-mono" id="col-kpi-subtitles">--</div>
+                <div class="text-[10px] text-zinc-400 truncate">Hoàn tất 100% Vietsub</div>
               </div>
             </div>
           </div>
 
-          <!-- VIEW 2: PLEX / JELLYFIN SHOW PAGE -->
-          <div id="plex-view-show" class="hidden space-y-4">
+          <!-- Filter & Search Toolbar -->
+          <div class="bg-zinc-950/90 border border-zinc-800/80 p-3 rounded-2xl space-y-2.5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <!-- Search Box -->
+              <div class="flex-1 min-w-[220px] max-w-md relative">
+                <input type="text" id="collection-search" oninput="applyCollectionFilters()" placeholder="🔍 Tìm theo tên phim, tiếng Việt, TVDB ID..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 shadow-inner">
+              </div>
 
-            <!-- Sleek Inline Back Button Bar -->
-            <div class="flex items-center justify-between">
-              <button onclick="backToPlexLibrary()" class="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-bold text-amber-400 hover:text-amber-300 transition flex items-center gap-1.5 shadow-sm">
-                <span>←</span> Quay Lại Danh Sách
-              </button>
-              <div class="text-xs text-zinc-400 truncate max-w-[180px] sm:max-w-none">
-                <span class="text-zinc-500 hidden sm:inline">Đang xem:</span> <span class="font-bold text-white text-xs truncate" id="inline-show-name">Monster (2004)</span>
+              <!-- Type Tabs -->
+              <div class="flex items-center gap-1 bg-zinc-900/80 p-1 rounded-xl border border-zinc-800 text-xs font-semibold overflow-x-auto custom-scroll">
+                <button onclick="setCollectionTypeFilter('all')" id="col-type-all" class="col-type-btn px-3 py-1.5 rounded-lg bg-amber-500 text-black font-bold transition shadow-sm shrink-0">
+                  Tất Cả
+                </button>
+                <button onclick="setCollectionTypeFilter('series')" id="col-type-series" class="col-type-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                  📺 TV Series
+                </button>
+                <button onclick="setCollectionTypeFilter('movie')" id="col-type-movie" class="col-type-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                  🎬 Movies / OVA
+                </button>
               </div>
             </div>
 
-            <!-- Hero Show Banner -->
-            <div class="relative rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 p-4 sm:p-6 md:p-8">
-              <div class="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/90 to-transparent z-10"></div>
-              <div id="show-backdrop-bg" class="absolute inset-0 bg-cover bg-center opacity-25 filter blur-sm"></div>
+            <!-- Sub Filters: Sync Status & Subtitle Status -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-zinc-900 text-xs">
+              <!-- Sync Filter -->
+              <div class="flex items-center gap-1.5 overflow-x-auto custom-scroll py-0.5">
+                <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider shrink-0">Kho Lưu Trữ:</span>
+                <button onclick="setCollectionSyncFilter('all')" id="col-sync-all" class="col-sync-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-white font-bold transition text-[11px] shrink-0">Tất Cả</button>
+                <button onclick="setCollectionSyncFilter('synced_both')" id="col-sync-both" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🟢 Cả NAS & Drive</button>
+                <button onclick="setCollectionSyncFilter('only_nas')" id="col-sync-nas" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🟡 Chỉ NAS</button>
+                <button onclick="setCollectionSyncFilter('only_gdrive')" id="col-sync-drive" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🔵 Chỉ Drive</button>
+                <button onclick="setCollectionSyncFilter('unsynced')" id="col-sync-unsynced" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">⚪ Chưa Đồng Bộ</button>
+              </div>
 
-              <div class="relative z-20 flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
-                <!-- Show Poster Frame (2:3) -->
-                <div class="w-28 sm:w-44 aspect-[2/3] rounded-2xl bg-zinc-900 border border-zinc-700/80 shadow-2xl flex flex-col justify-center items-center shrink-0 overflow-hidden relative mx-auto sm:mx-0" id="show-poster-box">
-                  <span class="text-5xl sm:text-6xl" id="show-hero-icon">🎬</span>
-                  <span class="absolute bottom-2 px-2 py-0.5 rounded bg-amber-500 text-black font-black text-[9px] sm:text-[10px]" id="show-hero-badge">1080p</span>
-                </div>
-
-                <!-- Show Meta Details -->
-                <div class="space-y-2.5 sm:space-y-3 flex-1 text-center sm:text-left">
-                  <div class="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2">
-                    <span class="px-2 py-0.5 rounded bg-amber-500 text-black font-black text-xs" id="show-hero-year">1993</span>
-                    <span class="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 font-mono text-xs" id="show-hero-tvdb">{tvdb-78864}</span>
-                    <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold">✓ Drive Ready</span>
-                  </div>
-
-                  <h2 class="text-xl sm:text-3xl font-black text-white" id="show-hero-title">Tên Phim</h2>
-                  <div class="text-xs sm:text-sm font-medium text-zinc-400" id="show-hero-vn">Tên Tiếng Việt</div>
-
-                  <p class="text-xs text-zinc-300 leading-relaxed max-w-3xl line-clamp-4 sm:line-clamp-none" id="show-hero-plot">
-                    Tóm tắt nội dung...
-                  </p>
-
-                  <div class="pt-1 flex flex-wrap justify-center sm:justify-start gap-1.5 text-xs" id="show-hero-genres">
-                    <!-- Genre tags -->
-                  </div>
-                </div>
+              <!-- Subtitle Filter -->
+              <div class="flex items-center gap-1.5 overflow-x-auto custom-scroll py-0.5">
+                <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider shrink-0">Phụ Đề:</span>
+                <button onclick="setCollectionSubFilter('all')" id="col-sub-all" class="col-sub-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-white font-bold transition text-[11px] shrink-0">Tất Cả</button>
+                <button onclick="setCollectionSubFilter('complete')" id="col-sub-complete" class="col-sub-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🎉 100% Vietsub</button>
+                <button onclick="setCollectionSubFilter('translating')" id="col-sub-translating" class="col-sub-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">⏳ Đang Dịch</button>
+                <button onclick="setCollectionSubFilter('missing')" id="col-sub-missing" class="col-sub-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">⚪ Chưa Dịch</button>
               </div>
             </div>
+          </div>
 
-            <!-- Season Selector Pills & Episode List Section -->
-            <div class="space-y-4">
-              <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-                <h3 class="font-bold text-sm text-white flex items-center gap-2">
-                  <span>📺</span> Các Mùa (Seasons)
-                </h3>
-                <span class="text-xs text-zinc-400 font-mono" id="show-files-count">0 files</span>
-              </div>
-
-              <!-- Season Tabs -->
-              <div class="flex gap-2 overflow-x-auto custom-scroll pb-2" id="show-season-tabs">
-                <!-- JS will populate season buttons -->
-              </div>
-
-              <!-- Episode Cards List Container -->
-              <div class="space-y-2" id="show-episodes-container">
-                <!-- JS will populate episode list -->
-              </div>
-            </div>
-
+          <!-- Dynamic Collection Cards List -->
+          <div id="collections-list-container" class="space-y-3.5">
+            <!-- Populated dynamically by JS -->
           </div>
 
           <!-- Mobile Clearance Spacer -->
           <div class="h-10 lg:hidden"></div>
         </div>
-
       </div>
 
       <!-- ==================== TAB 4: AI AGENT ASSISTANT FULL VIEW ==================== -->
@@ -1302,6 +1148,59 @@
               <div class="text-[11px] text-zinc-400 font-medium">Quy Chuẩn Batching</div>
               <div class="text-lg font-bold text-purple-400 font-mono">Tối đa 5 tập</div>
               <div class="text-[10px] text-zinc-500">Chạy ngầm tuần tự</div>
+            </div>
+          </div>
+
+          <!-- 1.1 TRANSLATION QUOTA GUARD BANNER -->
+          <div id="sub-quota-guard-banner" class="p-4 sm:p-5 rounded-3xl bg-zinc-900/80 border border-zinc-800 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div id="sub-quota-status-icon" class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-lg font-bold shrink-0 shadow-inner">
+                🛡️
+              </div>
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-sm text-white">Translation Quota Guard</span>
+                  <span id="sub-quota-badge" class="text-[10px] px-2 py-0.5 rounded-full font-bold font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    🟢 AN TOÀN (READY)
+                  </span>
+                </div>
+                <p class="text-xs text-zinc-400">
+                  Bảo vệ hạn mức tuần (40% Flash Budget) • Tự động hoãn dịch khi chạm trần 30 tập/ngày hoặc 150 tập/tuần
+                </p>
+              </div>
+            </div>
+
+            <!-- Progress Bars -->
+            <div class="flex items-center gap-4 sm:gap-6 w-full md:w-auto shrink-0 flex-wrap sm:flex-nowrap">
+              <!-- Day bar -->
+              <div class="w-full sm:w-44 space-y-1.5">
+                <div class="flex items-center justify-between text-[11px] font-mono">
+                  <span class="text-zinc-400">Hôm nay:</span>
+                  <span class="font-bold text-white"><span id="sub-quota-day-used">0</span> / <span id="sub-quota-day-limit">30</span> tập</span>
+                </div>
+                <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                  <div id="sub-quota-day-bar" class="h-full bg-emerald-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="text-[10px] text-zinc-500 flex justify-between font-mono">
+                  <span id="sub-quota-day-pct">0%</span>
+                  <span id="sub-quota-day-reset">Reset: --</span>
+                </div>
+              </div>
+
+              <!-- Week bar -->
+              <div class="w-full sm:w-44 space-y-1.5">
+                <div class="flex items-center justify-between text-[11px] font-mono">
+                  <span class="text-zinc-400">Tuần này:</span>
+                  <span class="font-bold text-white"><span id="sub-quota-week-used">0</span> / <span id="sub-quota-week-limit">150</span> tập</span>
+                </div>
+                <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                  <div id="sub-quota-week-bar" class="h-full bg-cyan-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="text-[10px] text-zinc-500 flex justify-between font-mono">
+                  <span id="sub-quota-week-pct">0%</span>
+                  <span id="sub-quota-week-reset">Reset: --</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1436,6 +1335,20 @@
                   <p class="text-[10px] text-zinc-400 mt-1 leading-relaxed">
                     Hệ thống sẽ thử chạy CLI được chọn. Nếu gặp lỗi hết quota (<code>quota reached</code>), hệ thống sẽ tự động fallback sang instance còn lại để đảm bảo việc dịch phụ đề không bị gián đoạn.
                   </p>
+                </div>
+              </div>
+
+              <!-- Translation Quota Guard Settings -->
+              <div class="sm:col-span-2 pt-3 border-t border-zinc-800/60 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-zinc-400 font-medium mb-1">Hạn Mức Dịch Ngày (Tập / Ngày):</label>
+                  <input type="number" id="cfg-quota-daily" min="1" max="500" value="30" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-white font-mono focus:outline-none focus:border-emerald-500">
+                  <p class="text-[10px] text-zinc-500 mt-1">Mặc định: 30 tập/ngày. Khi chạm trần, hệ thống sẽ tự động tạm hoãn nhận lệnh dịch mới.</p>
+                </div>
+                <div>
+                  <label class="block text-zinc-400 font-medium mb-1">Hạn Mức Dịch Tuần (Tập / Tuần):</label>
+                  <input type="number" id="cfg-quota-weekly" min="1" max="2000" value="150" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-white font-mono focus:outline-none focus:border-emerald-500">
+                  <p class="text-[10px] text-zinc-500 mt-1">Mặc định: 150 tập/tuần (chuẩn an toàn 40% quota Flash tuần, bảo toàn 100% quota Pro).</p>
                 </div>
               </div>
             </div>
@@ -1967,6 +1880,66 @@
 
           </div>
 
+          <!-- 4.1 TRANSLATION QUOTA GUARD CARD -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-zinc-800 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">🛡️</span>
+                <div>
+                  <h4 class="font-bold text-sm text-white flex items-center gap-2">
+                    Translation Quota Guard (Hạn Mức An Toàn Gemini Flash)
+                    <span id="token-quota-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">🟢 AN TOÀN</span>
+                  </h4>
+                  <p class="text-[11px] text-zinc-400">Chốt chặn tự động bảo vệ tài khoản tránh lỗi 429 Resource Exhausted và bảo toàn 100% quota Pro</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="resetQuotaGuard('day')" class="px-3 py-1.5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-xl transition flex items-center gap-1">
+                  <span>🔄</span> Reset Ngày
+                </button>
+                <button onclick="resetQuotaGuard('all')" class="px-3 py-1.5 text-xs font-semibold bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 rounded-xl transition flex items-center gap-1">
+                  <span>⚠️</span> Reset Toàn Bộ
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              <!-- Day stats -->
+              <div class="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-zinc-400 font-medium flex items-center gap-1.5">
+                    <span>📅</span> Hạn mức ngày hôm nay:
+                  </span>
+                  <span class="font-mono font-bold text-white" id="token-quota-day-text">0 / 30 tập (0%)</span>
+                </div>
+                <div class="w-full h-2.5 bg-zinc-800 rounded-full overflow-hidden">
+                  <div id="token-quota-day-bar" class="h-full bg-emerald-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-zinc-500 font-mono pt-0.5">
+                  <span>Ước tính: <b id="token-quota-day-tokens" class="text-zinc-300">0</b> tokens</span>
+                  <span id="token-quota-day-reset" class="text-zinc-400">Reset sau: --</span>
+                </div>
+              </div>
+
+              <!-- Week stats -->
+              <div class="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-zinc-400 font-medium flex items-center gap-1.5">
+                    <span>📆</span> Hạn mức tuần (40% Flash Budget):
+                  </span>
+                  <span class="font-mono font-bold text-white" id="token-quota-week-text">0 / 150 tập (0%)</span>
+                </div>
+                <div class="w-full h-2.5 bg-zinc-800 rounded-full overflow-hidden">
+                  <div id="token-quota-week-bar" class="h-full bg-cyan-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-zinc-500 font-mono pt-0.5">
+                  <span>Ước tính: <b id="token-quota-week-tokens" class="text-zinc-300">0</b> tokens</span>
+                  <span id="token-quota-week-reset" class="text-zinc-400">Reset sau: --</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Detailed Sessions Table -->
           <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-zinc-800 shadow-xl space-y-4">
             <div class="flex items-center justify-between border-b border-zinc-800 pb-3.5 flex-wrap gap-2">
@@ -2101,24 +2074,23 @@
       <span class="text-[9px] mt-0.5 tracking-tight font-semibold">Tổng Quan</span>
     </button>
 
-    <!-- 2. Downloader -->
+    <!-- 2. Quản Lý Tải Xuống -->
     <button onclick="setTab('torbox')" id="mobile-tab-btn-torbox" class="flex flex-col items-center justify-center flex-1 py-1 text-zinc-400 transition relative">
       <span class="text-base">📥</span>
-      <span class="text-[9px] mt-0.5 tracking-tight font-semibold">Bộ Tải</span>
-      <span class="absolute top-1 right-2 px-1 py-0.2 text-[7px] bg-purple-500 text-white rounded-full font-mono">32</span>
+      <span class="text-[9px] mt-0.5 tracking-tight font-semibold">Tải Xuống</span>
+      <span id="mobile-tab-badge-torbox" class="absolute top-1 right-2 px-1 py-0.2 text-[7px] bg-purple-500 text-white rounded-full font-mono">--</span>
     </button>
 
-    <!-- 3. Cloud Librarian -->
-    <button onclick="setTab('gdrive')" id="mobile-tab-btn-gdrive" class="flex flex-col items-center justify-center flex-1 py-1 text-zinc-400 transition">
-      <span class="text-base">🏷️</span>
-      <span class="text-[9px] mt-0.5 tracking-tight font-semibold">Thư Viện</span>
+    <!-- 3. Bộ Sưu Tập Media -->
+    <button onclick="setTab('collection')" id="mobile-tab-btn-collection" class="flex flex-col items-center justify-center flex-1 py-1 text-zinc-400 transition relative">
+      <span class="text-base">🎬</span>
+      <span class="text-[9px] mt-0.5 tracking-tight font-semibold">Bộ Sưu Tập</span>
     </button>
 
-    <!-- 4. Sync -->
-    <button onclick="setTab('pipelines')" id="mobile-tab-btn-pipelines" class="flex flex-col items-center justify-center flex-1 py-1 text-zinc-400 transition relative">
-      <span class="text-base">📤</span>
-      <span class="text-[9px] mt-0.5 tracking-tight font-semibold">Đồng Bộ</span>
-      <span class="absolute top-1 right-2.5 w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+    <!-- 4. Dịch Thuật Phụ Đề -->
+    <button onclick="setTab('subtitles')" id="mobile-tab-btn-subtitles" class="flex flex-col items-center justify-center flex-1 py-1 text-zinc-400 transition relative">
+      <span class="text-base">🌐</span>
+      <span class="text-[9px] mt-0.5 tracking-tight font-semibold">Phụ Đề</span>
     </button>
 
     <!-- 5. Settings -->
@@ -2388,6 +2360,46 @@
   </div>
 
   <script>
+    // Desktop Native App Bridge (Clean Architecture Adapter Pattern)
+    window.desktopBridge = {
+      isDesktop: !!(window.electronAPI && window.electronAPI.isElectron),
+      async init() {
+        if (!this.isDesktop) return;
+        try {
+          const row = document.getElementById('sidebar-desktop-row');
+          const badge = document.getElementById('sidebar-desktop-badge');
+          if (row) row.style.display = 'flex';
+          const infoRes = await window.electronAPI.app.getInfo();
+          if (infoRes && infoRes.success && badge) {
+            badge.innerText = `v${infoRes.data.version} (v${infoRes.data.electronVersion})`;
+          }
+        } catch (_) {}
+      },
+      async openExternal(url) {
+        if (this.isDesktop && window.electronAPI.system) {
+          return await window.electronAPI.system.openExternal(url);
+        }
+        window.open(url, '_blank');
+      },
+      async writeClipboard(text) {
+        if (this.isDesktop && window.electronAPI.system) {
+          return await window.electronAPI.system.writeClipboard(text);
+        }
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(text);
+        }
+      },
+      async showNotification(title, body) {
+        if (this.isDesktop && window.electronAPI.system) {
+          return await window.electronAPI.system.showNotification({ title, body });
+        }
+        if (window.Notification && Notification.permission === 'granted') {
+          new Notification(title, { body });
+        }
+      }
+    };
+    document.addEventListener('DOMContentLoaded', () => window.desktopBridge.init());
+
     let currentTorrents = [];
     let lastKnownLibraryVersion = null;
     let currentActiveSeason = null;
@@ -3206,11 +3218,11 @@
       });
       const activeStatusBtn = document.getElementById(`tbfilter-${status}`);
       if (activeStatusBtn) {
-        if (status === 'drive') {
+        if (status === 'cached') {
           activeStatusBtn.className = "torbox-filter-btn px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold transition shadow-sm shrink-0";
-        } else if (status === 'nas') {
-          activeStatusBtn.className = "torbox-filter-btn px-3 py-1.5 rounded-lg bg-amber-600 text-white font-bold transition shadow-sm shrink-0";
-        } else if (status === 'both') {
+        } else if (status === 'active') {
+          activeStatusBtn.className = "torbox-filter-btn px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold transition shadow-sm shrink-0";
+        } else if (status === 'queued') {
           activeStatusBtn.className = "torbox-filter-btn px-3 py-1.5 rounded-lg bg-purple-600 text-white font-bold transition shadow-sm shrink-0";
         } else {
           activeStatusBtn.className = "torbox-filter-btn px-3 py-1.5 rounded-lg bg-zinc-800 text-white font-bold transition shadow-sm shrink-0";
@@ -3230,17 +3242,16 @@
           applyTorboxFilter();
           const tbCount = document.getElementById('torbox-count');
           if (tbCount) {
-            tbCount.innerText = `${currentTorrents.length} Torrents`;
+            tbCount.innerText = `${currentTorrents.length} Downloads`;
           }
-          showToast(`⚡ Đã xoá cache và làm mới ${currentTorrents.length} Torrents từ TorBox Cloud!`, 'success');
+          showToast(`⚡ Đã làm mới ${currentTorrents.length} tác vụ tải!`, 'success');
         } else {
-          // Fallback GET
           const res2 = await fetch('/api/torbox?refresh=true');
           const data2 = await res2.json();
           if (data2.data) {
             currentTorrents = data2.data;
             applyTorboxFilter();
-            showToast(`⚡ Đã làm mới ${currentTorrents.length} Torrents!`, 'success');
+            showToast(`⚡ Đã làm mới ${currentTorrents.length} tác vụ tải!`, 'success');
           }
         }
       } catch (err) {
@@ -3267,31 +3278,19 @@
         filtered = filtered.filter(t => t.engine === 'direct');
       }
 
-      // Calculate Storage Location Counts
-      const countDrive = currentTorrents.filter(t => (t.locations || []).includes('gdrive') || (t.synced_destinations || []).includes('gdrive')).length;
-      const countNas = currentTorrents.filter(t => (t.locations || []).includes('nas') || (t.synced_destinations || []).includes('nas')).length;
-      const countBoth = currentTorrents.filter(t => ((t.locations || []).includes('gdrive') || (t.synced_destinations || []).includes('gdrive')) && ((t.locations || []).includes('nas') || (t.synced_destinations || []).includes('nas'))).length;
-      const countUnsynced = currentTorrents.filter(t => !t.is_completed_and_synced).length;
+      // Calculate pure download counts
+      const countCached = currentTorrents.filter(t => t.progress >= 1 || t.download_state === 'completed' || t.cached).length;
       const countActive = currentTorrents.filter(t => t.download_state === 'downloading' || (t.progress > 0 && t.progress < 1)).length;
       const countQueued = currentTorrents.filter(t => t.download_state === 'queued' || t.is_queued || t.progress === 0).length;
 
       if (document.getElementById('tbcount-all')) document.getElementById('tbcount-all').innerText = currentTorrents.length;
-      if (document.getElementById('tbcount-drive')) document.getElementById('tbcount-drive').innerText = countDrive;
-      if (document.getElementById('tbcount-nas')) document.getElementById('tbcount-nas').innerText = countNas;
-      if (document.getElementById('tbcount-both')) document.getElementById('tbcount-both').innerText = countBoth;
-      if (document.getElementById('tbcount-unsynced')) document.getElementById('tbcount-unsynced').innerText = countUnsynced;
+      if (document.getElementById('tbcount-cached')) document.getElementById('tbcount-cached').innerText = countCached;
       if (document.getElementById('tbcount-active')) document.getElementById('tbcount-active').innerText = countActive;
       if (document.getElementById('tbcount-queued')) document.getElementById('tbcount-queued').innerText = countQueued;
 
-      // Filter by Storage Location & Status
-      if (currentTorboxFilter === 'drive') {
-        filtered = filtered.filter(t => (t.locations || []).includes('gdrive') || (t.synced_destinations || []).includes('gdrive'));
-      } else if (currentTorboxFilter === 'nas') {
-        filtered = filtered.filter(t => (t.locations || []).includes('nas') || (t.synced_destinations || []).includes('nas'));
-      } else if (currentTorboxFilter === 'both') {
-        filtered = filtered.filter(t => ((t.locations || []).includes('gdrive') || (t.synced_destinations || []).includes('gdrive')) && ((t.locations || []).includes('nas') || (t.synced_destinations || []).includes('nas')));
-      } else if (currentTorboxFilter === 'unsynced') {
-        filtered = filtered.filter(t => !t.is_completed_and_synced);
+      // Filter by Download Status
+      if (currentTorboxFilter === 'cached') {
+        filtered = filtered.filter(t => t.progress >= 1 || t.download_state === 'completed' || t.cached);
       } else if (currentTorboxFilter === 'active') {
         filtered = filtered.filter(t => t.download_state === 'downloading' || (t.progress > 0 && t.progress < 1));
       } else if (currentTorboxFilter === 'queued') {
@@ -3434,59 +3433,21 @@
 
       tbody.innerHTML = items.map(t => {
         const isQueued = t.is_queued || t.download_state === 'queued';
-        const isSynced = !!t.is_completed_and_synced;
-        const destinations = t.synced_destinations || [];
+        const isCompleted = t.progress >= 1 || t.download_state === 'completed' || t.cached;
         const sizeGb = t.size ? (t.size / (1024*1024*1024)).toFixed(2) : '0.00';
         const safeName = (t.name || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         
-                                const locations = t.locations || [];
-        const onLocal = locations.includes('local');
-        const onDrive = locations.includes('gdrive');
-        const onNas = locations.includes('nas');
-        const syncJob = t.sync_in_progress;
-        
         let statusBadge = '';
-        
-        // Check if currently syncing in real time
-        if (syncJob && (syncJob.status === 'syncing' || syncJob.status === 'queued')) {
-          const targets = syncJob.targets || [syncJob.target || 'drive'];
-          const pct = Math.round(syncJob.progress || 0);
-          const phaseLabel = {
-            pending: 'Chờ', link: 'Lấy link', download: 'Tải về',
-            upload: 'Đẩy lên', verify: 'Đối chiếu', purge: 'Dọn đệm'
-          }[syncJob.phase] || 'Đang Sync';
-          const tip = (syncJob.message || '').replace(/"/g, '&quot;');
-          if (targets.includes('drive') && targets.includes('nas')) {
-            statusBadge = `<span class="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold text-[10px] animate-pulse flex items-center gap-1.5 justify-center whitespace-nowrap" title="${tip}"><span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping"></span> ${phaseLabel} Cả 2 ${pct}%</span>`;
-          } else if (targets.includes('nas')) {
-            statusBadge = `<span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold text-[10px] animate-pulse flex items-center gap-1.5 justify-center whitespace-nowrap" title="${tip}"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> ${phaseLabel} NAS ${pct}%</span>`;
-          } else {
-            statusBadge = `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold text-[10px] animate-pulse flex items-center gap-1.5 justify-center whitespace-nowrap" title="${tip}"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> ${phaseLabel} Drive ${pct}%</span>`;
-          }
-        } else if (onLocal && onDrive && onNas) {
-          statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold text-[10px] whitespace-nowrap">Cả 3 Nơi (Máy • Drive • NAS)</span>`;
-        } else if (onDrive && onNas) {
-          statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold text-[10px] whitespace-nowrap">Drive • NAS</span>`;
-        } else if (onLocal && onDrive) {
-          statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-teal-500/20 text-teal-300 border border-teal-500/30 font-bold text-[10px] whitespace-nowrap">Máy • Drive</span>`;
-        } else if (onLocal && onNas) {
-          statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold text-[10px] whitespace-nowrap">Máy • NAS</span>`;
-        } else if (onDrive) {
-          statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-[10px] whitespace-nowrap">Đã Lên Drive</span>`;
-        } else if (onNas) {
-          statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-[10px] whitespace-nowrap">Đã Lên NAS</span>`;
-        } else if (onLocal) {
-          statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-bold text-[10px] whitespace-nowrap">Đã Về Máy</span>`;
+        if (isCompleted) {
+          statusBadge = `<span class="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold text-[10px] whitespace-nowrap flex items-center gap-1.5 justify-center"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đã Tải Xong 100%</span>`;
+        } else if (t.download_state === 'downloading' || (t.progress > 0 && t.progress < 1)) {
+          const pct = Math.round((t.progress || 0) * 100);
+          statusBadge = `<span class="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold text-[10px] animate-pulse whitespace-nowrap flex items-center gap-1.5 justify-center"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping"></span> Đang Tải ${pct}%</span>`;
         } else if (isQueued) {
           statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-zinc-800 text-zinc-400 border border-zinc-700 font-medium text-[10px] whitespace-nowrap">Hàng Đợi</span>`;
-        } else if (t.download_state === 'downloading' || (t.progress > 0 && t.progress < 1)) {
-          statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold text-[10px] animate-pulse whitespace-nowrap">Đang Tải ${(t.progress*100).toFixed(1)}%</span>`;
         } else {
-          statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-zinc-800/80 text-zinc-400 border border-zinc-700/60 font-medium text-[10px] whitespace-nowrap">TorBox Cloud</span>`;
+          statusBadge = `<span class="px-2 py-0.5 rounded-lg bg-zinc-800/80 text-zinc-400 border border-zinc-700/60 font-medium text-[10px] whitespace-nowrap">Sẵn Sàng</span>`;
         }
-
-        const isSyncingDrive = syncJob && (syncJob.targets || [syncJob.target]).includes('drive');
-        const isSyncingNas = syncJob && (syncJob.targets || [syncJob.target]).includes('nas');
 
         return `
           <tr class="hover:bg-zinc-800/30 transition">
@@ -3496,9 +3457,8 @@
             <td class="px-3 py-3 w-60 sm:w-72 lg:w-80">
               <div class="font-bold text-white text-xs truncate max-w-[220px] sm:max-w-[280px] lg:max-w-[320px]" title="${t.name}">${t.name}</div>
               <div class="text-[10px] text-zinc-500 font-mono mt-0.5 flex items-center gap-1.5">
-                <span>TorBox</span>
+                <span>${t.engine ? t.engine.toUpperCase() : 'TORBOX'}</span>
                 <span>• #${t.id}</span>
-                ${isSynced ? '<span class="text-emerald-400 font-bold">Đã có trên kho</span>' : ''}
               </div>
             </td>
             <td class="px-3 py-3 font-mono text-zinc-300 font-semibold w-24 whitespace-nowrap">${isQueued ? 'Chờ slot' : sizeGb + ' GB'}</td>
@@ -3507,29 +3467,19 @@
             </td>
             <td class="px-3 py-3 text-right whitespace-nowrap">
               <div class="flex items-center justify-end gap-1.5 whitespace-nowrap">
-                <!-- Sync to Google Drive Button -->
-                <button onclick="syncSingleTorrent(${t.id}, 'drive', '${safeName}')" class="px-2.5 py-1 ${isSyncingDrive ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/50 animate-pulse' : (onDrive ? 'bg-zinc-900 text-zinc-400 hover:text-emerald-300 border-zinc-800' : 'bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border-emerald-500/30')} border text-xs font-semibold rounded-xl transition shadow-sm shrink-0" title="Đồng bộ lên Google Drive">
-                  ${isSyncingDrive ? 'Đang Sync Drive...' : (onDrive ? 'Re-Sync Drive' : 'Sync Drive')}
-                </button>
-
-                <!-- Sync to NAS Storage Button -->
-                <button onclick="syncSingleTorrent(${t.id}, 'nas', '${safeName}')" class="px-2.5 py-1 ${isSyncingNas ? 'bg-amber-600/30 text-amber-300 border-amber-500/50 animate-pulse' : (onNas ? 'bg-zinc-900 text-zinc-400 hover:text-amber-300 border-zinc-800' : 'bg-amber-600/10 hover:bg-amber-600 text-amber-400 hover:text-white border-amber-500/30')} border text-xs font-semibold rounded-xl transition shadow-sm shrink-0" title="Đồng bộ qua SSH lên NAS Storage">
-                  ${isSyncingNas ? 'Đang Sync NAS...' : (onNas ? 'Re-Sync NAS' : 'Sync NAS')}
-                </button>
-
-                <!-- Local Download Zip Button -->
-                <button onclick="downloadTorboxTorrent(${t.id}, '${safeName}')" class="px-2.5 py-1 bg-purple-600/10 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-semibold rounded-xl transition shrink-0" title="Tải file Zip về máy đệm">
-                  Tải Về
+                <!-- Direct DDL Download Button -->
+                <button onclick="downloadTorboxTorrent(${t.id}, '${safeName}')" class="px-2.5 py-1 bg-purple-600/10 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-semibold rounded-xl transition flex items-center gap-1 shadow-sm shrink-0" title="Tải file trực tiếp về máy">
+                  <span>📥</span> Tải Về
                 </button>
 
                 <!-- Copy Link Button -->
-                <button onclick="copyTorboxDownloadLink(${t.id})" class="px-2 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white text-xs font-medium rounded-xl transition shrink-0" title="Copy Link Direct Download">
-                  Copy Link
+                <button onclick="copyTorboxDownloadLink(${t.id})" class="px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white text-xs font-medium rounded-xl transition flex items-center gap-1 shadow-sm shrink-0" title="Copy Link Tải Trực Tiếp">
+                  <span>📋</span> Link
                 </button>
 
                 <!-- Delete Button -->
-                <button onclick="deleteTorrent(${t.id})" class="px-2 py-1 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition rounded-xl text-xs font-medium shrink-0" title="Xóa torrent khỏi TorBox">
-                  Xóa
+                <button onclick="deleteTorrent(${t.id})" class="px-2 py-1 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition rounded-xl text-xs font-medium shrink-0" title="Xóa tác vụ tải">
+                  🗑️
                 </button>
               </div>
             </td>
@@ -3540,11 +3490,34 @@
     }
 
     // ==================== TOAST NOTIFICATION ENGINE ====================
-    function showToast(message, type = 'info', duration = 3500) {
+    // ==================== TOAST NOTIFICATION ENGINE (MINIMAL & UNINTRUSIVE) ====================
+    window._lastToastTime = 0;
+    window._lastToastMsg = '';
+
+    function showToast(message, type = 'info', duration = 2200, force = false) {
+      // 1. Suppress routine action in-flight / info notifications unless explicitly forced
+      if (type === 'info' && !force) {
+        console.log(`[MediaHub Action Info] ${message}`);
+        return;
+      }
+
+      // 2. Debounce duplicate messages within 2.5 seconds
+      const now = Date.now();
+      if (message === window._lastToastMsg && (now - window._lastToastTime) < 2500) {
+        return;
+      }
+      window._lastToastMsg = message;
+      window._lastToastTime = now;
+
       const container = document.getElementById('toast-container');
       if (!container) return;
 
-      const toastId = 'toast-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+      // 3. Keep only 1 visible toast at a time (prevent stacking covering the screen)
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+
+      const toastId = 'toast-' + now;
       
       let borderStyle = "border-zinc-800 bg-zinc-950/95";
       let icon = "ℹ️";
@@ -3556,45 +3529,43 @@
         icon = "✓";
         barColor = "bg-emerald-500";
         textColor = "text-emerald-300";
+        if (duration > 2200) duration = 2200; // Concise 2.2s max for success
       } else if (type === 'error') {
         borderStyle = "border-red-500/40 bg-zinc-950/95 shadow-red-500/10";
         icon = "✕";
         barColor = "bg-red-500";
         textColor = "text-red-300";
+        duration = Math.max(duration, 3500); // Errors remain visible long enough to read
       } else if (type === 'warning') {
         borderStyle = "border-amber-500/40 bg-zinc-950/95 shadow-amber-500/10";
         icon = "⚡";
         barColor = "bg-amber-500";
         textColor = "text-amber-300";
+        duration = Math.max(duration, 3000);
       }
 
       const toastEl = document.createElement('div');
       toastEl.id = toastId;
-      toastEl.className = `pointer-events-auto p-3.5 rounded-2xl border ${borderStyle} shadow-2xl backdrop-blur-xl flex flex-col gap-2 transition-all duration-300 transform translate-y-[-10px] opacity-0 text-xs`;
+      toastEl.className = `pointer-events-auto px-3.5 py-2.5 rounded-2xl border ${borderStyle} shadow-2xl backdrop-blur-xl flex flex-col gap-1.5 transition-all duration-300 transform translate-y-[-8px] opacity-0 text-xs`;
       
       toastEl.innerHTML = `
-        <div class="flex items-start justify-between gap-3">
-          <div class="flex items-start gap-2.5 min-w-0">
-            <span class="w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${barColor} text-black">${icon}</span>
-            <div class="${textColor} font-medium leading-snug break-words">${message}</div>
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="w-4 h-4 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${barColor} text-black">${icon}</span>
+            <div class="${textColor} font-medium leading-snug break-words max-w-xs">${message}</div>
           </div>
-          <button onclick="dismissToast('${toastId}')" class="text-zinc-500 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition text-xs shrink-0" title="Tắt thông báo (Clear)">
+          <button onclick="dismissToast('${toastId}')" class="text-zinc-500 hover:text-white p-0.5 rounded-lg hover:bg-zinc-800 transition text-[11px] shrink-0" title="Đóng">
             ✕
           </button>
-        </div>
-        <div class="w-full bg-zinc-900 h-1 rounded-full overflow-hidden">
-          <div id="${toastId}-bar" class="${barColor} h-full rounded-full transition-all linear" style="width: 100%; transition-duration: ${duration}ms;"></div>
         </div>
       `;
 
       container.appendChild(toastEl);
 
       // Animate in
-      setTimeout(() => {
-        toastEl.classList.remove('translate-y-[-10px]', 'opacity-0');
-        const bar = document.getElementById(`${toastId}-bar`);
-        if (bar) bar.style.width = '0%';
-      }, 50);
+      requestAnimationFrame(() => {
+        toastEl.classList.remove('translate-y-[-8px]', 'opacity-0');
+      });
 
       // Auto dismiss timer
       const timeoutId = setTimeout(() => {
@@ -3608,10 +3579,10 @@
       const toastEl = document.getElementById(toastId);
       if (!toastEl) return;
       if (toastEl._timeoutId) clearTimeout(toastEl._timeoutId);
-      toastEl.classList.add('opacity-0', 'translate-y-[-10px]');
+      toastEl.classList.add('opacity-0', 'translate-y-[-8px]');
       setTimeout(() => {
-        if (toastEl.parentNode) toastEl.parentNode.removeChild(toastEl);
-      }, 300);
+        if (toastEl && toastEl.parentNode) toastEl.parentNode.removeChild(toastEl);
+      }, 250);
     }
 
     async function startQueuedDownload(queuedId) {
@@ -3874,16 +3845,319 @@
       } catch (e) {}
     }
 
+    // ==================== BỘ SƯU TẬP MEDIA (UNIFIED MEDIA COLLECTIONS) ====================
+    window.allMediaCollections = [];
+    window.currentColTypeFilter = 'all';
+    window.currentColSyncFilter = 'all';
+    window.currentColSubFilter = 'all';
+    window.expandedCollectionId = null;
+    window.selectedCollectionSeason = {};
+
+    async function loadMediaCollections(forceRefresh = false) {
+      const btnIcon = document.getElementById('btn-icon-col-refresh');
+      if (btnIcon) btnIcon.classList.add('animate-spin');
+      try {
+        const res = await fetch(`/api/media/collections?refresh=${forceRefresh ? '1' : '0'}`);
+        const data = await res.json();
+        if (data && data.collections) {
+          window.allMediaCollections = data.collections;
+          
+          // Update KPI Summary
+          const sm = data.summary || {};
+          if (document.getElementById('col-kpi-total')) document.getElementById('col-kpi-total').innerText = sm.total_items || 0;
+          if (document.getElementById('col-kpi-types')) document.getElementById('col-kpi-types').innerText = `${sm.total_series || 0} Series • ${sm.total_movies || 0} Movies`;
+          if (document.getElementById('col-kpi-download')) document.getElementById('col-kpi-download').innerText = `${sm.total_series + sm.total_movies} Sẵn Sàng`;
+          if (document.getElementById('col-kpi-synced')) document.getElementById('col-kpi-synced').innerText = `${sm.synced_both || 0} / ${sm.total_items || 0}`;
+          if (document.getElementById('col-kpi-subtitles')) document.getElementById('col-kpi-subtitles').innerText = `${sm.sub_complete || 0} Phim (100%)`;
+          if (document.getElementById('collection-kpi-badge')) document.getElementById('collection-kpi-badge').innerText = `${sm.total_items || 0} Bộ Phim`;
+          if (document.getElementById('sidebar-collection-count')) document.getElementById('sidebar-collection-count').innerText = sm.total_items || 0;
+
+          applyCollectionFilters();
+        }
+      } catch (e) {
+        console.error("loadMediaCollections error:", e);
+      } finally {
+        if (btnIcon) btnIcon.classList.remove('animate-spin');
+      }
+    }
+
+    function setCollectionTypeFilter(type) {
+      window.currentColTypeFilter = type;
+      document.querySelectorAll('.col-type-btn').forEach(btn => {
+        btn.className = "col-type-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0";
+      });
+      const activeBtn = document.getElementById(`col-type-${type}`);
+      if (activeBtn) activeBtn.className = "col-type-btn px-3 py-1.5 rounded-lg bg-amber-500 text-black font-bold transition shadow-sm shrink-0";
+      applyCollectionFilters();
+    }
+
+    function setCollectionSyncFilter(filter) {
+      window.currentColSyncFilter = filter;
+      document.querySelectorAll('.col-sync-btn').forEach(btn => {
+        btn.className = "col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0";
+      });
+      const targetId = filter === 'synced_both' ? 'both' : (filter === 'only_nas' ? 'nas' : (filter === 'only_gdrive' ? 'drive' : (filter === 'unsynced' ? 'unsynced' : 'all')));
+      const activeBtn = document.getElementById(`col-sync-${targetId}`);
+      if (activeBtn) activeBtn.className = "col-sync-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-white font-bold transition text-[11px] shrink-0";
+      applyCollectionFilters();
+    }
+
+    function setCollectionSubFilter(filter) {
+      window.currentColSubFilter = filter;
+      document.querySelectorAll('.col-sub-btn').forEach(btn => {
+        btn.className = "col-sub-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0";
+      });
+      const activeBtn = document.getElementById(`col-sub-${filter}`);
+      if (activeBtn) activeBtn.className = "col-sub-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-white font-bold transition text-[11px] shrink-0";
+      applyCollectionFilters();
+    }
+
+    function applyCollectionFilters() {
+      const q = (document.getElementById('collection-search')?.value || '').toLowerCase().trim();
+      let list = window.allMediaCollections || [];
+
+      // Filter by search
+      if (q) {
+        list = list.filter(c => 
+          (c.title || '').toLowerCase().includes(q) ||
+          (c.vn_title || '').toLowerCase().includes(q) ||
+          (c.folder || '').toLowerCase().includes(q) ||
+          (c.tvdb_id || '').includes(q)
+        );
+      }
+
+      // Filter by type
+      if (window.currentColTypeFilter !== 'all') {
+        list = list.filter(c => c.type === window.currentColTypeFilter);
+      }
+
+      // Filter by sync state
+      if (window.currentColSyncFilter !== 'all') {
+        list = list.filter(c => c.sync.state === window.currentColSyncFilter);
+      }
+
+      // Filter by subtitle state
+      if (window.currentColSubFilter !== 'all') {
+        list = list.filter(c => c.subtitle.state === window.currentColSubFilter);
+      }
+
+      renderCollectionCards(list);
+    }
+
+    function toggleCollectionDetail(colId) {
+      if (window.expandedCollectionId === colId) {
+        window.expandedCollectionId = null;
+      } else {
+        window.expandedCollectionId = colId;
+      }
+      applyCollectionFilters();
+    }
+
+    function selectCollectionSeason(colId, sNum) {
+      window.selectedCollectionSeason[colId] = sNum;
+      applyCollectionFilters();
+    }
+
+    function renderCollectionCards(collections) {
+      const container = document.getElementById('collections-list-container');
+      if (!container) return;
+
+      if (!collections || collections.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 rounded-3xl bg-zinc-950/60 border border-zinc-800 text-center space-y-2">
+            <span class="text-4xl block">🎬</span>
+            <div class="text-white font-bold text-sm">Không tìm thấy bộ phim nào phù hợp</div>
+            <p class="text-xs text-zinc-500">Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc trạng thái phía trên.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = collections.map(col => {
+        const isExpanded = window.expandedCollectionId === col.id;
+        const seasons = col.seasons || [];
+        const activeSeasonNum = window.selectedCollectionSeason[col.id] !== undefined 
+          ? window.selectedCollectionSeason[col.id] 
+          : (seasons[0]?.season_num ?? 1);
+        const activeSeason = seasons.find(s => s.season_num === activeSeasonNum) || seasons[0];
+
+        // Pillar Badge styles
+        let dlBadge = `<span class="px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> ${col.download.label}</span>`;
+        if (col.download.state === 'complete') {
+          dlBadge = `<span class="px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> ${col.download.label}</span>`;
+        } else if (col.download.state === 'partial') {
+          dlBadge = `<span class="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> ${col.download.label}</span>`;
+        }
+
+        let syncBadge = `<span class="px-2.5 py-1 rounded-xl bg-zinc-800 text-zinc-400 border border-zinc-700 font-bold text-xs font-mono">${col.sync.label}</span>`;
+        if (col.sync.state === 'synced_both') {
+          syncBadge = `<span class="px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold text-xs font-mono flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> ${col.sync.label}</span>`;
+        } else if (col.sync.state === 'only_nas') {
+          syncBadge = `<span class="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold text-xs font-mono">${col.sync.label}</span>`;
+        } else if (col.sync.state === 'only_gdrive') {
+          syncBadge = `<span class="px-2.5 py-1 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold text-xs font-mono">${col.sync.label}</span>`;
+        }
+
+        let subBadge = `<span class="px-2.5 py-1 rounded-xl bg-zinc-800 text-zinc-400 border border-zinc-700 font-bold text-xs font-mono">${col.subtitle.label}</span>`;
+        if (col.subtitle.state === 'complete') {
+          subBadge = `<span class="px-2.5 py-1 rounded-xl bg-purple-500/10 text-purple-300 border border-purple-500/30 font-bold text-xs font-mono">${col.subtitle.label}</span>`;
+        } else if (col.subtitle.state === 'translating') {
+          subBadge = `<span class="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 font-bold text-xs font-mono animate-pulse">${col.subtitle.label}</span>`;
+        }
+
+        // Season tabs & episode table if expanded
+        let detailHtml = '';
+        if (isExpanded) {
+          const seasonTabsHtml = seasons.map(s => {
+            const isSActive = s.season_num === activeSeasonNum;
+            return `
+              <button onclick="selectCollectionSeason('${col.id}', ${s.season_num})" class="px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 ${isSActive ? 'bg-amber-500 text-black shadow-md' : 'bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800'}">
+                ${s.name} (${s.episodes.length})
+              </button>
+            `;
+          }).join('');
+
+          const episodes = activeSeason?.episodes || [];
+          const episodesTableHtml = episodes.length === 0 
+            ? `<div class="p-6 text-center text-zinc-500 text-xs">Chưa có tập phim nào trong mùa này.</div>`
+            : `
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-zinc-300">
+                  <thead class="bg-zinc-950 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-zinc-800">
+                    <tr>
+                      <th class="px-3 py-2.5 w-20">Tập</th>
+                      <th class="px-3 py-2.5">Tên File / Tiêu Đề</th>
+                      <th class="px-3 py-2.5 text-center w-28">📥 Tải (Local)</th>
+                      <th class="px-3 py-2.5 text-center w-28">🖥️ NAS Storage</th>
+                      <th class="px-3 py-2.5 text-center w-28">☁️ Google Drive</th>
+                      <th class="px-3 py-2.5 text-center w-36">🇻🇳 Phụ Đề</th>
+                      <th class="px-3 py-2.5 text-right w-36">Thao Tác</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-zinc-800/60">
+                    ${episodes.map(ep => {
+                      const dlPill = ep.video 
+                        ? `<span class="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold text-[10px] border border-emerald-500/20">✓ Có Video</span>`
+                        : `<span class="px-2 py-0.5 rounded-lg bg-zinc-900 text-zinc-500 text-[10px]">⚪ Đám Mây</span>`;
+                      
+                      const nasPill = ep.in_nas
+                        ? `<span class="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold text-[10px] border border-emerald-500/20">✓ Có Trên NAS</span>`
+                        : `<span class="px-2 py-0.5 rounded-lg bg-zinc-900 text-zinc-500 text-[10px]">⚪ Chưa Có</span>`;
+
+                      const drivePill = ep.in_gdrive
+                        ? `<span class="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-400 font-bold text-[10px] border border-blue-500/20">✓ Có Trên Drive</span>`
+                        : `<span class="px-2 py-0.5 rounded-lg bg-zinc-900 text-zinc-500 text-[10px]">⚪ Chưa Có</span>`;
+
+                      const subPill = ep.has_vi_sub
+                        ? `<span class="px-2 py-0.5 rounded-lg bg-purple-500/10 text-purple-300 font-bold text-[10px] border border-purple-500/30 font-mono">${(ep.sub_types || []).join(' ')}</span>`
+                        : `<span class="px-2 py-0.5 rounded-lg bg-zinc-900 text-zinc-500 text-[10px]">⚪ Chưa Dịch</span>`;
+
+                      return `
+                        <tr class="hover:bg-zinc-900/60 transition">
+                          <td class="px-3 py-2 font-mono font-bold text-amber-400">${ep.key}</td>
+                          <td class="px-3 py-2 font-medium text-white truncate max-w-xs" title="${ep.name}">${ep.name}</td>
+                          <td class="px-3 py-2 text-center">${dlPill}</td>
+                          <td class="px-3 py-2 text-center">${nasPill}</td>
+                          <td class="px-3 py-2 text-center">${drivePill}</td>
+                          <td class="px-3 py-2 text-center">${subPill}</td>
+                          <td class="px-3 py-2 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                              ${!ep.has_vi_sub ? `<button onclick="confirmTranslateSingleEpisode('${col.title}', '${ep.key}')" class="px-2 py-1 bg-purple-600/10 hover:bg-purple-600 text-purple-300 hover:text-white rounded-lg transition text-[10px] font-bold border border-purple-500/20">Dịch</button>` : ''}
+                              ${ep.has_vi_sub ? `<button onclick="openDownloadSubtitlesModal('${col.title}', '${ep.key}')" class="px-2 py-1 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded-lg transition text-[10px] font-bold border border-emerald-500/20">Tải Sub</button>` : ''}
+                            </div>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `;
+
+          detailHtml = `
+            <div class="mt-4 pt-4 border-t border-zinc-800/80 space-y-3 bg-zinc-950/60 p-4 rounded-2xl">
+              <div class="flex items-center justify-between gap-3 flex-wrap">
+                <div class="flex items-center gap-1.5 overflow-x-auto custom-scroll">
+                  ${seasonTabsHtml}
+                </div>
+                <div class="text-xs text-zinc-500">
+                  Hiển thị <strong class="text-white">${episodes.length}</strong> tập
+                </div>
+              </div>
+              <div class="bg-zinc-950 rounded-xl border border-zinc-800/80 overflow-hidden shadow-inner">
+                ${episodesTableHtml}
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="p-4 sm:p-5 rounded-3xl bg-zinc-950/80 border border-zinc-800/80 hover:border-amber-500/30 transition shadow-lg space-y-3">
+            <!-- Main Card Row -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <!-- Left: Poster + Title + Tags -->
+              <div class="flex items-center gap-3.5 min-w-0 flex-1">
+                <div class="w-16 h-24 sm:w-20 sm:h-28 rounded-2xl bg-zinc-900 bg-cover bg-center shrink-0 border border-zinc-700/60 shadow-md flex items-center justify-center text-3xl overflow-hidden" style="background-image: url('${col.poster}')">
+                  ${!col.poster ? '🎬' : ''}
+                </div>
+                <div class="space-y-1.5 min-w-0 flex-1">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold ${col.type === 'movie' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
+                      ${col.type === 'movie' ? '🎬 MOVIE' : '📺 TV SERIES'}
+                    </span>
+                    ${col.year ? `<span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono text-[10px]">${col.year}</span>` : ''}
+                    ${col.tvdb_id ? `<span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 font-mono text-[10px]">{tvdb-${col.tvdb_id}}</span>` : ''}
+                  </div>
+                  <h3 class="font-bold text-base sm:text-lg text-white truncate group-hover:text-amber-400 transition" title="${col.title}">
+                    ${col.title}
+                  </h3>
+                  <div class="text-xs text-zinc-400 truncate">${col.vn_title !== col.title ? col.vn_title : ''}</div>
+                  
+                  <!-- 3 Pillar Status Badges Row -->
+                  <div class="pt-1 flex items-center gap-2 flex-wrap">
+                    ${dlBadge}
+                    ${syncBadge}
+                    ${subBadge}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Actions: Sync, Dịch, Chi tiết Toggle -->
+              <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-800/80 shrink-0">
+                <button onclick="syncShowSubtitles('${col.title}', this)" class="px-3 py-2 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-sm shrink-0" title="Đồng bộ phụ đề và dữ liệu lên NAS & Drive">
+                  <span>⚡</span> Sync Kho
+                </button>
+                <button onclick="sendTranslateBatchToAgent('${col.title}', 'btn-col-trans-${col.id}')" id="btn-col-trans-${col.id}" class="px-3 py-2 bg-purple-600/10 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 shadow-sm shrink-0" title="Dịch tự động các tập còn thiếu">
+                  <span>🚀</span> Dịch Sub
+                </button>
+                <button onclick="toggleCollectionDetail('${col.id}')" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm shrink-0">
+                  <span>${isExpanded ? '▲ Thu Gọn' : '▼ Chi Tiết'}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Expanded Section -->
+            ${detailHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
     function setTab(tab, updateUrl = true) {
       window.scrollTo({ top: 0, behavior: 'instant' });
       
       const tabAliases = {
         'overview': 'home',
+        'downloads': 'torbox',
         'torrents': 'torbox',
         'downloader': 'torbox',
-        'plex': 'gdrive',
-        'library': 'gdrive',
-        'sync': 'pipelines',
+        'collection': 'collection',
+        'collections': 'collection',
+        'plex': 'collection',
+        'library': 'collection',
+        'gdrive': 'collection',
+        'sync': 'collection',
+        'pipelines': 'collection',
         'subtitle-studio': 'subtitles',
         'tokens': 'tokens',
         'token-usage': 'tokens',
@@ -3896,7 +4170,7 @@
         'config': 'settings'
       };
       tab = tabAliases[tab] || tab;
-      const tabs = ['home', 'pipelines', 'torbox', 'gdrive', 'subtitles', 'tokens', 'console', 'settings', 'agent'];
+      const tabs = ['home', 'torbox', 'collection', 'subtitles', 'tokens', 'console', 'settings', 'agent'];
       if (!tabs.includes(tab)) tab = 'home';
 
       // Persist active tab selection to localStorage
@@ -3930,11 +4204,9 @@
           label.className = "text-xs text-zinc-300 group-hover:text-white font-bold truncate";
         }
         if (dot) {
-          if (t === 'pipelines') {
-            dot.className = "w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0";
-          } else if (t === 'agent') {
+          if (t === 'agent') {
             dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0";
-          } else if (t === 'subtitles' || t === 'tokens') {
+          } else if (t === 'subtitles' || t === 'tokens' || t === 'collection') {
             dot.className = "w-1.5 h-1.5 rounded-full bg-cyan-400 hidden shrink-0";
           } else {
             dot.classList.add('hidden');
@@ -3965,7 +4237,7 @@
       }
       if (activeDot) {
         activeDot.classList.remove('hidden');
-        if (tab !== 'pipelines' && tab !== 'agent') {
+        if (tab !== 'agent') {
           activeDot.className = "w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0";
         }
       }
@@ -3983,28 +4255,10 @@
       if (tab === 'home') {
         fetchDashboardOverview();
         fetchData();
-      } else if (tab === 'gdrive') {
-        const vLib = document.getElementById('plex-view-library');
-        const vShow = document.getElementById('plex-view-show');
-        const hLib = document.getElementById('gdrive-header-library');
-        const hShow = document.getElementById('gdrive-header-show');
-        if (vLib) vLib.classList.remove('hidden');
-        if (vShow) vShow.classList.add('hidden');
-        if (hLib) hLib.classList.remove('hidden');
-        if (hShow) hShow.classList.add('hidden');
-        if (typeof filterPlexShows === 'function') filterPlexShows();
+      } else if (tab === 'collection') {
+        loadMediaCollections();
       } else if (tab === 'torbox') {
         if (typeof fetchTorrents === 'function') fetchTorrents();
-      } else if (tab === 'pipelines') {
-        const vList = document.getElementById('pipeline-view-list');
-        const vDetail = document.getElementById('pipeline-view-detail');
-        const hList = document.getElementById('pipeline-header-list');
-        const hDetail = document.getElementById('pipeline-header-detail');
-        if (vList) vList.classList.remove('hidden');
-        if (vDetail) vDetail.classList.add('hidden');
-        if (hList) hList.classList.remove('hidden');
-        if (hDetail) hDetail.classList.add('hidden');
-        if (typeof fetchPipelines === 'function') fetchPipelines();
       } else if (tab === 'subtitles') {
         if (typeof loadSubtitleStudioData === 'function') loadSubtitleStudioData();
         if (typeof loadSubtitlesStaging === 'function') loadSubtitlesStaging();
@@ -4033,6 +4287,7 @@
 
     async function loadTokenUsageReport() {
       const tbody = document.getElementById('token-report-tbody');
+      loadQuotaGuardStatus();
       try {
         const res = await fetch('/api/agent/token_usage');
         const data = await res.json();
@@ -4113,6 +4368,128 @@
           loadTokenUsageReport();
         } else {
           showToast('❌ Lỗi: ' + (data.error || 'Không thể xóa session'), 'error');
+        }
+      } catch (e) {
+        showToast('❌ Lỗi kết nối: ' + e, 'error');
+      }
+    }
+
+    // ==================== TRANSLATION QUOTA GUARD ====================
+    window.quotaGuardStatus = null;
+    window.quotaGuardLocked = false;
+
+    async function loadQuotaGuardStatus() {
+      try {
+        const res = await fetch('/api/agent/quota_status');
+        const data = await res.json();
+        window.quotaGuardStatus = data;
+        window.quotaGuardLocked = Boolean(data.is_locked);
+
+        // 1. Update Subtitle Studio (Tab 4) Banner
+        const subDayUsed = document.getElementById('sub-quota-day-used');
+        const subDayLimit = document.getElementById('sub-quota-day-limit');
+        const subDayPct = document.getElementById('sub-quota-day-pct');
+        const subDayBar = document.getElementById('sub-quota-day-bar');
+        const subDayReset = document.getElementById('sub-quota-day-reset');
+
+        const subWeekUsed = document.getElementById('sub-quota-week-used');
+        const subWeekLimit = document.getElementById('sub-quota-week-limit');
+        const subWeekPct = document.getElementById('sub-quota-week-pct');
+        const subWeekBar = document.getElementById('sub-quota-week-bar');
+        const subWeekReset = document.getElementById('sub-quota-week-reset');
+
+        const subBadge = document.getElementById('sub-quota-badge');
+        const subIcon = document.getElementById('sub-quota-status-icon');
+
+        if (subDayUsed) subDayUsed.textContent = data.day.used;
+        if (subDayLimit) subDayLimit.textContent = data.day.limit;
+        if (subDayPct) subDayPct.textContent = `${data.day.percentage}%`;
+        if (subDayBar) {
+          subDayBar.style.width = `${Math.min(100, data.day.percentage)}%`;
+          subDayBar.className = `h-full transition-all duration-500 ${data.day.percentage >= 100 ? 'bg-red-500' : (data.day.percentage >= 80 ? 'bg-amber-500' : 'bg-emerald-500')}`;
+        }
+        if (subDayReset) subDayReset.textContent = `Reset: ${data.day.reset_in}`;
+
+        if (subWeekUsed) subWeekUsed.textContent = data.week.used;
+        if (subWeekLimit) subWeekLimit.textContent = data.week.limit;
+        if (subWeekPct) subWeekPct.textContent = `${data.week.percentage}%`;
+        if (subWeekBar) {
+          subWeekBar.style.width = `${Math.min(100, data.week.percentage)}%`;
+          subWeekBar.className = `h-full transition-all duration-500 ${data.week.percentage >= 100 ? 'bg-red-500' : (data.week.percentage >= 80 ? 'bg-amber-500' : 'bg-cyan-500')}`;
+        }
+        if (subWeekReset) subWeekReset.textContent = `Reset: ${data.week.reset_in}`;
+
+        if (subBadge) {
+          subBadge.textContent = data.status_label;
+          const colorClasses = data.status_code === 'LOCKED' ? 'bg-red-500/10 text-red-400 border-red-500/20' : (data.status_code === 'WARNING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20');
+          subBadge.className = `text-[10px] px-2 py-0.5 rounded-full font-bold font-mono border ${colorClasses}`;
+        }
+        if (subIcon) {
+          subIcon.innerHTML = data.status_code === 'LOCKED' ? '🛑' : (data.status_code === 'WARNING' ? '⚠️' : '🛡️');
+          const iconColors = data.status_code === 'LOCKED' ? 'bg-red-500/10 text-red-400 border-red-500/20' : (data.status_code === 'WARNING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20');
+          subIcon.className = `w-10 h-10 rounded-2xl border flex items-center justify-center text-lg font-bold shrink-0 shadow-inner ${iconColors}`;
+        }
+
+        // 2. Update Token Usage (Tab 6) Quota Card
+        const tokenBadge = document.getElementById('token-quota-badge');
+        const tokenDayText = document.getElementById('token-quota-day-text');
+        const tokenDayBar = document.getElementById('token-quota-day-bar');
+        const tokenDayTokens = document.getElementById('token-quota-day-tokens');
+        const tokenDayReset = document.getElementById('token-quota-day-reset');
+
+        const tokenWeekText = document.getElementById('token-quota-week-text');
+        const tokenWeekBar = document.getElementById('token-quota-week-bar');
+        const tokenWeekTokens = document.getElementById('token-quota-week-tokens');
+        const tokenWeekReset = document.getElementById('token-quota-week-reset');
+
+        if (tokenBadge) {
+          tokenBadge.textContent = data.status_label;
+          const colorClasses = data.status_code === 'LOCKED' ? 'bg-red-500/10 text-red-400 border-red-500/20' : (data.status_code === 'WARNING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20');
+          tokenBadge.className = `px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${colorClasses}`;
+        }
+        if (tokenDayText) tokenDayText.textContent = `${data.day.used} / ${data.day.limit} tập (${data.day.percentage}%)`;
+        if (tokenDayBar) {
+          tokenDayBar.style.width = `${Math.min(100, data.day.percentage)}%`;
+          tokenDayBar.className = `h-full transition-all duration-500 ${data.day.percentage >= 100 ? 'bg-red-500' : (data.day.percentage >= 80 ? 'bg-amber-500' : 'bg-emerald-500')}`;
+        }
+        if (tokenDayTokens) tokenDayTokens.textContent = (data.day.tokens_est || 0).toLocaleString();
+        if (tokenDayReset) tokenDayReset.textContent = `Reset sau: ${data.day.reset_in}`;
+
+        if (tokenWeekText) tokenWeekText.textContent = `${data.week.used} / ${data.week.limit} tập (${data.week.percentage}%)`;
+        if (tokenWeekBar) {
+          tokenWeekBar.style.width = `${Math.min(100, data.week.percentage)}%`;
+          tokenWeekBar.className = `h-full transition-all duration-500 ${data.week.percentage >= 100 ? 'bg-red-500' : (data.week.percentage >= 80 ? 'bg-amber-500' : 'bg-cyan-500')}`;
+        }
+        if (tokenWeekTokens) tokenWeekTokens.textContent = (data.week.tokens_est || 0).toLocaleString();
+        if (tokenWeekReset) tokenWeekReset.textContent = `Reset sau: ${data.week.reset_in}`;
+
+        // 3. Populate Settings fields (Tab 5) if empty
+        const cfgDay = document.getElementById('cfg-quota-daily');
+        const cfgWeek = document.getElementById('cfg-quota-weekly');
+        if (cfgDay && (!cfgDay.value || cfgDay.value === '30')) cfgDay.value = data.day.limit;
+        if (cfgWeek && (!cfgWeek.value || cfgWeek.value === '150')) cfgWeek.value = data.week.limit;
+
+      } catch (e) {
+        console.error('Error loading quota guard status:', e);
+      }
+    }
+
+    async function resetQuotaGuard(scope) {
+      const label = scope === 'day' ? 'ngày hôm nay' : 'toàn bộ (ngày & tuần)';
+      if (!confirm(`Bạn có chắc muốn reset bộ đếm Quota cho ${label}?`)) return;
+      try {
+        const res = await fetch('/api/agent/quota_reset', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ scope: scope })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`✅ ${data.message}`, 'success');
+          loadQuotaGuardStatus();
+          if (typeof loadSubtitleStudioData === 'function') loadSubtitleStudioData();
+        } else {
+          showToast('❌ Lỗi reset Quota: ' + (data.error || 'Thất bại'), 'error');
         }
       } catch (e) {
         showToast('❌ Lỗi kết nối: ' + e, 'error');
@@ -4310,7 +4687,7 @@
         const res = await fetch('/api/agent/service/ensure', { method: 'POST' });
         const data = await res.json();
         if (data.status === 'attached' || data.is_running) {
-          showToast(`🔗 Đã gắn kết (Attach) vào tiến trình CLI ngầm [${data.active_job?.cli || 'CLI'}]`, 'success', 3000);
+          console.log(`[CLI Service] Attached to active background CLI [${data.active_job?.cli || 'CLI'}]`);
           pollTabConsoleLogs(true);
         }
       } catch (e) {}
@@ -4561,6 +4938,18 @@
         });
         const data = await res.json();
         if (data.success) {
+          // Also save Quota Guard configuration if customized
+          const qDaily = parseInt(document.getElementById('cfg-quota-daily')?.value || 30);
+          const qWeekly = parseInt(document.getElementById('cfg-quota-weekly')?.value || 150);
+          try {
+            await fetch('/api/agent/quota_config', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ daily_limit: qDaily, weekly_limit: qWeekly })
+            });
+            loadQuotaGuardStatus();
+          } catch (err) {}
+
           if (wsDir) updateSidebarWorkspaceUI(wsDir);
           showToast('💾 ' + (data.message || 'Đã lưu cấu hình thành công!'), 'success');
         } else {
@@ -4593,7 +4982,7 @@
           sideBadge.title = `Đang mở: ${url} (Bấm để copy)`;
           sideBadge.onclick = () => {
             navigator.clipboard.writeText(url);
-            showToast('📋 Đã sao chép URL Remote!', 'info', 2500);
+            showToast('📋 Đã sao chép URL Remote!', 'success', 1800);
           };
         } else {
           sideBadge.className = "cursor-pointer font-mono text-[9px] text-zinc-500 hover:text-amber-400 transition";
@@ -4909,6 +5298,13 @@
     window.activeTranslatingBatches = window.activeTranslatingBatches || new Set();
 
     function sendTranslateBatchToAgent(showTitle, btnId) {
+      if (window.quotaGuardLocked) {
+        const q = window.quotaGuardStatus;
+        const msg = q ? (q.day.used >= q.day.limit ? `Hôm nay đã dịch chạm trần ${q.day.used}/${q.day.limit} tập. Quota sẽ reset sau ${q.day.reset_in}.` : `Tuần này đã dịch chạm trần ${q.week.used}/${q.week.limit} tập (40% Quota Budget).`) : 'Translation Quota Guard đã tạm khóa để bảo vệ tài khoản.';
+        showToast(`🛑 ${msg}`, 'warning', 5000);
+        return;
+      }
+
       const showKey = (showTitle || '').trim().toLowerCase();
       if (window.activeTranslatingBatches.has(showKey)) {
         return;
@@ -4935,7 +5331,6 @@
       const icon = btn ? btn.querySelector('.sync-icon') : null;
       if (icon) icon.classList.add('animate-spin');
       if (btn) btn.disabled = true;
-      showToast(`⏳ Đang kiểm tra và đồng bộ phụ đề cho ${showTitle} lên NAS & Google Drive...`, 'info', 3000);
       try {
         const res = await fetch('/api/subtitles/sync', {
           method: 'POST',
@@ -4944,12 +5339,14 @@
         });
         const data = await res.json();
         if (data.success) {
-          showToast(`⚡ ${data.message}`, 'success', 4000);
+          if (!data.message.includes('đã có đầy đủ') && !data.message.includes('đã được đồng bộ')) {
+            showToast(`⚡ ${data.message}`, 'success', 2000);
+          }
         } else {
-          showToast(`Lỗi đồng bộ: ${data.error || 'Thất bại'}`, 'error', 4000);
+          showToast(`Lỗi đồng bộ: ${data.error || 'Thất bại'}`, 'error', 3500);
         }
       } catch (e) {
-        showToast(`Lỗi kết nối: ${e.message}`, 'error', 4000);
+        showToast(`Lỗi kết nối: ${e.message}`, 'error', 3500);
       } finally {
         if (icon) icon.classList.remove('animate-spin');
         if (btn) btn.disabled = false;
@@ -4979,6 +5376,7 @@
     async function loadSubtitleTranslationProjects() {
       const box = document.getElementById('sub-translation-projects-list');
       if (!box) return;
+      loadQuotaGuardStatus();
 
       try {
         const res = await fetch('/api/subtitles/projects');
@@ -5038,11 +5436,15 @@
                     <button disabled class="px-3 py-1.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-xs rounded-xl cursor-not-allowed flex items-center gap-1 shrink-0 animate-pulse">
                       <span>⏳</span> Đang Dịch...
                     </button>
-                  ` : (pendingEps.length > 0 ? `
+                  ` : (pendingEps.length > 0 ? (window.quotaGuardLocked ? `
+                    <button disabled class="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 font-bold text-xs rounded-xl cursor-not-allowed flex items-center gap-1 shrink-0" title="Translation Quota Guard tạm khóa để bảo vệ tài khoản">
+                      <span>🛑</span> Quota Khóa
+                    </button>
+                  ` : `
                     <button id="${btnId}" onclick="sendTranslateBatchToAgent('${p.title.replace(/'/g, "\\'")}', '${btnId}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center gap-1 shrink-0 shadow-md shadow-emerald-600/20">
                       <span>🚀</span> Dịch Phụ Đề
                     </button>
-                  ` : ''))}
+                  `) : ''))}
                   <button onclick="toggleCardCollapse('${collapseId}', this)" class="p-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 text-xs transition flex items-center justify-center" title="Thu gọn / Mở rộng danh sách tập">
                     <span class="toggle-icon inline-block text-[10px] transform transition-transform duration-200 ${isComplete ? '-rotate-90' : 'rotate-0'}">▼</span>
                   </button>
@@ -5074,6 +5476,7 @@
       const statPending = document.getElementById('sub-stat-pending-eps');
       const badgeCount = document.getElementById('sub-projects-badge-count');
       const sidebarBadge = document.getElementById('sidebar-sub-count');
+      loadQuotaGuardStatus();
 
       try {
         const res = await fetch('/api/subtitles/projects');
@@ -5156,11 +5559,15 @@
                     <button disabled class="px-4 py-2 bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-xs rounded-xl cursor-not-allowed flex items-center gap-1.5 shrink-0 animate-pulse">
                       <span>⏳</span> Đang Dịch...
                     </button>
-                  ` : (pendingEps.length > 0 ? `
+                  ` : (pendingEps.length > 0 ? (window.quotaGuardLocked ? `
+                    <button disabled class="px-4 py-2 bg-red-500/10 text-red-400 border border-red-500/20 font-bold text-xs rounded-xl cursor-not-allowed flex items-center gap-1.5 shrink-0" title="Translation Quota Guard tạm khóa để bảo vệ tài khoản">
+                      <span>🛑</span> Quota Khóa
+                    </button>
+                  ` : `
                     <button id="${btnId}" onclick="sendTranslateBatchToAgent('${p.title.replace(/'/g, "\\'")}', '${btnId}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 shadow-md shadow-emerald-600/20">
                       <span>🚀</span> Dịch Phụ Đề
                     </button>
-                  ` : ''))}
+                  `) : ''))}
 
                   <button onclick="toggleCardCollapse('${collapseId}', this)" class="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 text-xs font-semibold transition flex items-center justify-center" title="Thu gọn / Mở rộng danh sách tập">
                     <span class="toggle-icon inline-block text-[11px] transform transition-transform duration-200 ${isComplete ? '-rotate-90' : 'rotate-0'}">▼</span>
@@ -5388,6 +5795,14 @@
     function confirmTranslateSingleEpisode() {
       const data = window.currentSelectedEpisode;
       if (!data) return;
+
+      if (window.quotaGuardLocked) {
+        const q = window.quotaGuardStatus;
+        const msg = q ? (q.day.used >= q.day.limit ? `Hôm nay đã dịch chạm trần ${q.day.used}/${q.day.limit} tập. Quota sẽ reset sau ${q.day.reset_in}.` : `Tuần này đã dịch chạm trần ${q.week.used}/${q.week.limit} tập.`) : 'Translation Quota Guard đã tạm khóa.';
+        showToast(`🛑 ${msg}`, 'warning', 4000);
+        closeModal('modal-confirm-translate-episode');
+        return;
+      }
 
       closeModal('modal-confirm-translate-episode');
 
@@ -6399,10 +6814,12 @@ QUY ĐỊNH LOGGING: BẮT BUỘC in ra console từng bước [BƯỚC 1/5: Kh�
     fetchData();
     fetchSettings();
     fetchTunnelStatus();
+    loadQuotaGuardStatus();
     ensureCliService();
     renderPlexGrid(plexShowsData);
     setInterval(fetchData, 4000);
     setInterval(fetchTunnelStatus, 8000);
+    setInterval(loadQuotaGuardStatus, 10000);
 
     // Support browser Back and Forward buttons navigation
     window.addEventListener('popstate', (e) => {

@@ -5,6 +5,7 @@ import subprocess
 import threading
 import collections
 from pathlib import Path
+from core.quota_guard import quota_guard
 
 # Kept alongside the other hub state instead of a hard-coded path on an external
 # volume: that directory can be unmounted or removed, and the previous constant
@@ -595,6 +596,31 @@ class AgentBridge:
         queue = self._load()
         cmd_id = int(time.time() * 1000)
         resolved_media_id = self._extract_media_id(command_text, media_id)
+
+        # Translation Quota Guard check
+        cmd_lower = command_text.lower()
+        is_translation = "translate-subtitle" in cmd_lower or "dịch phụ đề" in cmd_lower or "dịch thuật" in cmd_lower
+        if is_translation:
+            import re
+            m_eps = re.findall(r'S\d+E\d+', command_text, re.IGNORECASE)
+            req_eps = len(m_eps) if m_eps else (5 if "5 tập" in cmd_lower or "batch" in cmd_lower else 1)
+            quota_check = quota_guard.can_translate(requested_episodes=req_eps)
+            if not quota_check["allowed"]:
+                pause_msg = quota_check["reason"]
+                cmd_item = {
+                    "id": cmd_id,
+                    "command": command_text,
+                    "author": author,
+                    "media_id": resolved_media_id,
+                    "status": "paused_quota",
+                    "response": pause_msg,
+                    "timestamp": time.strftime("%H:%M")
+                }
+                queue.append(cmd_item)
+                self._save(queue)
+                self.log_live(f"🛑 [Quota Guard] {pause_msg}", "warning")
+                print(f"[AgentBridge] 🛑 Quota Guard blocked [{resolved_media_id}]: {pause_msg}", flush=True)
+                return cmd_item
         
         quick_response = f"🤖 Đã nhận lệnh [{resolved_media_id}], đang kích hoạt Antigravity CLI..."
 
@@ -729,6 +755,19 @@ class AgentBridge:
             cmd_id = pending_item.get("id")
             cmd_text = pending_item.get("command", "").strip()
             media_id = pending_item.get("media_id") or self._extract_media_id(cmd_text)
+
+            # Translation Quota Guard Check
+            cmd_lower = cmd_text.lower()
+            if "translate-subtitle" in cmd_lower or "dịch phụ đề" in cmd_lower or "dịch thuật" in cmd_lower:
+                import re
+                m_eps = re.findall(r'S\d+E\d+', cmd_text, re.IGNORECASE)
+                req_eps = len(m_eps) if m_eps else (5 if "5 tập" in cmd_lower or "batch" in cmd_lower else 1)
+                quota_check = quota_guard.can_translate(requested_episodes=req_eps)
+                if not quota_check["allowed"]:
+                    self.update_response(cmd_id, quota_check["reason"], status="paused_quota")
+                    self.log_live(f"🛑 [Quota Guard] {quota_check['reason']}", "warning")
+                    print(f"[AgentBridge] 🛑 Quota Guard paused command #{cmd_id}: {quota_check['reason']}", flush=True)
+                    continue
 
             self.update_response(cmd_id, f"⏳ Đang kết nối Antigravity CLI cho [{media_id}]...", status="processing")
 
@@ -886,6 +925,15 @@ class AgentBridge:
                         last_output = combined or "✅ Đã thực thi thành công qua Antigravity CLI."
                         self.log_live(f"✅ Hoàn tất tác vụ thành công trên {bin_name}.", "success")
                         print(f"[AgentBridge] ✅ Hoàn thành lệnh qua {bin_name} (ID: {cmd_id})", flush=True)
+
+                        # Record in Quota Guard if translation command
+                        cmd_l = cmd_text.lower()
+                        if "translate-subtitle" in cmd_l or "dịch phụ đề" in cmd_l or "dịch thuật" in cmd_l:
+                            import re
+                            done_eps = len(re.findall(r'S\d+E\d+', cmd_text, re.IGNORECASE)) or 1
+                            quota_guard.record_translation(episodes_count=done_eps, media_id=media_id)
+                            st = quota_guard.get_status()
+                            self.log_live(f"📊 [Quota Guard] Đã ghi nhận {done_eps} tập vào Quota (Ngày: {st['day']['used']}/{st['day']['limit']}, Tuần: {st['week']['used']}/{st['week']['limit']}).", "info")
 
                         # Discover newly created conversation if not existing
                         if not sessions.get(media_id) and brain_dir.exists():
