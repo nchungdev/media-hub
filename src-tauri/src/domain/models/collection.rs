@@ -30,6 +30,15 @@ pub struct SubtitleStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubtitleFileInfo {
+    pub name: String,
+    pub path: String,
+    pub lang: String,
+    pub format: String,
+    pub size_kb: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EpisodeInfo {
     pub key: String,
     pub num: String,
@@ -40,6 +49,8 @@ pub struct EpisodeInfo {
     pub has_vi_sub: bool,
     pub sub_types: Vec<String>,
     pub has_eng_sub: bool,
+    #[serde(default)]
+    pub subtitle_files: Vec<SubtitleFileInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

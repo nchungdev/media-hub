@@ -92,11 +92,79 @@ impl CollectionService {
                                     || ep_name.ends_with(".m4v");
                                 if is_video {
                                     total_videos += 1;
-                                    let has_vi = ep_path.with_extension("vi.ass").exists()
-                                        || ep_path.with_extension("vi.srt").exists();
+                                    let video_stem =
+                                        ep_path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+                                    let mut sub_files = Vec::new();
+                                    let mut has_vi = false;
+                                    let mut has_eng = false;
+                                    let mut sub_types = Vec::new();
+
+                                    if let Ok(dir_entries) = fs::read_dir(&sub_path) {
+                                        for de in dir_entries.flatten() {
+                                            let p = de.path();
+                                            let fname = p
+                                                .file_name()
+                                                .and_then(|n| n.to_str())
+                                                .unwrap_or("");
+                                            if fname.starts_with(video_stem)
+                                                && (fname.ends_with(".ass")
+                                                    || fname.ends_with(".srt")
+                                                    || fname.ends_with(".vtt"))
+                                            {
+                                                let is_vi = fname.contains(".vi.")
+                                                    || fname.ends_with(".vi.ass")
+                                                    || fname.ends_with(".vi.srt")
+                                                    || fname.ends_with(".vi.vtt");
+                                                let is_en = fname.contains(".en.")
+                                                    || fname.contains(".eng.")
+                                                    || fname.ends_with(".en.ass")
+                                                    || fname.ends_with(".en.srt");
+                                                let lang = if is_vi {
+                                                    "vi"
+                                                } else if is_en {
+                                                    "en"
+                                                } else {
+                                                    "other"
+                                                };
+                                                let format = if fname.ends_with(".ass") {
+                                                    "ass"
+                                                } else if fname.ends_with(".srt") {
+                                                    "srt"
+                                                } else {
+                                                    "vtt"
+                                                };
+                                                let size_kb = p
+                                                    .metadata()
+                                                    .map(|m| (m.len() as f32 / 1024.0).round())
+                                                    .unwrap_or(0.0);
+
+                                                if is_vi {
+                                                    has_vi = true;
+                                                    if !sub_types
+                                                        .contains(&format!(".vi.{}", format))
+                                                    {
+                                                        sub_types.push(format!(".vi.{}", format));
+                                                    }
+                                                }
+                                                if is_en {
+                                                    has_eng = true;
+                                                }
+
+                                                sub_files.push(crate::domain::models::collection::SubtitleFileInfo {
+                                                    name: fname.to_string(),
+                                                    path: p.to_string_lossy().to_string(),
+                                                    lang: lang.to_string(),
+                                                    format: format.to_string(),
+                                                    size_kb,
+                                                });
+                                            }
+                                        }
+                                    }
+
                                     if has_vi {
                                         total_vi_subs += 1;
                                     }
+
                                     season.episodes.push(EpisodeInfo {
                                         key: ep_name.to_string(),
                                         num: format!("E{:02}", season.episodes.len() + 1),
@@ -105,12 +173,9 @@ impl CollectionService {
                                         in_nas: true,
                                         in_gdrive: true,
                                         has_vi_sub: has_vi,
-                                        sub_types: if has_vi {
-                                            vec!["vi".to_string()]
-                                        } else {
-                                            vec![]
-                                        },
-                                        has_eng_sub: true,
+                                        sub_types,
+                                        has_eng_sub: has_eng,
+                                        subtitle_files: sub_files,
                                     });
                                 }
                             }

@@ -225,19 +225,34 @@ class MediaCollectionManager:
                                     "vi_ass": False,
                                     "vi_srt": False,
                                     "vi_vtt": False,
-                                    "eng_sub": False
+                                    "eng_sub": False,
+                                    "subtitle_files": []
                                 }
                             if f.endswith((".mkv", ".mp4", ".m4v", ".avi")):
                                 episodes_dict[ep_key]["video"] = True
                                 episodes_dict[ep_key]["name"] = f
-                            elif f.endswith(".vi.ass"):
-                                episodes_dict[ep_key]["vi_ass"] = True
-                            elif f.endswith(".vi.srt"):
-                                episodes_dict[ep_key]["vi_srt"] = True
-                            elif f.endswith(".vi.vtt"):
-                                episodes_dict[ep_key]["vi_vtt"] = True
-                            elif f.endswith((".eng.ass", ".eng.srt", ".ass", ".srt")):
-                                episodes_dict[ep_key]["eng_sub"] = True
+                            elif f.endswith((".ass", ".srt", ".vtt")):
+                                full_p = os.path.join(root, f)
+                                sz_kb = round(os.path.getsize(full_p) / 1024, 1) if os.path.exists(full_p) else 0
+                                is_vi = ".vi." in f or f.endswith((".vi.ass", ".vi.srt", ".vi.vtt"))
+                                is_en = ".en." in f or ".eng." in f or f.endswith((".en.ass", ".en.srt"))
+                                lang = "vi" if is_vi else ("en" if is_en else "other")
+                                fmt = "ass" if f.endswith(".ass") else ("srt" if f.endswith(".srt") else "vtt")
+
+                                if is_vi:
+                                    if f.endswith(".vi.ass"): episodes_dict[ep_key]["vi_ass"] = True
+                                    elif f.endswith(".vi.srt"): episodes_dict[ep_key]["vi_srt"] = True
+                                    elif f.endswith(".vi.vtt"): episodes_dict[ep_key]["vi_vtt"] = True
+                                elif is_en:
+                                    episodes_dict[ep_key]["eng_sub"] = True
+
+                                episodes_dict[ep_key]["subtitle_files"].append({
+                                    "name": f,
+                                    "path": full_p,
+                                    "lang": lang,
+                                    "format": fmt,
+                                    "size_kb": sz_kb
+                                })
 
             # If episodes not found locally, generate from known metadata or GDrive count
             total_eps = meta.get("episodes", len(episodes_dict))
@@ -326,7 +341,8 @@ class MediaCollectionManager:
                     "in_gdrive": in_gdrive,
                     "has_vi_sub": has_vi,
                     "sub_types": sub_tags,
-                    "has_eng_sub": ep["eng_sub"]
+                    "has_eng_sub": ep["eng_sub"],
+                    "subtitle_files": ep.get("subtitle_files", [])
                 })
 
             seasons_list = [seasons_map[k] for k in sorted(seasons_map.keys())]
