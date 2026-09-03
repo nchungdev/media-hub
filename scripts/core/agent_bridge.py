@@ -31,22 +31,40 @@ class AgentBridge:
             Path(self.queue_file).parent.mkdir(parents=True, exist_ok=True)
             if not os.path.exists(self.queue_file):
                 self._save([])
+            else:
+                # Recover any interrupted 'processing' items back to 'pending'
+                queue = self._load()
+                changed = False
+                for item in queue:
+                    if item.get("status") == "processing":
+                        item["status"] = "pending"
+                        item["response"] = "🔄 Đang tiếp tục xử lý..."
+                        changed = True
+                if changed:
+                    self._save(queue)
             # Resume any pending items on server start
             self._trigger_worker()
         except Exception as e:
             print(f"[AgentBridge] Không khởi tạo được hàng đợi ({self.queue_file}): {e}")
 
     def stop_current_job(self):
-        """Kill the currently running agy/agy2 subprocess and cancel the active job."""
+        """Kill the currently running agy/agy2 subprocess and all its children, cancel active job."""
         self._stop_requested = True
         proc = self._current_proc
         if proc and proc.poll() is None:
             try:
-                proc.terminate()
+                import signal
                 try:
-                    proc.wait(timeout=5)
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                except Exception:
+                    proc.terminate()
+                try:
+                    proc.wait(timeout=3)
                 except subprocess.TimeoutExpired:
-                    proc.kill()
+                    try:
+                        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+                    except Exception:
+                        proc.kill()
                 self.log_live("🛑 Đã dừng tiến trình CLI theo yêu cầu người dùng.", "warning")
                 print("[AgentBridge] 🛑 User requested stop — process terminated.", flush=True)
             except Exception as e:
@@ -545,7 +563,8 @@ class AgentBridge:
                         text=True,
                         cwd=workspace_dir,
                         env=env,
-                        bufsize=1
+                        bufsize=1,
+                        start_new_session=True
                     )
                     self._current_proc = proc
 

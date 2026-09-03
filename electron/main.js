@@ -111,24 +111,23 @@ function startBackendServer() {
       PATH: extraPath + (process.env.PATH ? ':' + process.env.PATH : '')
     });
 
+    const logDir = path.join(process.env.HOME || '', '.media-hub', '.logs');
+    try {
+      fs.mkdirSync(logDir, { recursive: true });
+    } catch (e) {}
+
+    const outLogPath = path.join(logDir, 'server.log');
+    const outLogFd = fs.openSync(outLogPath, 'a');
+
     serverProcess = spawn(pythonBin, [scriptPath], {
       cwd: appDir,
       env: env,
-      stdio: 'pipe'
+      stdio: ['ignore', outLogFd, outLogFd],
+      detached: true
     });
+    serverProcess.unref();
 
-    serverProcess.stdout.on('data', (data) => {
-      console.log(`[PythonServer] ${data.toString().trim()}`);
-    });
-
-    serverProcess.stderr.on('data', (data) => {
-      console.error(`[PythonServer Error] ${data.toString().trim()}`);
-    });
-
-    serverProcess.on('close', (code) => {
-      console.log(`[PythonServer] Exited with code ${code}`);
-      serverProcess = null;
-    });
+    console.log(`[PythonServer] Spawned detached daemon (PID: ${serverProcess.pid}), logging to ${outLogPath}`);
 
     const ready = await checkServerReady(35, 400);
     resolve(ready);
