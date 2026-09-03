@@ -163,10 +163,158 @@ class AgentBridge:
 
         return "media-hub-system"
 
-    def _get_brain_dir(self, cli_bin):
+    def _get_brain_dirs(self, cli_bin):
         if "agy2" in str(cli_bin):
-            return Path.home() / ".antigravity-instances" / "secondary" / ".gemini" / "antigravity-cli" / "brain"
-        return Path.home() / ".gemini" / "antigravity-cli" / "brain"
+            return [
+                Path.home() / ".antigravity-instances" / "secondary" / ".gemini" / "antigravity-cli" / "brain",
+                Path.home() / ".antigravity-instances" / "secondary" / ".gemini" / "antigravity" / "brain",
+            ]
+        return [
+            Path.home() / ".gemini" / "antigravity-cli" / "brain",
+            Path.home() / ".gemini" / "antigravity" / "brain",
+        ]
+
+    def _get_brain_dir(self, cli_bin):
+        dirs = self._get_brain_dirs(cli_bin)
+        for d in dirs:
+            if d.exists():
+                return d
+        return dirs[0]
+
+    def _process_transcript_step(self, step):
+        stype = step.get("type")
+        thinking = step.get("thinking")
+        tool_calls = step.get("tool_calls")
+        content = step.get("content")
+
+        if thinking and str(thinking).strip():
+            th_text = str(thinking).strip()
+            lines = [l.strip() for l in th_text.split("\n") if l.strip()]
+            for l in lines:
+                clean_l = l.lstrip("#*-> ").strip()
+                if clean_l and not clean_l.startswith("```"):
+                    self.log_live(f"🧠 [Thinking] {clean_l}", "thinking")
+
+        if tool_calls:
+            for tc in tool_calls:
+                name = tc.get("name", "tool")
+                args = tc.get("args") or tc.get("parameters") or {}
+                act = args.get("toolAction") or args.get("toolSummary") or args.get("Description") or args.get("Instruction") or ""
+
+                if name == "run_command":
+                    cmd = str(args.get("CommandLine", "")).strip()
+                    if "\n" in cmd:
+                        cmd = cmd.split("\n")[0] + "..."
+                    self.log_live(f"⚡ [Run Command] {act} $ {cmd[:140]}", "tool")
+                elif name in ["write_to_file", "replace_file_content"]:
+                    tf = os.path.basename(str(args.get("TargetFile") or args.get("AbsolutePath") or args.get("Path") or ""))
+                    self.log_live(f"📝 [{act or 'Chỉnh sửa tệp'}] {name} -> {tf}", "tool")
+                elif name == "invoke_subagent":
+                    subagents = args.get("Subagents", [])
+                    roles = [s.get("Role", "Subagent") for s in subagents]
+                    self.log_live(f"🤖 [Spawn Subagent] {', '.join(roles)}", "subagent")
+                elif name == "view_file":
+                    vf = os.path.basename(str(args.get("AbsolutePath", "")))
+                    self.log_live(f"🔍 [Đọc Tệp Tin] {act} -> {vf}", "tool")
+                elif name == "grep_search":
+                    q = str(args.get("Query", ""))
+                    self.log_live(f"🔎 [Tìm Kiếm Mã Nguồn] Pattern: '{q}'", "tool")
+                elif name == "search_web":
+                    q = str(args.get("query", ""))
+                    self.log_live(f"🌐 [Tìm Kiếm Web] '{q}'", "tool")
+                elif name == "send_message":
+                    rec = args.get("Recipient", "")
+                    self.log_live(f"✉️ [Gửi Tin Nhắn Cho Agent] Recipient: {rec}", "tool")
+                else:
+                    summary = args.get("toolSummary") or args.get("toolAction") or name
+                    self.log_live(f"⚙️ [Thực Thi Công Cụ] {summary}", "tool")
+
+        if stype == "GENERIC" and content and not str(content).startswith("Created At:"):
+            first_line = str(content).strip().split("\n")[0].strip()
+            if first_line and not first_line.startswith("{") and len(first_line) > 3:
+                if len(first_line) > 120:
+                    first_line = first_line[:120] + "..."
+                self.log_live(f"  ↳ {first_line}", "output")
+
+    def _tail_transcript(self, brain_dirs, conv_id_hint, start_time, stop_event, on_conv_discovered=None):
+        """Realtime transcript tailer: streams thinking, tool calls, and execution steps to live console."""
+        conv_id = conv_id_hint
+        transcript_path = None
+        seen_lines = 0
+
+        # Step 1: Discover active conversation
+        start_ts = time.time()
+        while not stop_event.is_set() and time.time() - start_ts < 25:
+            if conv_id:
+                for bd in brain_dirs:
+                    candidate = Path(bd) / conv_id / ".system_generated" / "logs" / "transcript.jsonl"
+                    if candidate.exists():
+                        transcript_path = candidate
+                        break
+                if transcript_path:
+                    break
+            else:
+                for bd in brain_dirs:
+                    if Path(bd).exists():
+                        try:
+                            dirs = [d for d in Path(bd).iterdir() if d.is_dir() and not d.name.startswith(".")]
+                            if dirs:
+                                dirs.sort(key=lambda d: d.stat().st_mtime, reverse=True)
+                                latest = dirs[0]
+                                if latest.stat().st_mtime >= start_time - 10:
+                                    cand = latest / ".system_generated" / "logs" / "transcript.jsonl"
+                                    if cand.exists():
+                                        conv_id = latest.name
+                                        transcript_path = cand
+                                        if on_conv_discovered:
+                                            on_conv_discovered(conv_id)
+                                        break
+                        except Exception:
+                            pass
+                if transcript_path:
+                    break
+            time.sleep(0.5)
+
+        if not transcript_path or not transcript_path.exists():
+            return
+
+        # Step 2: Tail transcript.jsonl
+        try:
+            with open(transcript_path, "r", encoding="utf-8") as f:
+                if conv_id_hint:
+                    # Count existing lines in resumed session so we only stream new steps
+                    seen_lines = sum(1 for _ in f)
+                    f.seek(0)
+                    for _ in range(seen_lines):
+                        f.readline()
+
+                while not stop_event.is_set():
+                    line = f.readline()
+                    if not line:
+                        time.sleep(0.3)
+                        continue
+
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    try:
+                        step = json.loads(line)
+                        self._process_transcript_step(step)
+                    except Exception:
+                        pass
+
+                # Read remaining lines after subprocess exits
+                for rem_line in f:
+                    rem_line = rem_line.strip()
+                    if rem_line:
+                        try:
+                            step = json.loads(rem_line)
+                            self._process_transcript_step(step)
+                        except Exception:
+                            pass
+        except Exception as e:
+            print(f"[AgentBridge] Error tailing transcript ({conv_id}): {e}")
 
     def add_command(self, command_text, author="User", media_id=None):
         queue = self._load()
@@ -372,6 +520,24 @@ class AgentBridge:
                         cli_args.extend(["--conversation", existing_conv_id])
                     cli_args.extend(["-p", cmd_text, "--dangerously-skip-permissions"])
 
+                    brain_dirs = self._get_brain_dirs(cli_bin)
+                    stop_tailer = threading.Event()
+                    discovered_conv_id = [existing_conv_id]
+
+                    def on_conv_discovered(cid):
+                        discovered_conv_id[0] = cid
+                        sessions[media_id] = cid
+                        self._save_media_sessions(sessions)
+                        self.log_live(f"📌 Gắn session mới {cid} cho {media_id}", "system")
+                        print(f"[AgentBridge] 📌 Gắn {media_id} với Conversation UUID: {cid}", flush=True)
+
+                    tailer_thread = threading.Thread(
+                        target=self._tail_transcript,
+                        args=(brain_dirs, existing_conv_id, time.time(), stop_tailer, on_conv_discovered),
+                        daemon=True
+                    )
+                    tailer_thread.start()
+
                     proc = subprocess.Popen(
                         cli_args,
                         stdout=subprocess.PIPE,
@@ -390,10 +556,14 @@ class AgentBridge:
                         line = raw_l.rstrip()
                         if line:
                             lines.append(line)
-                            lvl = "error" if "error" in line.lower() else "warning" if "warning" in line.lower() else "info"
-                            self.log_live(line, lvl)
+                            # Skip if line is raw json or internal noise
+                            if not line.startswith('{"event":') and not line.startswith('{"step_index":'):
+                                lvl = "error" if "error" in line.lower() else "warning" if "warning" in line.lower() else "info"
+                                self.log_live(line, lvl)
 
                     proc.stdout.close()
+                    stop_tailer.set()
+                    tailer_thread.join(timeout=2)
                     self._current_proc = None
 
                     if self._stop_requested:
@@ -419,7 +589,7 @@ class AgentBridge:
                         print(f"[AgentBridge] ✅ Hoàn thành lệnh qua {bin_name} (ID: {cmd_id})", flush=True)
 
                         # Discover newly created conversation if not existing
-                        if not existing_conv_id and brain_dir.exists():
+                        if not sessions.get(media_id) and brain_dir.exists():
                             try:
                                 current_dirs = set(d.name for d in brain_dir.iterdir() if d.is_dir())
                                 new_dirs = current_dirs - existing_dirs

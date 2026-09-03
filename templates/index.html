@@ -4193,14 +4193,33 @@
 
       output.innerHTML = logs.map(l => {
         let colorClass = "text-zinc-300";
-        if (l.level === "system") colorClass = "text-cyan-400 font-semibold";
-        else if (l.level === "success") colorClass = "text-emerald-400 font-semibold";
-        else if (l.level === "warning") colorClass = "text-amber-400";
-        else if (l.level === "error") colorClass = "text-red-400 font-bold";
+        let bgClass = "";
         
-        return `<div class="flex items-start gap-2 hover:bg-zinc-900/50 py-0.5 px-1.5 rounded transition">
-          <span class="text-zinc-600 select-none shrink-0 font-mono text-[10px]">[${l.time}]</span>
-          <span class="${colorClass} break-all select-text font-mono text-xs">${l.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+        if (l.level === "thinking") {
+          colorClass = "text-amber-300/90 italic font-mono text-[11px] leading-relaxed";
+          bgClass = "bg-amber-500/[0.04] border-l-2 border-amber-500/40 pl-2 my-0.5";
+        } else if (l.level === "tool") {
+          colorClass = "text-sky-300 font-mono font-medium text-[11px]";
+          bgClass = "bg-sky-500/[0.03] pl-1.5";
+        } else if (l.level === "subagent") {
+          colorClass = "text-emerald-300 font-mono font-semibold text-xs";
+          bgClass = "bg-emerald-500/[0.06] border-l-2 border-emerald-500/40 pl-2 my-0.5";
+        } else if (l.level === "output") {
+          colorClass = "text-zinc-400 font-mono text-[11px]";
+          bgClass = "pl-3";
+        } else if (l.level === "system") {
+          colorClass = "text-cyan-400 font-semibold font-mono text-xs";
+        } else if (l.level === "success") {
+          colorClass = "text-emerald-400 font-semibold font-mono text-xs";
+        } else if (l.level === "warning") {
+          colorClass = "text-amber-400 font-mono text-xs";
+        } else if (l.level === "error") {
+          colorClass = "text-red-400 font-bold font-mono text-xs";
+        }
+        
+        return `<div class="flex items-start gap-2 hover:bg-zinc-900/50 py-0.5 px-1.5 rounded transition ${bgClass}">
+          <span class="text-zinc-600 select-none shrink-0 font-mono text-[10px] pt-0.5">[${l.time}]</span>
+          <span class="${colorClass} break-all select-text font-mono text-xs flex-1">${l.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
         </div>`;
       }).join('');
 
