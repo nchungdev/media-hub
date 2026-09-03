@@ -206,6 +206,56 @@ cmd_open() {
   fi
 }
 
+cmd_tunnel() {
+  local subcmd="${1:-status}"
+  shift || true
+
+  python3 -c "
+import sys
+sys.path.append('$APP_DIR/scripts')
+from core.tunnel import tunnel_mgr
+
+sub = '$subcmd'
+if sub == 'start':
+    res = tunnel_mgr.start(8888)
+    if res.get('success'):
+        print(f'🌐 Cloudflare Tunnel Online: {res.get(\"url\")}')
+    else:
+        print(f'❌ Lỗi: {res.get(\"error\")}')
+elif sub == 'stop':
+    res = tunnel_mgr.stop()
+    print(res.get('message', 'Đã tắt tunnel'))
+elif sub == 'url':
+    st = tunnel_mgr.get_status()
+    if st.get('running') and st.get('url'):
+        print(st.get('url'))
+    else:
+        print('Offline')
+elif sub == 'open':
+    st = tunnel_mgr.get_status()
+    url = st.get('url')
+    if url:
+        import subprocess
+        subprocess.run(['open', url])
+    else:
+        print('Tunnel chưa chạy. Chạy: media-hub tunnel start')
+else:
+    st = tunnel_mgr.get_status()
+    print('========================================')
+    print(' Cloudflare Quick Tunnel (TryCloudflare)')
+    print('========================================')
+    print(f' Binary:     {st.get(\"binary\")}')
+    print(f' Installed:  {\"✅ Có\" if st.get(\"installed\") else \"❌ Chưa\"}')
+    print(f' Running:    {\"🟢 Đang trực tuyến\" if st.get(\"running\") else \"⚪ Đang tắt\"}')
+    if st.get('running'):
+        print(f' Public URL: {st.get(\"url\")}')
+        print(f' Started:    {st.get(\"started_at\")}')
+    if st.get('error'):
+        print(f' Error:      {st.get(\"error\")}')
+    print('========================================')
+"
+}
+
 cmd_help() {
   echo "Antigravity Media Hub Standalone CLI & Desktop"
   echo ""
@@ -219,6 +269,7 @@ cmd_help() {
   echo "  status                         Kiểm tra trạng thái máy chủ"
   echo "  logs [-f]                      Xem log của máy chủ"
   echo "  open                           Mở Web Dashboard trên trình duyệt"
+  echo "  tunnel [start|stop|status|open] Quản lý Cloudflare Tunnel truy cập từ xa"
   echo "  build                          Đóng gói thành file cài đặt macOS (.dmg / .app)"
   echo "  help                           Hiển thị trợ giúp này"
   echo ""
@@ -251,6 +302,10 @@ case "$1" in
     ;;
   open)
     cmd_open
+    ;;
+  tunnel)
+    shift
+    cmd_tunnel "$@"
     ;;
   help|--help|-h|"")
     cmd_help

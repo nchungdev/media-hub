@@ -233,6 +233,10 @@
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Sẵn Sàng
           </span>
         </div>
+        <div class="flex items-center justify-between pt-1 border-t border-zinc-800/60" id="sidebar-tunnel-row">
+          <span class="text-zinc-400 flex items-center gap-1"><span>🌐</span> Remote:</span>
+          <span id="sidebar-tunnel-badge" onclick="setTab('settings')" class="cursor-pointer font-mono text-[9px] text-zinc-500 hover:text-amber-400 transition" title="Bấm để xem/bật Remote Tunnel">Offline</span>
+        </div>
       </div>
     </div>
   </aside>
@@ -1437,7 +1441,70 @@
             </div>
           </div>
 
-          <!-- ==================== 3. QUẢN LÝ BỘ TẢI & 4 DOWNLOAD ENGINES ==================== -->
+          <!-- ==================== 3. TRUY CẬP TỪ XA QUA CLOUDFLARE (TRYCLOUDFLARE) ==================== -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-amber-500/30 shadow-xl space-y-4 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-amber-600/10 text-amber-400 flex items-center justify-center font-bold text-base border border-amber-500/20 shadow-inner">🌐</div>
+                <div>
+                  <h4 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                    Truy Cập Từ Xa Qua Cloudflare (TryCloudflare Quick Tunnel)
+                    <span id="tunnel-badge-status" class="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 text-[10px] border border-zinc-700 font-mono font-bold">⚪ Đang Tắt</span>
+                  </h4>
+                  <p class="text-[11px] text-zinc-400">Tạo đường hầm HTTPS public miễn phí để truy cập Web Dashboard từ điện thoại, laptop ở bất cứ đâu</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" id="btn-tunnel-toggle" onclick="toggleCloudflareTunnel()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-amber-600/20">
+                  <span id="tunnel-btn-icon">⚡</span> <span id="tunnel-btn-text">Bật Truy Cập Từ Xa</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-3 text-xs">
+              <!-- Active URL Display -->
+              <div id="tunnel-active-box" class="hidden p-4 rounded-2xl bg-amber-500/[0.05] border border-amber-500/30 space-y-2.5">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span class="font-bold text-emerald-400 text-xs">Đường dẫn Public đang hoạt động (HTTPS):</span>
+                  </div>
+                  <div class="text-[10px] text-zinc-500 font-mono" id="tunnel-start-time"></div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="tunnel-public-url" readonly class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-amber-300 font-mono font-bold text-xs select-all focus:outline-none focus:border-amber-500 shadow-inner">
+                  <button type="button" onclick="copyTunnelUrl()" class="px-3.5 py-2.5 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/30 text-amber-300 hover:text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shrink-0 shadow-sm">
+                    <span>📋</span> Sao Chép
+                  </button>
+                  <button type="button" onclick="openTunnelUrl()" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shrink-0 shadow-sm">
+                    <span>🔗</span> Mở Trình Duyệt
+                  </button>
+                </div>
+              </div>
+
+              <!-- Binary & Info Note -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-zinc-400">
+                <div class="p-3 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
+                  <span>Tiện ích Cloudflare:</span>
+                  <span id="tunnel-binary-path" class="font-mono text-zinc-300">Đang kiểm tra...</span>
+                </div>
+                <div class="p-3 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
+                  <span>Cổng nội bộ ánh xạ:</span>
+                  <span class="font-mono text-amber-400 font-bold" id="tunnel-local-port">127.0.0.1:8888</span>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-2xl bg-amber-500/[0.04] border border-amber-500/20 text-[11px] text-amber-300 flex items-start gap-2">
+                <span class="text-sm shrink-0">💡</span>
+                <p class="leading-relaxed">
+                  Tính năng <strong>TryCloudflare Quick Tunnel</strong> tạo kết nối ngược (reverse tunnel) an toàn ra mạng Cloudflare Edge mà <strong>không cần mở port modem (No Port Forwarding)</strong>, không cần tên miền riêng và hoàn toàn miễn phí.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==================== 4. QUẢN LÝ BỘ TẢI & 4 DOWNLOAD ENGINES ==================== -->
           <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-purple-500/20 shadow-xl space-y-5 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-48 h-48 bg-purple-500/5 rounded-full blur-3xl pointer-events-none"></div>
             
@@ -4488,6 +4555,132 @@
       }
     }
 
+    /* ==================== CLOUDFLARE QUICK TUNNEL (TRYCLOUDFLARE) ==================== */
+    async function fetchTunnelStatus() {
+      try {
+        const res = await fetch('/api/tunnel/status');
+        const st = await res.json();
+        updateTunnelUI(st);
+      } catch (e) {}
+    }
+
+    function updateTunnelUI(st) {
+      const isRunning = !!st.running;
+      const url = st.url || '';
+
+      // Sidebar indicator
+      const sideBadge = document.getElementById('sidebar-tunnel-badge');
+      if (sideBadge) {
+        if (isRunning && url) {
+          sideBadge.className = "cursor-pointer font-mono text-[9px] text-emerald-400 font-bold hover:underline transition flex items-center gap-1";
+          sideBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Public`;
+          sideBadge.title = `Đang mở: ${url} (Bấm để copy)`;
+          sideBadge.onclick = () => {
+            navigator.clipboard.writeText(url);
+            showToast('📋 Đã sao chép URL Remote!', 'info', 2500);
+          };
+        } else {
+          sideBadge.className = "cursor-pointer font-mono text-[9px] text-zinc-500 hover:text-amber-400 transition";
+          sideBadge.innerHTML = "Offline";
+          sideBadge.title = "Bấm để vào cài đặt bật Tunnel";
+          sideBadge.onclick = () => setTab('settings');
+        }
+      }
+
+      // Settings Tab UI Elements
+      const badgeStatus = document.getElementById('tunnel-badge-status');
+      const activeBox = document.getElementById('tunnel-active-box');
+      const publicUrlInput = document.getElementById('tunnel-public-url');
+      const btnToggle = document.getElementById('btn-tunnel-toggle');
+      const btnIcon = document.getElementById('tunnel-btn-icon');
+      const btnText = document.getElementById('tunnel-btn-text');
+      const binPathEl = document.getElementById('tunnel-binary-path');
+      const startTimeEl = document.getElementById('tunnel-start-time');
+
+      if (binPathEl) {
+        binPathEl.textContent = st.binary || (st.installed ? 'cloudflared' : 'Chưa cài đặt (brew install cloudflared)');
+      }
+
+      if (isRunning && url) {
+        if (badgeStatus) {
+          badgeStatus.className = "px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] border border-emerald-500/20 font-mono font-bold flex items-center gap-1";
+          badgeStatus.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> 🟢 Đang Bật (Public)';
+        }
+        if (activeBox) activeBox.classList.remove('hidden');
+        if (publicUrlInput) publicUrlInput.value = url;
+        if (startTimeEl) startTimeEl.textContent = 'Khởi động: ' + (st.started_at || '--');
+
+        if (btnToggle) {
+          btnToggle.className = "px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-300 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer";
+          if (btnIcon) btnIcon.textContent = "⏹";
+          if (btnText) btnText.textContent = "Tắt Truy Cập Từ Xa";
+        }
+      } else {
+        if (badgeStatus) {
+          badgeStatus.className = "px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 text-[10px] border border-zinc-700 font-mono font-bold";
+          badgeStatus.innerHTML = "⚪ Đang Tắt (Local Only)";
+        }
+        if (activeBox) activeBox.classList.add('hidden');
+        if (publicUrlInput) publicUrlInput.value = '';
+
+        if (btnToggle) {
+          btnToggle.className = "px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-amber-600/20 cursor-pointer";
+          if (btnIcon) btnIcon.textContent = "⚡";
+          if (btnText) btnText.textContent = "Bật Truy Cập Từ Xa";
+        }
+      }
+    }
+
+    async function toggleCloudflareTunnel() {
+      const btn = document.getElementById('btn-tunnel-toggle');
+      const isCurrentlyRunning = document.getElementById('tunnel-btn-text')?.textContent === 'Tắt Truy Cập Từ Xa';
+
+      if (btn) btn.disabled = true;
+
+      try {
+        if (isCurrentlyRunning) {
+          showToast('⏳ Đang dừng Cloudflare Tunnel...', 'info', 2000);
+          const res = await fetch('/api/tunnel/stop', {method: 'POST'});
+          const data = await res.json();
+          showToast(data.message || 'Đã tắt Tunnel', 'info');
+          fetchTunnelStatus();
+        } else {
+          showToast('🚀 Đang yêu cầu Cloudflare Edge cấp phát URL...', 'info', 4000);
+          const res = await fetch('/api/tunnel/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({port: 8888})
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(`🎉 Tunnel đã mở: ${data.url}`, 'success', 5000);
+            fetchTunnelStatus();
+          } else {
+            showToast(`❌ ${data.error || 'Không thể tạo tunnel'}`, 'error', 5000);
+          }
+        }
+      } catch (e) {
+        showToast(`❌ Lỗi: ${e.message || e}`, 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function copyTunnelUrl() {
+      const input = document.getElementById('tunnel-public-url');
+      if (input && input.value) {
+        navigator.clipboard.writeText(input.value);
+        showToast('📋 Đã sao chép URL Remote vào bộ nhớ đệm!', 'success', 2500);
+      }
+    }
+
+    function openTunnelUrl() {
+      const input = document.getElementById('tunnel-public-url');
+      if (input && input.value) {
+        window.open(input.value, '_blank');
+      }
+    }
+
     async function scanNasLibraries() {
       const host = document.getElementById('cfg-nas-host')?.value?.trim();
       const user = document.getElementById('cfg-nas-user')?.value?.trim() || 'admin';
@@ -6188,8 +6381,10 @@
     setTab(initialActiveTab, true);
     fetchData();
     fetchSettings();
+    fetchTunnelStatus();
     renderPlexGrid(plexShowsData);
     setInterval(fetchData, 4000);
+    setInterval(fetchTunnelStatus, 8000);
 
     // Support browser Back and Forward buttons navigation
     window.addEventListener('popstate', (e) => {

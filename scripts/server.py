@@ -36,6 +36,7 @@ from core.artwork import get_poster_bytes
 from core.library_builder import LibraryBuilder
 from core.job_store import JobStore
 from core.sync_worker import SyncWorker
+from core.tunnel import tunnel_mgr
 
 # Initialize Core Managers
 torbox_mgr = TorBoxManager()
@@ -1041,6 +1042,9 @@ class MediaHubHandler(BaseHTTPRequestHandler):
         elif path == "/api/settings":
             cfg = load_unified_settings()
             return self._send_json(cfg)
+        # 11. REST API: Cloudflare Quick Tunnel Status (/api/tunnel/status)
+        elif path == "/api/tunnel/status":
+            return self._send_json(tunnel_mgr.get_status())
 
         # 9. REST API: Cross-Storage Scan & Compare (GDrive vs NAS vs Local)
         elif path == "/api/library/cross_check":
@@ -1687,6 +1691,16 @@ class MediaHubHandler(BaseHTTPRequestHandler):
                 return self._send_json({"success": True, "message": "Đã lưu cài đặt thành công!", "settings": cfg})
             except Exception as e:
                 return self._send_json({"success": False, "error": str(e)}, status=500)
+
+        # 4b. API: Start/Stop Cloudflare Tunnel
+        elif path == "/api/tunnel/start":
+            port = int(req_data.get("port") or PORT or 8888)
+            res = tunnel_mgr.start(port=port)
+            return self._send_json(res, status=200 if res.get("success") else 500)
+
+        elif path == "/api/tunnel/stop":
+            res = tunnel_mgr.stop()
+            return self._send_json(res)
 
         # 5. API: Scan NAS Plex Directories (/api/nas/scan)
         elif path == "/api/nas/scan":
