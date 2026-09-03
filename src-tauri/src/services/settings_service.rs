@@ -12,14 +12,25 @@ pub struct SettingsService {
 
 impl SettingsService {
     pub fn new() -> Self {
+        let ws_config = PathBuf::from("/Volumes/512GB/AI Workspace/.media-hub/config.json");
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
-        let config_path = home.join(".media-hub").join("settings.json");
+        let home_config = home.join(".media-hub").join("settings.json");
+
+        let config_path = if ws_config.exists() {
+            ws_config
+        } else if home_config.exists() {
+            home_config
+        } else {
+            home.join(".media-hub").join("settings.json")
+        };
+
         Self {
             config_path,
             cache: RwLock::new(None),
         }
     }
 }
+
 
 impl Default for SettingsService {
     fn default() -> Self {
@@ -36,7 +47,7 @@ impl ISettingsService for SettingsService {
             }
         }
 
-        let settings = if self.config_path.exists() {
+        let mut settings = if self.config_path.exists() {
             match fs::read_to_string(&self.config_path) {
                 Ok(content) => serde_json::from_str(&content).unwrap_or_default(),
                 Err(_) => AppSettings::default(),
@@ -45,11 +56,17 @@ impl ISettingsService for SettingsService {
             AppSettings::default()
         };
 
+        // Ensure staging_dir is outside the .app bundle so it is never deleted when updating/reinstalling the app
+        if settings.staging_dir.is_empty() || settings.staging_dir.contains("Contents/Resources") {
+            settings.staging_dir = "/Volumes/512GB/AI Workspace/.media-hub/.staging".to_string();
+        }
+
         if let Ok(mut guard) = self.cache.write() {
             *guard = Some(settings.clone());
         }
 
         settings
+
     }
 
     fn save(&self, settings: &AppSettings) -> Result<(), String> {
