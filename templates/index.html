@@ -4928,7 +4928,7 @@
       loadSubtitleTranslationProjects();
 
       const mediaId = 'media-show-' + (showTitle || '').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-      sendQuickCommand(`translate-subtitle tự động chia batch tối đa 5 tập và dịch tuần tự tất cả các tập còn thiếu cho ${showTitle}`, mediaId);
+      sendQuickCommand(`translate-subtitle tự động chia batch tối đa 5 tập và dịch tuần tự tất cả các tập còn thiếu cho ${showTitle}. BẮT BUỘC in log console chi tiết từng bước [BƯỚC 1/5: Nạp nguồn], [BƯỚC 2/5: Glossary], [BƯỚC 3/5: Dịch thuật], [BƯỚC 4/5: Xuất bản], [BƯỚC 5/5: Audit] cho từng tập để người dùng theo dõi thời gian thực.`, mediaId);
     }
 
     async function syncShowSubtitles(showTitle, btn) {
@@ -5403,7 +5403,8 @@
       loadSubtitleTranslationProjects();
 
       const mediaId = 'media-show-' + (data.showTitle || '').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-      const command = `translate-subtitle: DỊCH DUY NHẤT 1 TẬP. Yêu cầu tự động dịch phụ đề tiếng Việt chuyên sâu cho "${data.showTitle}" duy nhất tập ${data.epKey}. Chỉ dịch và xuất đúng 3 file (.vi.ass, .vi.srt, .vi.vtt) cho tập ${data.epKey}, tuyệt đối KHÔNG dịch bất kỳ tập nào khác.`;
+      const command = `translate-subtitle: DỊCH DUY NHẤT 1 TẬP. Yêu cầu tự động dịch phụ đề tiếng Việt chuyên sâu cho "${data.showTitle}" duy nhất tập ${data.epKey}. Chỉ dịch và xuất đúng 3 file (.vi.ass, .vi.srt, .vi.vtt) cho tập ${data.epKey}, tuyệt đối KHÔNG dịch bất kỳ tập nào khác.
+QUY ĐỊNH LOGGING: BẮT BUỘC in ra console từng bước [BƯỚC 1/5: Khảo sát nguồn], [BƯỚC 2/5: Đối chiếu Glossary], [BƯỚC 3/5: Dịch thuật], [BƯỚC 4/5: Xuất bản 3 định dạng], [BƯỚC 5/5: Audit & Hoàn tất] để hiển thị thời gian thực lên Live Console.`;
 
       sendQuickCommand(command, mediaId);
       showToast(`🚀 Đã gửi lệnh dịch duy nhất tập ${data.epKey} sang AI Agent!`, 'success', 2500);

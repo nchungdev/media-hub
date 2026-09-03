@@ -347,63 +347,108 @@ class AgentBridge:
                 return d
         return dirs[0]
 
-    def _process_transcript_step(self, step):
+    def _process_transcript_step(self, step, agent_label=""):
         stype = step.get("type")
         thinking = step.get("thinking")
         tool_calls = step.get("tool_calls")
         content = step.get("content")
 
+        pfx = f"[{agent_label}] " if agent_label else ""
+
+        # 1. Thinking / Internal Reasoning
         if thinking and str(thinking).strip():
             th_text = str(thinking).strip()
             lines = [l.strip() for l in th_text.split("\n") if l.strip()]
             for l in lines:
                 clean_l = l.lstrip("#*-> ").strip()
                 if clean_l and not clean_l.startswith("```"):
-                    self.log_live(f"🧠 [Thinking] {clean_l}", "thinking")
+                    self.log_live(f"{pfx}🧠 [Thinking] {clean_l}", "thinking")
 
+        # 2. Agent Content / Progress / Step Announcements / Tool Outputs
+        if content and str(content).strip():
+            c_str = str(content).strip()
+            if "Created At:" in c_str or "The command exited" in c_str or "File Path:" in c_str:
+                # Strip metadata headers to get actual command/tool output
+                lines = c_str.split("\n")
+                actual_lines = []
+                in_body = False
+                for l in lines:
+                    l_strip = l.strip()
+                    if not in_body:
+                        if any(l_strip.startswith(h) for h in [
+                            "Created At:", "Completed At:", "File Path:", "Total Lines:",
+                            "Total Bytes:", "Showing lines", "The following code",
+                            "The lines of the file are", "Content is limited to"
+                        ]):
+                            continue
+                        elif l_strip.startswith("The command exited with code") or l_strip.startswith("Output:"):
+                            in_body = True
+                            continue
+                        else:
+                            in_body = True
+                    if l_strip:
+                        import re
+                        clean = re.sub(r'^\d+:\s*', '', l_strip)
+                        if clean and not clean.startswith('{') and not clean.startswith('['):
+                            actual_lines.append(clean)
+
+                for al in actual_lines[:6]:
+                    if len(al) > 140:
+                        al = al[:140] + "..."
+                    self.log_live(f"{pfx}  ↳ {al}", "output")
+            else:
+                # Model dialogue or step announcements
+                for l in c_str.split("\n"):
+                    l_clean = l.strip()
+                    if not l_clean or l_clean.startswith("```"):
+                        continue
+                    if any(l_clean.startswith(tag) for tag in [
+                        "[BƯỚC", "BƯỚC", "[STEP", "Step", "✅", "🚀", "⏳", "📝", "🔍", "⚡", "📌", "✨"
+                    ]):
+                        self.log_live(f"{pfx}📌 {l_clean}", "system")
+                    elif len(l_clean) > 3:
+                        if len(l_clean) > 140:
+                            l_clean = l_clean[:140] + "..."
+                        self.log_live(f"{pfx}💬 {l_clean}", "info")
+
+        # 3. Tool Calls
         if tool_calls:
             for tc in tool_calls:
                 name = tc.get("name", "tool")
                 args = tc.get("args") or tc.get("parameters") or {}
                 act = args.get("toolAction") or args.get("toolSummary") or args.get("Description") or args.get("Instruction") or ""
+                act = str(act).strip('"\' ')
 
                 if name == "run_command":
                     cmd = str(args.get("CommandLine", "")).strip()
                     if "\n" in cmd:
                         cmd = cmd.split("\n")[0] + "..."
-                    self.log_live(f"⚡ [Run Command] {act} $ {cmd[:140]}", "tool")
+                    self.log_live(f"{pfx}⚡ [Run Command] {act} $ {cmd[:140]}", "tool")
                 elif name in ["write_to_file", "replace_file_content"]:
-                    tf = os.path.basename(str(args.get("TargetFile") or args.get("AbsolutePath") or args.get("Path") or ""))
-                    self.log_live(f"📝 [{act or 'Chỉnh sửa tệp'}] {name} -> {tf}", "tool")
+                    tf = os.path.basename(str(args.get("TargetFile") or args.get("AbsolutePath") or args.get("Path") or "").strip('"\' '))
+                    self.log_live(f"{pfx}📝 [{act or 'Chỉnh sửa tệp'}] {name} -> {tf}", "tool")
                 elif name == "invoke_subagent":
                     subagents = args.get("Subagents", [])
                     roles = [s.get("Role", "Subagent") for s in subagents]
-                    self.log_live(f"🤖 [Spawn Subagent] {', '.join(roles)}", "subagent")
+                    self.log_live(f"{pfx}🤖 [Spawn Subagent] {', '.join(roles)}", "subagent")
                 elif name == "view_file":
-                    vf = os.path.basename(str(args.get("AbsolutePath", "")))
-                    self.log_live(f"🔍 [Đọc Tệp Tin] {act} -> {vf}", "tool")
+                    vf = os.path.basename(str(args.get("AbsolutePath", "")).strip('"\' '))
+                    self.log_live(f"{pfx}🔍 [Đọc Tệp Tin] {act} -> {vf}", "tool")
                 elif name == "grep_search":
-                    q = str(args.get("Query", ""))
-                    self.log_live(f"🔎 [Tìm Kiếm Mã Nguồn] Pattern: '{q}'", "tool")
+                    q = str(args.get("Query", "")).strip('"\' ')
+                    self.log_live(f"{pfx}🔎 [Tìm Kiếm Mã Nguồn] Pattern: '{q}'", "tool")
                 elif name == "search_web":
-                    q = str(args.get("query", ""))
-                    self.log_live(f"🌐 [Tìm Kiếm Web] '{q}'", "tool")
+                    q = str(args.get("query", "")).strip('"\' ')
+                    self.log_live(f"{pfx}🌐 [Tìm Kiếm Web] '{q}'", "tool")
                 elif name == "send_message":
                     rec = args.get("Recipient", "")
-                    self.log_live(f"✉️ [Gửi Tin Nhắn Cho Agent] Recipient: {rec}", "tool")
+                    self.log_live(f"{pfx}✉️ [Gửi Tin Nhắn Cho Agent] Recipient: {rec}", "tool")
                 else:
                     summary = args.get("toolSummary") or args.get("toolAction") or name
-                    self.log_live(f"⚙️ [Thực Thi Công Cụ] {summary}", "tool")
-
-        if stype == "GENERIC" and content and not str(content).startswith("Created At:"):
-            first_line = str(content).strip().split("\n")[0].strip()
-            if first_line and not first_line.startswith("{") and len(first_line) > 3:
-                if len(first_line) > 120:
-                    first_line = first_line[:120] + "..."
-                self.log_live(f"  ↳ {first_line}", "output")
+                    self.log_live(f"{pfx}⚙️ [Thực Thi Công Cụ] {summary}", "tool")
 
     def _tail_transcript(self, brain_dirs, conv_id_hint, start_time, stop_event, on_conv_discovered=None):
-        """Realtime transcript tailer: streams thinking, tool calls, and execution steps to live console."""
+        """Realtime transcript tailer: streams thinking, tool calls, execution steps and subagents to live console."""
         conv_id = conv_id_hint
         transcript_path = None
         seen_lines = 0
@@ -444,7 +489,51 @@ class AgentBridge:
         if not transcript_path or not transcript_path.exists():
             return
 
-        # Step 2: Tail transcript.jsonl
+        tracked_subagents = set()
+
+        def start_subagent_tailer(sub_cid, role):
+            if sub_cid in tracked_subagents:
+                return
+            tracked_subagents.add(sub_cid)
+            
+            def sub_tail():
+                sub_path = None
+                for _ in range(30):
+                    if stop_event.is_set():
+                        return
+                    for bd in brain_dirs:
+                        candidate = Path(bd) / sub_cid / ".system_generated" / "logs" / "transcript.jsonl"
+                        if candidate.exists():
+                            sub_path = candidate
+                            break
+                    if sub_path:
+                        break
+                    time.sleep(0.5)
+
+                if not sub_path:
+                    return
+
+                try:
+                    with open(sub_path, "r", encoding="utf-8") as sf:
+                        while not stop_event.is_set():
+                            s_line = sf.readline()
+                            if not s_line:
+                                time.sleep(0.3)
+                                continue
+                            s_line = s_line.strip()
+                            if s_line:
+                                try:
+                                    s_step = json.loads(s_line)
+                                    self._process_transcript_step(s_step, agent_label=role)
+                                except Exception:
+                                    pass
+                except Exception:
+                    pass
+
+            t = threading.Thread(target=sub_tail, daemon=True)
+            t.start()
+
+        # Step 2: Tail parent transcript.jsonl
         try:
             with open(transcript_path, "r", encoding="utf-8") as f:
                 if conv_id_hint:
@@ -453,6 +542,9 @@ class AgentBridge:
                     f.seek(0)
                     for _ in range(seen_lines):
                         f.readline()
+
+                import re
+                subagent_role_map = {}
 
                 while not stop_event.is_set():
                     line = f.readline()
@@ -467,6 +559,23 @@ class AgentBridge:
                     try:
                         step = json.loads(line)
                         self._process_transcript_step(step)
+
+                        # Detect subagents invoked in tool_calls
+                        for tc in step.get("tool_calls", []):
+                            if tc.get("name") == "invoke_subagent":
+                                s_args = tc.get("args") or tc.get("parameters") or {}
+                                for sub in s_args.get("Subagents", []):
+                                    r = sub.get("Role") or sub.get("TypeName", "Subagent")
+                                    # Save pending role
+                                    subagent_role_map["pending"] = r
+
+                        # Detect subagent conversationId in content
+                        c_text = str(step.get("content", ""))
+                        if "conversationId" in c_text:
+                            matches = re.findall(r'"conversationId":\s*"([a-f0-9\-]+)"', c_text)
+                            for m in matches:
+                                r_label = subagent_role_map.get("pending", "Subagent")
+                                start_subagent_tailer(m, r_label)
                     except Exception:
                         pass
 
@@ -480,7 +589,7 @@ class AgentBridge:
                         except Exception:
                             pass
         except Exception as e:
-            print(f"[AgentBridge] Error tailing transcript ({conv_id}): {e}")
+            print(f"[AgentBridge] Lỗi tail transcript: {e}", flush=True)
 
     def add_command(self, command_text, author="User", media_id=None):
         queue = self._load()
