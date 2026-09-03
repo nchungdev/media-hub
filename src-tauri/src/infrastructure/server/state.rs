@@ -2,7 +2,7 @@ use crate::domain::traits::{
     ICollectionService, IQuotaService, ISettingsService, ISubtitleService, ITunnelService,
 };
 use crate::services::{
-    watcher_service,
+    aria2_service::Aria2Service, sync_worker, watcher_service,
     agent_service::AgentService, artwork_service::ArtworkService,
     collection_service::CollectionService, dashboard_service::DashboardService,
     gdrive_service::GDriveService, health_service::HealthService, job_store::JobStore,
@@ -31,6 +31,7 @@ pub struct AppState {
     pub library: Arc<LibraryService>,
     pub tmdb: Arc<TmdbService>,
     pub agent: Arc<AgentService>,
+    pub aria2: Arc<Aria2Service>,
 }
 
 impl AppState {
@@ -65,6 +66,11 @@ impl AppState {
         // Watcher nen: theo doi .media-hub/_franchise, tu dong lam moi + luu
         // collections_cache vao DB moi khi co thay doi file (them/xoa/doi ten).
         watcher_service::start(home.join("_franchise"), collections.clone(), job_store.clone());
+
+        // Hang doi tai: aria2 nhan ca magnet lan link https (TorBox cap hoac DDL),
+        // nen worker khong can phan biet nguon.
+        let aria2 = Arc::new(Aria2Service::new(settings.clone()));
+        sync_worker::start(aria2.clone(), job_store.clone());
         let dashboard = Arc::new(DashboardService::new(settings.clone(), job_store.clone()));
         let gdrive = Arc::new(GDriveService::new(settings.clone()));
         let nas = Arc::new(NasService::new(settings.clone()));
@@ -94,6 +100,7 @@ impl AppState {
             library,
             tmdb,
             agent,
+            aria2,
         }
     }
 }

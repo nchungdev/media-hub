@@ -63,6 +63,10 @@ pub struct SeasonInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollectionItem {
     pub id: String,
+    /// Ten franchise chua title nay (ten thu muc trong _franchise/).
+    /// App hien thi gom nhom theo truong nay, con NAS/Drive van giu
+    /// cau truc phang kieu Plex/Jellyfin khi dong bo.
+    pub franchise: String,
     pub folder: String,
     pub tvdb_id: Option<String>,
     pub title: String,
@@ -92,8 +96,20 @@ pub struct CollectionSummary {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FranchiseGroup {
+    pub name: String,
+    pub total_items: usize,
+    pub total_series: usize,
+    pub total_movies: usize,
+    /// Danh sach id cua cac title thuoc franchise nay.
+    pub item_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollectionsResponse {
     pub collections: Vec<CollectionItem>,
+    /// Gom nhom san theo franchise de UI khong phai tu tinh lai.
+    pub franchises: Vec<FranchiseGroup>,
     pub summary: CollectionSummary,
     pub timestamp: f64,
 }

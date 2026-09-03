@@ -1,4 +1,5 @@
 use crate::domain::models::collection::{
+    FranchiseGroup,
     CollectionItem, CollectionSummary, CollectionsResponse, DownloadStatus, EpisodeInfo,
     SeasonInfo, SubtitleStatus, SyncStatus,
 };
@@ -23,7 +24,7 @@ impl CollectionService {
         }
     }
 
-    fn scan_directory(dir: &Path, media_type: &str) -> Vec<CollectionItem> {
+    fn scan_directory(dir: &Path, media_type: &str, franchise: &str) -> Vec<CollectionItem> {
         let mut items = Vec::new();
         if !dir.exists() {
             return items;
@@ -150,6 +151,7 @@ impl CollectionService {
                     "col-{}",
                     tvdb_id.clone().unwrap_or_else(|| folder_name.clone())
                 ),
+                franchise: franchise.to_string(),
                 folder: folder_name,
                 tvdb_id,
                 title: clean_name,
@@ -278,8 +280,17 @@ impl ICollectionService for CollectionService {
                 if fname.starts_with('.') || fname.starts_with('_') {
                     continue;
                 }
-                all_items.extend(Self::scan_directory(&franchise_path.join("TV Shows"), "series"));
-                all_items.extend(Self::scan_directory(&franchise_path.join("Movies"), "movie"));
+                let franchise_name = fname.to_string();
+                all_items.extend(Self::scan_directory(
+                    &franchise_path.join("TV Shows"),
+                    "series",
+                    &franchise_name,
+                ));
+                all_items.extend(Self::scan_directory(
+                    &franchise_path.join("Movies"),
+                    "movie",
+                    &franchise_name,
+                ));
             }
         }
 
@@ -290,8 +301,38 @@ impl ICollectionService for CollectionService {
         let synced_both = all_items.iter().filter(|i| i.sync.state == "synced_both").count();
         let sub_complete = all_items.iter().filter(|i| i.subtitle.state == "complete").count();
 
+        // Gom nhom theo franchise: app hien thi theo franchise, con NAS/Drive
+        // van dong bo phang theo chuan Plex/Jellyfin.
+        let mut order: Vec<String> = Vec::new();
+        let mut grouped: HashMap<String, FranchiseGroup> = HashMap::new();
+        for it in &all_items {
+            let g = grouped
+                .entry(it.franchise.clone())
+                .or_insert_with(|| {
+                    order.push(it.franchise.clone());
+                    FranchiseGroup {
+                        name: it.franchise.clone(),
+                        total_items: 0,
+                        total_series: 0,
+                        total_movies: 0,
+                        item_ids: Vec::new(),
+                    }
+                });
+            g.total_items += 1;
+            if it.media_type == "series" {
+                g.total_series += 1;
+            } else {
+                g.total_movies += 1;
+            }
+            g.item_ids.push(it.id.clone());
+        }
+        order.sort();
+        let franchises: Vec<FranchiseGroup> =
+            order.into_iter().filter_map(|n| grouped.remove(&n)).collect();
+
         let resp = CollectionsResponse {
             collections: all_items,
+            franchises,
             summary: CollectionSummary {
                 total_items,
                 total_series,

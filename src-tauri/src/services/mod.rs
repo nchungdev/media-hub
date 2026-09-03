@@ -1,4 +1,5 @@
 pub mod agent_service;
+pub mod aria2_service;
 pub mod artwork_service;
 pub mod collection_service;
 pub mod dashboard_service;
@@ -11,6 +12,7 @@ pub mod quota_service;
 pub mod settings_service;
 pub mod streaming_service;
 pub mod subtitle_service;
+pub mod sync_worker;
 pub mod tmdb_service;
 pub mod torbox_service;
 pub mod tunnel_service;

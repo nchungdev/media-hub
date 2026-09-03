@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS jobs (
     bytes_done    INTEGER NOT NULL DEFAULT 0,
     speed_bps     REAL    NOT NULL DEFAULT 0.0,
     staging_path  TEXT    NOT NULL DEFAULT '',
+    franchise     TEXT    NOT NULL DEFAULT '',
+    source_uri    TEXT    NOT NULL DEFAULT '',
+    gid           TEXT    NOT NULL DEFAULT '',
     message       TEXT    NOT NULL DEFAULT '',
     error         TEXT    NOT NULL DEFAULT '',
     attempts      INTEGER NOT NULL DEFAULT 0,
@@ -70,6 +73,16 @@ impl JobStore {
         .map_err(|e| e.to_string())?;
         conn.execute_batch(SCHEMA).map_err(|e| e.to_string())?;
 
+        // DB cu da co bang jobs roi thi CREATE TABLE IF NOT EXISTS khong them cot moi,
+        // nen phai ALTER rieng. Cot da ton tai se bao loi -> bo qua co y.
+        for col in [
+            "ALTER TABLE jobs ADD COLUMN franchise TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE jobs ADD COLUMN source_uri TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE jobs ADD COLUMN gid TEXT NOT NULL DEFAULT ''",
+        ] {
+            let _ = conn.execute(col, []);
+        }
+
         // Requeue stale jobs
         let _ = conn.execute(
             "UPDATE jobs SET status='queued', phase='pending', message='Khôi phục sau khi server khởi động lại', updated_at=? WHERE status='running'",
@@ -79,6 +92,112 @@ impl JobStore {
         Ok(Self {
             conn: Arc::new(Mutex::new(conn)),
         })
+    }
+
+    /// Them job tai moi, co gan franchise dich va nguon (magnet hoac https).
+    pub fn enqueue_download(
+        &self,
+        name: &str,
+        franchise: &str,
+        source_uri: &str,
+        staging_path: &str,
+        targets: Vec<String>,
+    ) -> i64 {
+        let conn = self.conn.lock().unwrap();
+        let now = now_secs();
+        let targets_json = serde_json::to_string(&targets).unwrap_or_else(|_| "[]".to_string());
+        let torrent_id = format!("dl-{}", now as i64);
+
+        let r = conn.execute(
+            "INSERT INTO jobs (torrent_id, name, status, phase, targets, franchise, source_uri, staging_path, created_at, updated_at)
+             VALUES (?, ?, 'queued', 'pending', ?, ?, ?, ?, ?, ?)",
+            params![torrent_id, name, targets_json, franchise, source_uri, staging_path, now, now],
+        );
+        match r {
+            Ok(_) => conn.last_insert_rowid(),
+            Err(_) => -1,
+        }
+    }
+
+    pub fn mark_running(&self, job_id: i64, gid: &str, message: &str) {
+        let conn = self.conn.lock().unwrap();
+        let _ = conn.execute(
+            "UPDATE jobs SET status='running', phase='download', gid=?, message=?, updated_at=? WHERE id=?",
+            params![gid, message, now_secs(), job_id],
+        );
+    }
+
+    pub fn update_progress(
+        &self,
+        job_id: i64,
+        bytes_done: u64,
+        bytes_total: u64,
+        speed_bps: u64,
+    ) {
+        let progress = if bytes_total > 0 {
+            (bytes_done as f64 / bytes_total as f64) * 100.0
+        } else {
+            0.0
+        };
+        let conn = self.conn.lock().unwrap();
+        let _ = conn.execute(
+            "UPDATE jobs SET bytes_done=?, bytes_total=?, speed_bps=?, progress=?, updated_at=? WHERE id=?",
+            params![
+                bytes_done as i64,
+                bytes_total as i64,
+                speed_bps as f64,
+                progress,
+                now_secs(),
+                job_id
+            ],
+        );
+    }
+
+    pub fn mark_done(&self, job_id: i64, message: &str) {
+        let conn = self.conn.lock().unwrap();
+        let now = now_secs();
+        let _ = conn.execute(
+            "UPDATE jobs SET status='done', phase='done', progress=100.0, message=?, updated_at=?, finished_at=? WHERE id=?",
+            params![message, now, now, job_id],
+        );
+    }
+
+    pub fn mark_failed(&self, job_id: i64, error: &str) {
+        let conn = self.conn.lock().unwrap();
+        let now = now_secs();
+        let _ = conn.execute(
+            "UPDATE jobs SET status='failed', message=?, error=?, updated_at=?, finished_at=? WHERE id=?",
+            params![error, error, now, now, job_id],
+        );
+    }
+
+    pub fn get_gid(&self, job_id: i64) -> Option<String> {
+        let conn = self.conn.lock().unwrap();
+        conn.query_row("SELECT gid FROM jobs WHERE id=?", params![job_id], |r| {
+            r.get::<_, String>(0)
+        })
+        .ok()
+        .filter(|g| !g.is_empty())
+    }
+
+    pub fn is_cancel_requested(&self, job_id: i64) -> bool {
+        let conn = self.conn.lock().unwrap();
+        conn.query_row(
+            "SELECT cancel_requested FROM jobs WHERE id=?",
+            params![job_id],
+            |r| r.get::<_, i64>(0),
+        )
+        .map(|v| v == 1)
+        .unwrap_or(false)
+    }
+
+    pub fn mark_cancelled(&self, job_id: i64) {
+        let conn = self.conn.lock().unwrap();
+        let now = now_secs();
+        let _ = conn.execute(
+            "UPDATE jobs SET status='cancelled', message='Đã huỷ theo yêu cầu', updated_at=?, finished_at=? WHERE id=?",
+            params![now, now, job_id],
+        );
     }
 
     pub fn save_collections_snapshot(&self, payload: &str) {
@@ -177,12 +296,14 @@ impl JobStore {
 
     pub fn list_active(&self) -> Vec<SyncJob> {
         let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT id, torrent_id, name, status, phase, targets, done_targets, progress, speed_bps, bytes_done, bytes_total, message, staging_path, created_at, updated_at, finished_at FROM jobs WHERE status IN ('queued', 'running') ORDER BY created_at ASC").unwrap();
+        let mut stmt = conn.prepare("SELECT id, torrent_id, name, status, phase, targets, done_targets, progress, speed_bps, bytes_done, bytes_total, message, staging_path, created_at, updated_at, finished_at, franchise, source_uri FROM jobs WHERE status IN ('queued', 'running') ORDER BY created_at ASC").unwrap();
         let rows = stmt
             .query_map([], |row| {
                 Ok(SyncJob {
                     id: row.get(0)?,
                     torrent_id: row.get(1)?,
+                    franchise: row.get::<_, String>(16).unwrap_or_default(),
+                    source_uri: row.get::<_, String>(17).unwrap_or_default(),
                     name: row.get(2)?,
                     status: match row.get::<_, String>(3)?.as_str() {
                         "running" => JobStatus::Running,
@@ -219,12 +340,14 @@ impl JobStore {
 
     pub fn list_recent(&self, limit: usize) -> Vec<SyncJob> {
         let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare("SELECT id, torrent_id, name, status, phase, targets, done_targets, progress, speed_bps, bytes_done, bytes_total, message, staging_path, created_at, updated_at, finished_at FROM jobs ORDER BY COALESCE(finished_at, updated_at) DESC LIMIT ?").unwrap();
+        let mut stmt = conn.prepare("SELECT id, torrent_id, name, status, phase, targets, done_targets, progress, speed_bps, bytes_done, bytes_total, message, staging_path, created_at, updated_at, finished_at, franchise, source_uri FROM jobs ORDER BY COALESCE(finished_at, updated_at) DESC LIMIT ?").unwrap();
         let rows = stmt
             .query_map(params![limit as i64], |row| {
                 Ok(SyncJob {
                     id: row.get(0)?,
                     torrent_id: row.get(1)?,
+                    franchise: row.get::<_, String>(16).unwrap_or_default(),
+                    source_uri: row.get::<_, String>(17).unwrap_or_default(),
                     name: row.get(2)?,
                     status: match row.get::<_, String>(3)?.as_str() {
                         "running" => JobStatus::Running,
