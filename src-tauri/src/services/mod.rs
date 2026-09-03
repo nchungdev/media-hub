@@ -14,4 +14,5 @@ pub mod subtitle_service;
 pub mod tmdb_service;
 pub mod torbox_service;
 pub mod tunnel_service;
+pub mod watcher_service;
 

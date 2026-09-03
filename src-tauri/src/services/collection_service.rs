@@ -262,13 +262,26 @@ impl ICollectionService for CollectionService {
         }
 
         let settings = self.settings_service.load();
-        let ws = PathBuf::from(&settings.workspace_dir);
-        let tv_dir = ws.join(&settings.tv_dirname);
-        let movie_dir = ws.join(&settings.movies_dirname);
+        let franchise_root = PathBuf::from(&settings.media_hub_home).join("_franchise");
 
+        // Kien truc collection-centric: moi franchise la 1 thu muc con truc tiep
+        // cua .media-hub/_franchise, ben trong co "Movies/" va/hoac "TV Shows/".
         let mut all_items = Vec::new();
-        all_items.extend(Self::scan_directory(&tv_dir, "series"));
-        all_items.extend(Self::scan_directory(&movie_dir, "movie"));
+        if let Ok(entries) = fs::read_dir(&franchise_root) {
+            for entry in entries.flatten() {
+                let franchise_path = entry.path();
+                if !franchise_path.is_dir() {
+                    continue;
+                }
+                let fname = entry.file_name();
+                let fname = fname.to_string_lossy();
+                if fname.starts_with('.') || fname.starts_with('_') {
+                    continue;
+                }
+                all_items.extend(Self::scan_directory(&franchise_path.join("TV Shows"), "series"));
+                all_items.extend(Self::scan_directory(&franchise_path.join("Movies"), "movie"));
+            }
+        }
 
         let total_items = all_items.len();
         let total_series = all_items.iter().filter(|i| i.media_type == "series").count();

@@ -35,6 +35,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_jobs_one_active_per_torrent
     ON jobs(torrent_id) WHERE status IN ('queued', 'running');
 CREATE INDEX IF NOT EXISTS idx_jobs_status  ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_jobs_updated ON jobs(updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS collections_cache (
+    id          INTEGER PRIMARY KEY CHECK (id = 1),
+    payload     TEXT    NOT NULL,
+    updated_at  REAL    NOT NULL
+);
 "#;
 
 fn now_secs() -> f64 {
@@ -73,6 +79,25 @@ impl JobStore {
         Ok(Self {
             conn: Arc::new(Mutex::new(conn)),
         })
+    }
+
+    pub fn save_collections_snapshot(&self, payload: &str) {
+        let conn = self.conn.lock().unwrap();
+        let _ = conn.execute(
+            "INSERT INTO collections_cache (id, payload, updated_at) VALUES (1, ?, ?)
+             ON CONFLICT(id) DO UPDATE SET payload=excluded.payload, updated_at=excluded.updated_at",
+            params![payload, now_secs()],
+        );
+    }
+
+    pub fn load_collections_snapshot(&self) -> Option<(String, f64)> {
+        let conn = self.conn.lock().unwrap();
+        conn.query_row(
+            "SELECT payload, updated_at FROM collections_cache WHERE id=1",
+            [],
+            |row| Ok((row.get::<_, String>(0)?, row.get::<_, f64>(1)?)),
+        )
+        .ok()
     }
 
     pub fn enqueue(&self, torrent_id: &str, targets: Vec<String>, name: &str) -> EnqueueResult {

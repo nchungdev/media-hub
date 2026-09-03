@@ -40,7 +40,7 @@ find_state_dir() {
   echo "$target/.media-hub"
 }
 
-STATE_DIR="$(find_state_dir)"
+STATE_DIR="$(find_state_dir)/_app"
 mkdir -p "$STATE_DIR"
 PID_FILE="$STATE_DIR/media_hub.pid"
 LOG_FILE="$STATE_DIR/server.log"
@@ -79,7 +79,7 @@ cmd_start() {
         ;;
       --workspace|-w)
         export MEDIA_HUB_WORKSPACE="$2"
-        STATE_DIR="$(find_state_dir)"
+        STATE_DIR="$(find_state_dir)/_app"
         PID_FILE="$STATE_DIR/media_hub.pid"
         LOG_FILE="$STATE_DIR/server.log"
         shift 2

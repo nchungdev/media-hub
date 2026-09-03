@@ -11,9 +11,8 @@ pub struct TunnelService {
 }
 
 impl TunnelService {
-    pub fn new() -> Self {
-        let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
-        let state_file = home.join(".media-hub").join("tunnel_state.json");
+    pub fn new(home: PathBuf) -> Self {
+        let state_file = home.join("tunnel_state.json");
         Self { state_file }
     }
 
@@ -43,11 +42,6 @@ impl TunnelService {
     }
 }
 
-impl Default for TunnelService {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 #[async_trait]
 impl ITunnelService for TunnelService {

@@ -32,7 +32,7 @@ impl AgentService {
         } else {
             dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join(".media-hub")
         };
-        home.join("agent_queue.json")
+        home.join("_app").join("agent_queue.json")
     }
 
     fn sessions_file(&self) -> PathBuf {
@@ -42,7 +42,7 @@ impl AgentService {
         } else {
             dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join(".media-hub")
         };
-        home.join("media_sessions.json")
+        home.join("_app").join("media_sessions.json")
     }
 
     pub fn list_commands(&self) -> Value {
@@ -89,7 +89,7 @@ impl AgentService {
     }
 
     pub fn trigger_worker(&self) {
-        let worker_script = "/Volumes/512GB/AI Workspace/apps/media-hub/backend/core/agent_bridge.py";
+        let worker_script = "/Volumes/512GB/Studio Projects/media-hub/backend/core/agent_bridge.py";
         if std::path::Path::new(worker_script).exists() {
             let _ = Command::new("python3")
                 .arg(worker_script)
