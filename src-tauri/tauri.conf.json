@@ -11,6 +11,7 @@
     "windows": [
       {
         "title": "Media Hub",
+        "url": "http://127.0.0.1:8888",
         "width": 1440,
         "height": 920,
         "minWidth": 1024,

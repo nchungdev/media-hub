@@ -2360,8 +2360,27 @@
   </div>
 
   <script>
+    // Universal API Origin Resolver for Tauri (tauri://), Localhost, and Tunnel
+    (function() {
+      const isCustomScheme = window.location.protocol === 'tauri:' || 
+                             window.location.protocol === 'file:' ||
+                             window.location.origin.includes('tauri.localhost');
+      if (isCustomScheme) {
+        const origFetch = window.fetch;
+        window.fetch = function(input, init) {
+          if (typeof input === 'string' && input.startsWith('/')) {
+            input = 'http://127.0.0.1:8888' + input;
+          } else if (input instanceof Request && input.url.startsWith('/')) {
+            input = new Request('http://127.0.0.1:8888' + input.url, init);
+          }
+          return origFetch.call(this, input, init);
+        };
+      }
+    })();
+
     // Desktop Native App Bridge (Clean Architecture Adapter Pattern for Tauri 2 & Electron)
     window.desktopBridge = {
+
       isTauri: !!(window.__TAURI__ && window.__TAURI__.core),
       isElectron: !!(window.electronAPI && window.electronAPI.isElectron),
       get isDesktop() { return this.isTauri || this.isElectron; },
