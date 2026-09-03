@@ -1741,7 +1741,8 @@ class MediaHubHandler(BaseHTTPRequestHandler):
         # 4b. API: Start/Stop Cloudflare Tunnel
         elif path == "/api/tunnel/start":
             port = int(req_data.get("port") or PORT or 8888)
-            res = tunnel_mgr.start(port=port)
+            force_new = bool(req_data.get("force") or req_data.get("force_new"))
+            res = tunnel_mgr.start(port=port, force_new=force_new)
             return self._send_json(res, status=200 if res.get("success") else 500)
 
         elif path == "/api/tunnel/stop":

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Cloudflare Quick Tunnel (trycloudflare) Manager for Antigravity Media Hub.
-Provides remote HTTPS access without port forwarding or account requirements.
+Provides persistent remote HTTPS access without port forwarding or account requirements.
+Designed with Domain Preservation Strategy: Reuses existing tunnel & domain across server restarts.
 """
 
 import os
@@ -36,6 +37,7 @@ class TunnelManager:
         self._reader_thread = None
         self._state_dir = Path.home() / ".media-hub"
         self._state_file = self._state_dir / "tunnel_state.json"
+        self._log_file = self._state_dir / "tunnel.log"
         self._load_state()
 
     def find_cloudflared_bin(self):
@@ -56,8 +58,41 @@ class TunnelManager:
                 return cand
         return None
 
+    def _is_cloudflared_pid(self, pid):
+        """Check if PID is alive and is actually a cloudflared process."""
+        if not pid or not isinstance(pid, int):
+            return False
+        try:
+            os.kill(pid, 0)
+            # Verify process name
+            res = subprocess.run(
+                ["ps", "-p", str(pid), "-o", "command="],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            return "cloudflared" in (res.stdout or "")
+        except Exception:
+            return False
+
+    def _extract_url_from_log(self):
+        """Extract public trycloudflare URL from persistent log file."""
+        if not self._log_file.exists():
+            return None
+        url_regex = re.compile(r"https://(?!api\.)[a-zA-Z0-9-]+\.trycloudflare\.com")
+        try:
+            with open(self._log_file, "r", encoding="utf-8", errors="ignore") as f:
+                lines = f.readlines()
+                for line in reversed(lines):
+                    m = url_regex.search(line)
+                    if m:
+                        return m.group(0)
+        except Exception:
+            pass
+        return None
+
     def _load_state(self):
-        """Load persistent tunnel state if any."""
+        """Load persistent tunnel state and reattach to running daemon if alive."""
         try:
             if self._state_file.exists():
                 with open(self._state_file, "r", encoding="utf-8") as f:
@@ -65,20 +100,58 @@ class TunnelManager:
                     pid = data.get("pid")
                     url = data.get("url")
                     port = data.get("port", 8888)
-                    # Check if pid is still running and is cloudflared
-                    if pid and self._is_pid_alive(pid):
-                        self._url = url
+                    started_at = data.get("started_at")
+
+                    if pid and self._is_cloudflared_pid(pid):
+                        self._url = url or self._extract_url_from_log()
                         self._port = port
-                        self._started_at = data.get("started_at")
+                        self._started_at = started_at
+                        self._start_tail_thread()
+                        return
         except Exception:
             pass
 
-    def _save_state(self):
+        # Also check system processes if state file was missing or stale
+        try:
+            res = subprocess.run(
+                ["pgrep", "-f", "cloudflared tunnel --url"],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            pids = [int(p.strip()) for p in res.stdout.split() if p.strip().isdigit()]
+            for pid in pids:
+                if self._is_cloudflared_pid(pid):
+                    url = self._extract_url_from_log()
+                    if url:
+                        self._url = url
+                        self._started_at = time.strftime("%Y-%m-%d %H:%M:%S")
+                        self._save_state(pid)
+                        self._start_tail_thread()
+                        return
+        except Exception:
+            pass
+
+    def _save_state(self, pid=None):
         """Save tunnel state to disk."""
         try:
             self._state_dir.mkdir(parents=True, exist_ok=True)
+            active_pid = pid
+            if active_pid is None:
+                if self._proc and self._proc.poll() is None:
+                    active_pid = self._proc.pid
+                elif self._state_file.exists():
+                    try:
+                        with open(self._state_file, "r", encoding="utf-8") as f:
+                            d = json.load(f)
+                            existing_pid = d.get("pid")
+                            if existing_pid and self._is_cloudflared_pid(existing_pid):
+                                active_pid = existing_pid
+                    except Exception:
+                        pass
+
             state = {
-                "pid": self._proc.pid if self._proc and self._proc.poll() is None else None,
+                "pid": active_pid,
                 "url": self._url,
                 "port": self._port,
                 "started_at": self._started_at,
@@ -89,27 +162,56 @@ class TunnelManager:
         except Exception:
             pass
 
-    def _is_pid_alive(self, pid):
-        try:
-            os.kill(pid, 0)
-            return True
-        except (OSError, ProcessLookupError):
-            return False
+    def _start_tail_thread(self):
+        """Start background log tailing thread from log file."""
+        if self._reader_thread and self._reader_thread.is_alive():
+            return
+
+        def _tail():
+            try:
+                if self._log_file.exists():
+                    with open(self._log_file, "r", encoding="utf-8", errors="ignore") as f:
+                        f.seek(0, os.SEEK_END)
+                        while True:
+                            line = f.readline()
+                            if line:
+                                l = line.strip()
+                                if l:
+                                    self._logs.append(l)
+                            else:
+                                time.sleep(1)
+            except Exception:
+                pass
+
+        self._reader_thread = threading.Thread(target=_tail, daemon=True)
+        self._reader_thread.start()
 
     def get_status(self):
-        """Get live status of Cloudflare Tunnel."""
+        """Get live status of Cloudflare Tunnel with domain persistence check."""
         bin_path = self.find_cloudflared_bin()
         
-        # Check if process died
-        if self._proc and self._proc.poll() is not None:
-            self._proc = None
-            self._url = None
-            self._save_state()
+        # Check if running
+        is_running = False
+        pid = None
+        if self._proc and self._proc.poll() is None:
+            is_running = bool(self._url)
+            pid = self._proc.pid
+        elif self._state_file.exists():
+            try:
+                with open(self._state_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    pid = data.get("pid")
+                    if pid and self._is_cloudflared_pid(pid):
+                        is_running = bool(self._url or data.get("url"))
+                        if not self._url:
+                            self._url = data.get("url") or self._extract_url_from_log()
+                            self._started_at = data.get("started_at")
+            except Exception:
+                pass
 
-        is_running = bool(self._url and (
-            (self._proc and self._proc.poll() is None) or 
-            self._check_state_pid_running()
-        ))
+        if not is_running:
+            self._url = None
+            self._started_at = None
 
         return {
             "installed": bool(bin_path),
@@ -118,33 +220,22 @@ class TunnelManager:
             "url": self._url if is_running else None,
             "port": self._port,
             "started_at": self._started_at if is_running else None,
+            "pid": pid if is_running else None,
             "error": self._error,
             "recent_logs": list(self._logs)[-25:]
         }
 
-    def _check_state_pid_running(self):
-        """Check if existing background daemon recorded in state is running."""
-        try:
-            if self._state_file.exists():
-                with open(self._state_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    pid = data.get("pid")
-                    if pid and self._is_pid_alive(pid):
-                        return True
-        except Exception:
-            pass
-        return False
-
-    def start(self, port=8888):
-        """Start Cloudflare Quick Tunnel on specified port."""
+    def start(self, port=8888, force_new=False):
+        """Start Cloudflare Quick Tunnel on specified port. Preserves existing domain if active."""
         with self._lock:
-            # If already running on same port, return existing URL
             st = self.get_status()
-            if st["running"] and self._url:
+            
+            # If already running and not force_new, PRESERVE EXISTING DOMAIN
+            if st["running"] and st["url"] and not force_new:
                 return {
                     "success": True,
-                    "url": self._url,
-                    "message": f"Cloudflare Tunnel đang hoạt động tại {self._url}",
+                    "url": st["url"],
+                    "message": f"♻️ Giữ nguyên domain Cloudflare đang hoạt động: {st['url']}",
                     "status": st
                 }
 
@@ -153,14 +244,21 @@ class TunnelManager:
                 self._error = "Không tìm thấy cloudflared trên hệ thống."
                 return {
                     "success": False,
-                    "error": "cloudflared chưa được cài đặt. Vui lòng mở Terminal và chạy: brew install cloudflared",
+                    "error": "cloudflared chưa được cài đặt. Vui lòng chạy: brew install cloudflared",
                     "status": self.get_status()
                 }
+
+            # Stop existing process if force_new
+            if force_new:
+                self.stop()
 
             self._port = int(port or 8888)
             self._error = None
             self._logs.clear()
             self._url = None
+
+            self._state_dir.mkdir(parents=True, exist_ok=True)
+            log_out = open(self._log_file, "a", encoding="utf-8")
 
             cmd = [bin_path, "tunnel", "--url", f"http://127.0.0.1:{self._port}"]
             
@@ -171,28 +269,28 @@ class TunnelManager:
                     stderr=subprocess.STDOUT,
                     text=True,
                     bufsize=1,
-                    start_new_session=True  # Isolated session so app quits don't kill it
+                    start_new_session=True  # Detached process so app restarts don't kill it
                 )
                 self._proc = proc
             except Exception as e:
                 self._error = f"Không khởi chạy được cloudflared: {e}"
+                log_out.close()
                 return {
                     "success": False,
                     "error": self._error,
                     "status": self.get_status()
                 }
 
-            # URL Discovery in main thread with 15s timeout
+            # Discover public URL from stdout stream
             discovered_url = None
             start_time = time.time()
-            # Use negative lookahead to ignore api.trycloudflare.com
             url_regex = re.compile(r"https://(?!api\.)[a-zA-Z0-9-]+\.trycloudflare\.com")
 
             while time.time() - start_time < 15:
                 if proc.poll() is not None:
-                    # Process exited prematurely
                     self._error = f"Tiến trình cloudflared thoát sớm với mã lỗi {proc.returncode}"
                     self._proc = None
+                    log_out.close()
                     return {
                         "success": False,
                         "error": self._error,
@@ -204,6 +302,8 @@ class TunnelManager:
                     clean_l = line.strip()
                     if clean_l:
                         self._logs.append(clean_l)
+                        log_out.write(clean_l + "\n")
+                        log_out.flush()
                         m = url_regex.search(clean_l)
                         if m:
                             discovered_url = m.group(0)
@@ -212,8 +312,8 @@ class TunnelManager:
                     time.sleep(0.1)
 
             if not discovered_url:
-                # Stop proc if URL was not found
                 self.stop()
+                log_out.close()
                 self._error = "Hết thời gian chờ nhận URL Public từ Cloudflare Edge."
                 return {
                     "success": False,
@@ -223,19 +323,30 @@ class TunnelManager:
 
             self._url = discovered_url
             self._started_at = time.strftime("%Y-%m-%d %H:%M:%S")
-            self._save_state()
+            self._save_state(proc.pid)
 
-            # Start background reader thread to continuously read logs
-            def _log_reader():
+            # Continue piping remaining logs to persistent log file in background
+            def _log_forwarder(p, out_f):
                 try:
-                    for raw_l in iter(proc.stdout.readline, ""):
+                    for raw_l in iter(p.stdout.readline, ""):
                         l = raw_l.strip()
                         if l:
                             self._logs.append(l)
+                            out_f.write(l + "\n")
+                            out_f.flush()
                 except Exception:
                     pass
+                finally:
+                    try:
+                        out_f.close()
+                    except Exception:
+                        pass
 
-            self._reader_thread = threading.Thread(target=_log_reader, daemon=True)
+            self._reader_thread = threading.Thread(
+                target=_log_forwarder,
+                args=(proc, log_out),
+                daemon=True
+            )
             self._reader_thread.start()
 
             return {
@@ -248,44 +359,48 @@ class TunnelManager:
     def stop(self):
         """Stop running Cloudflare Tunnel."""
         with self._lock:
-            stopped = False
+            # 1. Kill proc if owned
             if self._proc:
                 try:
-                    import signal
                     try:
                         os.killpg(os.getpgid(self._proc.pid), signal.SIGTERM)
                     except Exception:
                         self._proc.terminate()
                     try:
-                        self._proc.wait(timeout=3)
+                        self._proc.wait(timeout=2)
                     except subprocess.TimeoutExpired:
                         try:
                             os.killpg(os.getpgid(self._proc.pid), signal.SIGKILL)
                         except Exception:
                             self._proc.kill()
-                    stopped = True
-                except Exception as e:
-                    self._logs.append(f"⚠️ Lỗi khi dừng tunnel: {e}")
+                except Exception:
+                    pass
                 self._proc = None
 
-            # Also check state file PID if different
+            # 2. Kill PID from state file
             try:
                 if self._state_file.exists():
                     with open(self._state_file, "r", encoding="utf-8") as f:
                         data = json.load(f)
                         pid = data.get("pid")
-                        if pid and self._is_pid_alive(pid):
+                        if pid and self._is_cloudflared_pid(pid):
                             try:
                                 os.kill(pid, signal.SIGTERM)
-                                stopped = True
                             except Exception:
                                 pass
             except Exception:
                 pass
 
+            # 3. Clean up any remaining cloudflared processes on port
+            try:
+                subprocess.run(["pkill", "-f", "cloudflared tunnel --url"], timeout=2)
+            except Exception:
+                pass
+
             self._url = None
             self._started_at = None
-            self._save_state()
+            self._save_state(None)
+
             return {
                 "success": True,
                 "message": "🛑 Đã tắt Cloudflare Tunnel thành công.",
