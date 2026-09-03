@@ -300,6 +300,99 @@ else:
 "
 }
 
+cmd_cli() {
+  local subcmd="${1:-status}"
+  shift || true
+
+  python3 -c "
+import sys, json, time, urllib.request, urllib.error
+server_url = 'http://$DEFAULT_HOST:$DEFAULT_PORT'
+sub = '$subcmd'
+
+def api_call(path, data=None):
+    url = f'{server_url}{path}'
+    req = urllib.request.Request(url, headers={'Content-Type': 'application/json'})
+    if data is not None:
+        req.data = json.dumps(data).encode('utf-8')
+    try:
+        with urllib.request.urlopen(req, timeout=10) as res:
+            return json.loads(res.read().decode('utf-8'))
+    except Exception:
+        return None
+
+if sub in ['status', 'ensure']:
+    res = api_call('/api/agent/service/status')
+    if not res:
+        import os
+        from pathlib import Path
+        sf = Path.home() / '.media-hub' / 'cli_service.json'
+        if sf.exists():
+            with open(sf, 'r') as f:
+                res = json.load(f)
+        else:
+            res = {'status': 'idle', 'message': 'Server offline'}
+    
+    print('========================================')
+    print(' Antigravity CLI Agent Service')
+    print('========================================')
+    st = res.get('status', 'idle')
+    is_running = res.get('is_running') or st in ['running', 'attached']
+    print(f' Trạng thái:  {\"🟢 RUNNING / ATTACHED\" if is_running else \"⚪ IDLE / READY\"}')
+    aj = res.get('active_job') or {}
+    if aj:
+        print(f' CLI Bin:     {aj.get(\"cli\", \"agy\")}')
+        print(f' Process PID: {aj.get(\"pid\", \"--\")}')
+        print(f' Media ID:    {aj.get(\"media_id\", \"--\")}')
+        print(f' Session ID:  {aj.get(\"conversation_id\", \"--\")}')
+        print(f' Bắt đầu lúc: {aj.get(\"start_time\", \"--\")}')
+        print(f' Lệnh:        {aj.get(\"command\", \"--\")}')
+    print('========================================')
+
+elif sub == 'sessions':
+    res = api_call('/api/agent/sessions')
+    if res is None:
+        print('Không kết nối được server để lấy danh sách session.')
+    else:
+        print('========================================')
+        print(' Registered Media / Skill Sessions')
+        print('========================================')
+        if not res:
+            print('  (Chưa có session nào. Sẽ tự động tạo khi chạy tác vụ)')
+        for k, v in res.items():
+            print(f' 🎯 {k.ljust(25)} ➔ {v}')
+        print('========================================')
+
+elif sub == 'stop':
+    res = api_call('/api/agent/stop', {})
+    if res:
+        print(res.get('message', 'Đã gửi lệnh dừng CLI'))
+    else:
+        print('Không kết nối được server.')
+
+elif sub == 'attach':
+    print('🔗 Đang gắn kết (Attach) vào dòng nhật ký Live CLI...')
+    seen = 0
+    try:
+        while True:
+            data = api_call('/api/agent/live_logs')
+            if data:
+                logs = data.get('logs', [])
+                for entry in logs[seen:]:
+                    t = entry.get('time', '')
+                    txt = entry.get('text', '')
+                    lvl = entry.get('level', 'info')
+                    color = '\033[33m' if lvl == 'thinking' else '\033[32m' if lvl == 'subagent' else '\033[36m' if lvl == 'tool' else '\033[0m'
+                    print(f'{color}[{t}] {txt}\033[0m')
+                seen = len(logs)
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print('\n👋 Đã tách (Detach) khỏi luồng console. Tiến trình CLI vẫn tiếp tục chạy ngầm!')
+
+else:
+    print(f'Lệnh CLI không hợp lệ: {sub}. Các lệnh hỗ trợ: status, ensure, attach, stop, sessions')
+"
+}
+
 cmd_help() {
   echo "Antigravity Media Hub Standalone CLI & Desktop"
   echo ""
@@ -313,6 +406,7 @@ cmd_help() {
   echo "  status                         Kiểm tra trạng thái máy chủ"
   echo "  logs [-f]                      Xem log của máy chủ"
   echo "  open                           Mở Web Dashboard trên trình duyệt"
+  echo "  cli [status|attach|stop|sessions] Quản lý dịch vụ CLI độc lập và gắn kết"
   echo "  tunnel [start|stop|status|open] Quản lý Cloudflare Tunnel truy cập từ xa"
   echo "  build                          Đóng gói thành file cài đặt macOS (.dmg / .app)"
   echo "  help                           Hiển thị trợ giúp này"
@@ -346,6 +440,10 @@ case "$1" in
     ;;
   open)
     cmd_open
+    ;;
+  cli)
+    shift
+    cmd_cli "$@"
     ;;
   tunnel)
     shift

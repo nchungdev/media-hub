@@ -2054,7 +2054,8 @@
               <span class="animate-spin text-base">⚙️</span>
               <span class="truncate">Đang thực thi: <strong id="tab-active-cmd" class="text-white font-bold">--</strong></span>
             </div>
-            <div class="flex items-center gap-3 shrink-0">
+            <div class="flex items-center gap-2 shrink-0">
+              <span id="tab-active-context" class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30 text-[10px]" title="Ngữ cảnh tự động đã chọn">Context</span>
               <span id="tab-active-cli" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">agy2</span>
               <span id="tab-active-time" class="text-[11px] text-emerald-400/80">--:--:--</span>
             </div>
@@ -4136,7 +4137,7 @@
         if (data.is_running) {
           if (badge) {
             badge.className = 'px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1.5 border border-emerald-500/30 animate-pulse';
-            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> RUNNING (${data.active_job?.cli || 'CLI'})`;
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> ${data.active_job?.status === 'attached' ? 'ATTACHED' : 'RUNNING'} (${data.active_job?.cli || 'CLI'})`;
           }
           if (sideDot) {
             sideDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0';
@@ -4146,6 +4147,10 @@
             if (document.getElementById('tab-active-cmd')) document.getElementById('tab-active-cmd').textContent = data.active_job?.command || '--';
             if (document.getElementById('tab-active-cli')) document.getElementById('tab-active-cli').textContent = data.active_job?.cli || 'CLI';
             if (document.getElementById('tab-active-time')) document.getElementById('tab-active-time').textContent = 'Bắt đầu: ' + (data.active_job?.start_time || '--');
+            if (document.getElementById('tab-active-context')) {
+              const ctx = data.active_job?.media_id || 'system';
+              document.getElementById('tab-active-context').textContent = '🎯 ' + ctx;
+            }
           }
           // Show stop button (red)
           updateCliToggleBtn(true);
@@ -4298,6 +4303,17 @@
 
     function openLiveConsoleModal() {
       setTab('console');
+    }
+
+    async function ensureCliService() {
+      try {
+        const res = await fetch('/api/agent/service/ensure', { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'attached' || data.is_running) {
+          showToast(`🔗 Đã gắn kết (Attach) vào tiến trình CLI ngầm [${data.active_job?.cli || 'CLI'}]`, 'success', 3000);
+          pollTabConsoleLogs(true);
+        }
+      } catch (e) {}
     }
 
 
@@ -6382,6 +6398,7 @@
     fetchData();
     fetchSettings();
     fetchTunnelStatus();
+    ensureCliService();
     renderPlexGrid(plexShowsData);
     setInterval(fetchData, 4000);
     setInterval(fetchTunnelStatus, 8000);

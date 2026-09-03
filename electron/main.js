@@ -243,6 +243,16 @@ app.whenReady().then(async () => {
       'Lỗi Khởi Chạy Máy Chủ',
       `Không thể kết nối với máy chủ Media Hub tại ${SERVER_URL}. Vui lòng kiểm tra Python 3.`
     );
+  } else {
+    // Proactively ensure / attach to the independent CLI Agent service
+    try {
+      const http = require('http');
+      const req = http.request(`${SERVER_URL}/api/agent/service/ensure`, { method: 'POST' }, (res) => {
+        console.log(`[CLI Service] Auto ensure/attach response status: ${res.statusCode}`);
+      });
+      req.on('error', () => {});
+      req.end();
+    } catch (e) {}
   }
   createWindow();
 

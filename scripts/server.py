@@ -1034,6 +1034,16 @@ class MediaHubHandler(BaseHTTPRequestHandler):
             logs_data = agent_bridge.get_live_logs()
             return self._send_json(logs_data)
 
+        # 5.3 REST API: Agent CLI Service Status (/api/agent/service/status)
+        elif path == "/api/agent/service/status":
+            st = agent_bridge.ensure_service()
+            return self._send_json(st)
+
+        # 5.4 REST API: Registered Media Sessions (/api/agent/sessions)
+        elif path == "/api/agent/sessions":
+            sessions = agent_bridge._load_media_sessions()
+            return self._send_json(sessions)
+
         # 10. REST API: Live Dashboard Overview & Machine Health (/api/dashboard/overview)
         elif path == "/api/dashboard/overview":
             data = get_cached_overview_data()
@@ -1638,6 +1648,11 @@ class MediaHubHandler(BaseHTTPRequestHandler):
         elif path == "/api/agent/resume":
             agent_bridge.resume_queue()
             return self._send_json({"success": True, "message": "Đã kích hoạt lại hàng đợi CLI."})
+
+        # 3.4b API: Ensure / Attach CLI Service (/api/agent/service/ensure)
+        elif path == "/api/agent/service/ensure":
+            res = agent_bridge.ensure_service()
+            return self._send_json(res)
 
 
         # 3.5 API: Native Directory Picker (/api/fs/choose_directory)

@@ -81,6 +81,7 @@ class AgentBridge:
         if changed:
             self._save(queue)
         self.active_job = None
+        self._save_service_state({"status": "idle", "cli_pid": None})
         return True
 
     def resume_queue(self):
@@ -109,6 +110,84 @@ class AgentBridge:
     def clear_live_logs(self):
         self.live_logs.clear()
         self.log_live("🧹 Đã xoá sạch lịch sử console log.", "system")
+
+    def _get_service_file(self):
+        s_dir = Path.home() / ".media-hub"
+        s_dir.mkdir(parents=True, exist_ok=True)
+        return s_dir / "cli_service.json"
+
+    def _load_service_state(self):
+        try:
+            sf = self._get_service_file()
+            if sf.exists():
+                with open(sf, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        except Exception:
+            pass
+        return {}
+
+    def _save_service_state(self, data):
+        try:
+            sf = self._get_service_file()
+            with open(sf, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"[AgentBridge] Lỗi lưu cli_service.json: {e}")
+
+    def _is_pid_alive(self, pid):
+        if not pid:
+            return False
+        try:
+            os.kill(int(pid), 0)
+            return True
+        except (OSError, ProcessLookupError, ValueError):
+            return False
+
+    def ensure_service(self):
+        """
+        Check if CLI agent process is running.
+        If running, ATTACH to it seamlessly without spawning a new process.
+        If idle, return ready state and resume any pending queue tasks.
+        """
+        state = self._load_service_state()
+        pid = state.get("cli_pid")
+
+        if pid and self._is_pid_alive(pid):
+            # Already running in background: ATTACH!
+            if not self.active_job:
+                self.active_job = {
+                    "media_id": state.get("media_id", "media-hub-general"),
+                    "showTitle": state.get("showTitle", ""),
+                    "command": state.get("command", ""),
+                    "cli": state.get("cli", "agy"),
+                    "start_time": state.get("start_time", ""),
+                    "conversation_id": state.get("conversation_id", ""),
+                    "pid": pid,
+                    "status": "attached"
+                }
+                self.log_live(f"🔗 Đã gắn kết (Attached) vào tiến trình CLI đang chạy ngầm [PID: {pid}]", "system")
+            return {
+                "status": "attached",
+                "message": f"Đã gắn kết vào tiến trình CLI đang hoạt động (PID: {pid})",
+                "active_job": self.active_job,
+                "is_running": True
+            }
+
+        # If process died or not running, clear active_job if it had old pid
+        if self.active_job and self.active_job.get("pid") and not self._is_pid_alive(self.active_job["pid"]):
+            self.active_job = None
+            self._save_service_state({"status": "idle", "cli_pid": None})
+
+        # Ensure worker is triggered if there are pending jobs
+        self._trigger_worker()
+
+        is_running = self.active_job is not None
+        return {
+            "status": "running" if is_running else "ready",
+            "message": "Tiến trình CLI đang xử lý" if is_running else "Dịch vụ CLI sẵn sàng",
+            "active_job": self.active_job,
+            "is_running": is_running
+        }
 
     def _load(self):
         try:
@@ -157,7 +236,21 @@ class AgentBridge:
             return str(explicit_id).strip()
 
         import re
-        # Check for TVDB / TMDB ID patterns
+        cmd_lower = (command_text or "").lower()
+
+        # 1. Detect dedicated skills context
+        if any(k in cmd_lower for k in ["torbox", "download", "tải phim", "tải xuống", "magnet", "aria2", "debrid"]):
+            return "skill-media-downloader"
+        elif any(k in cmd_lower for k in ["sync", "đồng bộ", "rclone", "sftp", "nas storage", "google drive"]):
+            return "skill-media-sync"
+        elif any(k in cmd_lower for k in ["librarian", "cross_check", "đối chiếu", "thư viện cloud"]):
+            return "skill-cloud-librarian"
+        elif any(k in cmd_lower for k in ["bóc tách", "sub nhúng", "extract sub", "muxed sub"]):
+            return "skill-subtitle-extractor"
+        elif any(k in cmd_lower for k in ["tmdb", "tra cứu phim", "poster metadata"]):
+            return "skill-tmdb-lookup"
+
+        # 2. Detect TVDB / TMDB ID patterns
         tvdb_match = re.search(r'tvdb[-_](\d+)', command_text, re.IGNORECASE)
         if tvdb_match:
             return f"media-tvdb-{tvdb_match.group(1)}"
@@ -166,20 +259,75 @@ class AgentBridge:
         if tmdb_match:
             return f"media-tmdb-{tmdb_match.group(1)}"
 
-        # Check for common show titles
-        cmd_lower = command_text.lower()
+        # 3. Dynamic Show Matching from Workspace
+        from core.settings import load_unified_settings
+        try:
+            cfg = load_unified_settings()
+            hub_home = cfg.get("media_hub_home") or os.getcwd()
+            ws_dir = str(Path(hub_home).parent) if os.path.basename(hub_home) == ".media-hub" else str(Path(hub_home))
+            
+            show_candidates = []
+            for folder in [Path(ws_dir) / "TV Shows", Path(ws_dir) / "Movies", Path(ws_dir)]:
+                if folder.exists():
+                    for d in folder.iterdir():
+                        if d.is_dir() and not d.name.startswith("."):
+                            show_candidates.append(d.name)
+            
+            for cname in sorted(show_candidates, key=len, reverse=True):
+                clean_name = re.sub(r'\(\d{4}\)|\[.*?\]|\{.*?\}', '', cname).strip().lower()
+                if clean_name and len(clean_name) >= 3 and clean_name in cmd_lower:
+                    slug = re.sub(r'[^a-z0-9]+', '-', re.sub(r'\[.*?\]|\{.*?\}', '', cname).lower()).strip('-')
+                    return f"media-show-{slug}"
+        except Exception:
+            pass
+
+        # 4. Fallbacks for well-known series
         if "monster" in cmd_lower:
             return "media-tvdb-74599"
         elif "wataru" in cmd_lower:
             return "media-tvdb-446736"
-        elif "three-eyed" in cmd_lower or "three eyed" in cmd_lower or "3 mắt" in cmd_lower:
+        elif any(k in cmd_lower for k in ["three-eyed", "three eyed", "3 mắt", "sharaku"]):
             return "media-tvdb-320122"
         elif "conan" in cmd_lower:
             return "media-tvdb-72454"
         elif "black jack" in cmd_lower:
             return "media-tvdb-78832"
 
-        return "media-hub-system"
+        return "media-hub-general"
+
+    def _build_context_prompt(self, command_text, media_id, workspace_dir):
+        """
+        Picks and attaches relevant project context (Glossary, Progress, Skills)
+        when starting a new conversation, or lets existing session resume seamlessly.
+        """
+        sessions = self._load_media_sessions()
+        if sessions.get(media_id):
+            # Already has existing conversation session — agy will resume with --conversation,
+            # retaining 100% of memory and previous turns!
+            return command_text
+
+        context_lines = []
+        if media_id.startswith("skill-"):
+            skill_name = media_id.replace("skill-", "")
+            context_lines.append(f"[KÍCH HOẠT KỸ NĂNG CHUYÊN BIỆT: {skill_name}]")
+            skill_path = Path(workspace_dir) / ".agents" / "skills" / skill_name / "SKILL.md"
+            if skill_path.exists():
+                context_lines.append(f"Tài liệu hướng dẫn skill: {skill_path}")
+        elif media_id.startswith("media-"):
+            context_lines.append(f"[NGỮ CẢNH DỰ ÁN MEDIA: {media_id}]")
+            ws_path = Path(workspace_dir)
+            for g in ws_path.rglob("GLOSSARY.md"):
+                context_lines.append(f"Bảng thuật ngữ chuẩn (Glossary): {g}")
+                break
+            for p in ws_path.rglob("PROGRESS.md"):
+                context_lines.append(f"Nhật ký tiến độ dự án (Progress): {p}")
+                break
+            context_lines.append("Quy tắc định dạng phụ đề: Xuất đủ 3 file (.vi.ass typography 1080p, .vi.srt, .vi.vtt stream zero-latency).")
+
+        if context_lines:
+            header = "\n".join(context_lines)
+            return f"{header}\n\n---\n\n{command_text}"
+        return command_text
 
     def _get_brain_dirs(self, cli_bin):
         if "agy2" in str(cli_bin):
@@ -533,10 +681,12 @@ class AgentBridge:
                     self.log_live(f"🚀 Kích hoạt tiến trình {bin_name} cho [{media_id}]...", "system")
                     print(f"[AgentBridge] 🚀 Dispatching [{media_id}] to {bin_name}: \"{cmd_text}\" (ID: {cmd_id})", flush=True)
 
+                    prompt_with_context = self._build_context_prompt(cmd_text, media_id, workspace_dir)
+
                     cli_args = [cli_bin, "--add-dir", workspace_dir]
                     if existing_conv_id:
                         cli_args.extend(["--conversation", existing_conv_id])
-                    cli_args.extend(["-p", cmd_text, "--dangerously-skip-permissions"])
+                    cli_args.extend(["-p", prompt_with_context, "--dangerously-skip-permissions"])
 
                     brain_dirs = self._get_brain_dirs(cli_bin)
                     stop_tailer = threading.Event()
@@ -568,6 +718,18 @@ class AgentBridge:
                     )
                     self._current_proc = proc
 
+                    # Record live CLI service state with process PID
+                    self._save_service_state({
+                        "status": "running",
+                        "cli_pid": proc.pid,
+                        "cli": bin_name,
+                        "media_id": media_id,
+                        "conversation_id": existing_conv_id or "",
+                        "command": cmd_text,
+                        "start_time": time.strftime("%H:%M:%S"),
+                        "workspace_dir": workspace_dir
+                    })
+
                     lines = []
                     for raw_l in iter(proc.stdout.readline, ''):
                         if self._stop_requested:
@@ -584,6 +746,15 @@ class AgentBridge:
                     stop_tailer.set()
                     tailer_thread.join(timeout=2)
                     self._current_proc = None
+
+                    # Reset service state on completion
+                    self._save_service_state({
+                        "status": "idle",
+                        "cli_pid": None,
+                        "last_media_id": media_id,
+                        "last_conversation_id": sessions.get(media_id),
+                        "last_finished": time.strftime("%H:%M:%S")
+                    })
 
                     if self._stop_requested:
                         self._stop_requested = False
