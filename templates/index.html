@@ -4814,7 +4814,13 @@
           const pendingEps = (p.episodes || []).filter(e => !e.vi_ass && !e.vi_srt && !e.vi_vtt).map(e => e.key);
           const isComplete = p.percent >= 100;
           const isRunning = window.activeTranslatingBatches.has(showKey);
-          const activeBatchSet = new Set(isRunning ? pendingEps.slice(0, 5) : []);
+          const singleEp = window.activeTranslatingEpisodes ? window.activeTranslatingEpisodes.get(showKey) : null;
+          let activeBatchSet = new Set();
+          if (singleEp) {
+            activeBatchSet.add(singleEp);
+          } else if (isRunning) {
+            activeBatchSet = new Set(pendingEps.slice(0, 5));
+          }
           const btnId = `btn-modal-trans-${idx}`;
           const collapseId = `modal-collapse-${idx}`;
 
@@ -4921,7 +4927,13 @@
           const pendingEps = (p.episodes || []).filter(e => !e.vi_ass && !e.vi_srt && !e.vi_vtt).map(e => e.key);
           const isComplete = p.percent >= 100;
           const isRunning = window.activeTranslatingBatches.has(showKey);
-          const activeBatchSet = new Set(isRunning ? pendingEps.slice(0, 5) : []);
+          const singleEp = window.activeTranslatingEpisodes ? window.activeTranslatingEpisodes.get(showKey) : null;
+          let activeBatchSet = new Set();
+          if (singleEp) {
+            activeBatchSet.add(singleEp);
+          } else if (isRunning) {
+            activeBatchSet = new Set(pendingEps.slice(0, 5));
+          }
           const btnId = `btn-studio-trans-${idx}`;
           const collapseId = `studio-collapse-${idx}`;
 
@@ -5196,12 +5208,18 @@
       window.activeTranslatingBatches = window.activeTranslatingBatches || new Set();
       window.activeTranslatingBatches.add(showKey);
 
-      // Re-render UI immediately to highlight the translating episode badges
+      window.activeTranslatingEpisodes = window.activeTranslatingEpisodes || new Map();
+      window.activeTranslatingEpisodes.set(showKey, data.epKey);
+
+      // Re-render UI immediately to highlight ONLY the selected episode badge as (Đang dịch)
       loadSubtitleStudioData();
       loadSubtitleTranslationProjects();
 
-      sendQuickCommand(`translate-subtitle tự động dịch phụ đề tiếng Việt chuyên sâu cho ${data.showTitle} tập ${data.epKey}`);
-      showToast(`🚀 Đã gửi lệnh dịch tập ${data.epKey} sang AI Agent!`, 'success', 2500);
+      const mediaId = 'media-show-' + (data.showTitle || '').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      const command = `translate-subtitle: DỊCH DUY NHẤT 1 TẬP. Yêu cầu tự động dịch phụ đề tiếng Việt chuyên sâu cho "${data.showTitle}" duy nhất tập ${data.epKey}. Chỉ dịch và xuất đúng 3 file (.vi.ass, .vi.srt, .vi.vtt) cho tập ${data.epKey}, tuyệt đối KHÔNG dịch bất kỳ tập nào khác.`;
+
+      sendQuickCommand(command, mediaId);
+      showToast(`🚀 Đã gửi lệnh dịch duy nhất tập ${data.epKey} sang AI Agent!`, 'success', 2500);
     }
 
     function sendSubStudioCommand() {
