@@ -103,6 +103,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         "/gdrive", "/library", "/plex", "/pipelines", "/sync", "/subtitles", "/subtitle-studio",
         "/tokens", "/token-usage", "/analytics", "/console", "/logs", "/terminal",
         "/settings", "/config", "/agent", "/chat",
+        "/services", "/service", "/workers", "/daemon",
     ];
     let mut spa_router = Router::new();
     for route in spa_routes {

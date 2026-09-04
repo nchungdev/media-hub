@@ -15,6 +15,7 @@ import './modules/collections.js';
 import './modules/subtitles.js';
 import './modules/settings.js';
 import './modules/agent.js';
+import './modules/services.js';
 
 // Setup Native Bridge
 document.addEventListener('DOMContentLoaded', () => {

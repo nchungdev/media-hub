@@ -46,10 +46,14 @@ export function getInitialTab() {
     'terminal': 'console',
     'cli': 'console',
     'chat': 'agent',
-    'config': 'settings'
+    'config': 'settings',
+    'services': 'services',
+    'service': 'services',
+    'workers': 'services',
+    'daemon': 'services'
   };
   const normalized = tabAliases[candidate] || candidate;
-  const validTabs = ['home', 'torbox', 'collection', 'subtitles', 'tokens', 'console', 'settings', 'agent'];
+  const validTabs = ['home', 'torbox', 'collection', 'subtitles', 'tokens', 'console', 'settings', 'agent', 'services'];
   return validTabs.includes(normalized) ? normalized : 'home';
 }
 
@@ -77,10 +81,14 @@ export function setTab(tab, updateUrl = true) {
     'terminal': 'console',
     'cli': 'console',
     'chat': 'agent',
-    'config': 'settings'
+    'config': 'settings',
+    'services': 'services',
+    'service': 'services',
+    'workers': 'services',
+    'daemon': 'services'
   };
   tab = tabAliases[tab] || tab;
-  const tabs = ['home', 'torbox', 'collection', 'subtitles', 'tokens', 'console', 'settings', 'agent'];
+  const tabs = ['home', 'torbox', 'collection', 'subtitles', 'tokens', 'console', 'settings', 'agent', 'services'];
   if (!tabs.includes(tab)) tab = 'home';
 
   // Persist active tab selection to localStorage
@@ -160,6 +168,13 @@ export function setTab(tab, updateUrl = true) {
   const agentDock = document.getElementById('agent-input-dock');
   if (agentDock) {
     agentDock.style.display = (tab === 'agent') ? 'block' : 'none';
+  }
+
+  // Tab services tu lam moi 5s -- chi khi dang mo tab, tranh goi API vo ich.
+  if (tab === 'services') {
+    if (typeof window.startServicesAutoRefresh === 'function') window.startServicesAutoRefresh();
+  } else if (typeof window.stopServicesAutoRefresh === 'function') {
+    window.stopServicesAutoRefresh();
   }
 
   // Tab dynamic loaders
