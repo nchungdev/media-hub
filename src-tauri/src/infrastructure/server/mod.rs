@@ -14,7 +14,7 @@ use routes::{
     job_routes::*, library_routes::*, nas_routes::handle_nas_scan,
     quota_routes::{handle_get_quota, handle_increment_quota},
     settings_routes::{handle_get_settings, handle_save_settings},
-    staging_routes::*, stream_routes::handle_stream, subtitle_routes::handle_subtitle,
+    staging_routes::*, stream_routes::handle_stream, subtitle_routes::{handle_subtitle, handle_subtitle_projects},
     tmdb_routes::handle_tmdb_search,
     torbox_routes::{handle_add_torrent, handle_delete_torrent, handle_list_torrents},
     tunnel_routes::{handle_tunnel_start, handle_tunnel_status, handle_tunnel_stop},
@@ -53,6 +53,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .route("/api/stream", get(handle_stream))
         .route("/api/media/collections", get(handle_get_collections))
         .route("/api/subtitles/vtt", get(handle_subtitle))
+        .route("/api/subtitles/projects", get(handle_subtitle_projects))
         .route("/api/tmdb/search", get(handle_tmdb_search))
         // TorBox
         .route("/api/torbox", get(handle_list_torrents))

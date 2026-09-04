@@ -57,13 +57,29 @@ _last_overview_time = 0
 APP_DIR = os.path.dirname(BASE_DIR)
 SKILL_DIR = APP_DIR
 STATIC_ROOTS = [
-    os.path.join(APP_DIR, "static"),
-    os.path.join(BASE_DIR, "static"),
+    os.path.join(APP_DIR, "frontend", "static"),
 ]
 TEMPLATE_ROOTS = [
-    os.path.join(APP_DIR, "templates"),
-    os.path.join(BASE_DIR, "templates"),
+    os.path.join(APP_DIR, "frontend"),
 ]
+
+def expand_template_includes(content, roots, depth=0):
+    import re
+    if depth > 5:
+        return content
+    def repl(m):
+        rel = m.group(1).strip()
+        for root in roots:
+            cand = os.path.join(root, rel)
+            if os.path.isfile(cand):
+                try:
+                    with open(cand, "r", encoding="utf-8") as pf:
+                        return expand_template_includes(pf.read(), roots, depth + 1)
+                except Exception:
+                    pass
+        return m.group(0)
+    pattern = r'<!--\s*include\s*["\x27]([^"\x27]+)["\x27]\s*-->'
+    return re.sub(pattern, repl, content)
 
 def sibling_skill_script(plugin_name, script_name):
     """Locate a script in a sibling skill. Searches workspace .agents/skills,
@@ -558,7 +574,7 @@ class MediaHubHandler(BaseHTTPRequestHandler):
             for tp in (os.path.join(root, "index.html") for root in TEMPLATE_ROOTS):
                 if os.path.exists(tp):
                     with open(tp, "r", encoding="utf-8") as f:
-                        return self._send_html(f.read())
+                        return self._send_html(expand_template_includes(f.read(), TEMPLATE_ROOTS))
             return self._send_html("<h1>Antigravity Media Hub</h1><p>Template missing.</p>", status=404)
 
         # 1.1 Static Assets Routing (/static/...)
@@ -590,7 +606,8 @@ class MediaHubHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", content_type)
                 self.send_header("Content-Length", str(len(data)))
                 self.send_header("Access-Control-Allow-Origin", "*")
-                self.send_header("Cache-Control", "public, max-age=86400")
+                cache_ctrl = "no-cache, must-revalidate" if (file_path.endswith(".js") or file_path.endswith(".css")) else "public, max-age=86400"
+                self.send_header("Cache-Control", cache_ctrl)
                 self.end_headers()
                 self.wfile.write(data)
                 return

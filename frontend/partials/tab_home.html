@@ -1,0 +1,338 @@
+      <!-- ==================== TAB 0: HOME / TỔNG QUAN ==================== -->
+      <div id="tab-home" class="space-y-0">
+        <!-- Pinned Header (Sticky Top-0 Flush with macOS Titlebar Drag) -->
+        <div class="sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 desktop-titlebar-pad flex flex-wrap items-center justify-between gap-3 shadow-sm app-drag-region">
+          <div class="flex items-center gap-3 app-no-drag">
+            <div class="w-9 h-9 rounded-xl bg-blue-600/10 text-blue-400 flex items-center justify-center font-bold text-base border border-blue-500/20 shrink-0">
+              🏠
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-sm sm:text-base text-white">Tổng Quan Hệ Thống</h3>
+                <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">Live v2.4</span>
+              </div>
+              <p class="text-xs text-zinc-400 hidden sm:block">Giám sát tiến trình tải, upload cloud, dung lượng kho lưu trữ & sức khỏe máy chủ</p>
+            </div>
+          </div>
+
+          <!-- Top Quick Actions -->
+          <div class="flex items-center gap-2 flex-wrap app-no-drag">
+            <button onclick="openModal('modal-add-magnet')" class="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-purple-600/20 flex items-center gap-1.5 shrink-0">
+              <span>➕</span> Thêm Tải Xuống
+            </button>
+            <button onclick="fetchDashboardOverview()" class="px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-zinc-300 transition flex items-center gap-1.5 shadow-sm">
+              <span>🔄</span> Làm Mới
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 sm:p-6 pb-28 lg:pb-10 space-y-6 w-full">
+          
+          <!-- ==================== KHỐI 1: NỘI DUNG ĐANG TẢI & ĐANG UPLOAD ==================== -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            
+            <!-- 1.1 LUỒNG ĐANG TẢI (DOWNLOADING) -->
+            <div class="p-5 rounded-3xl bg-zinc-900/70 border border-blue-500/20 shadow-xl space-y-4 relative overflow-hidden">
+              <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-sm border border-blue-500/20">
+                    📥
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-xs sm:text-sm text-white">Nội Dung Đang Tải (Downloading)</h4>
+                    <p class="text-[10px] text-zinc-400">TorBox Cloud & Aria2c P2P Client</p>
+                  </div>
+                </div>
+                <button onclick="setTab('torbox')" class="text-[11px] text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1">
+                  Quản lý tải ➔
+                </button>
+              </div>
+
+              <!-- Live Download Items List -->
+              <div id="home-active-downloads-list" class="space-y-3 min-h-[110px]">
+                <!-- Populated by JS -->
+                <div class="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-xs text-white truncate max-w-xs">Monster (2004) [1080p BluRay]</span>
+                    <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">100% Cached</span>
+                  </div>
+                  <div class="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-blue-500/20">
+                    <div class="bg-blue-500 h-full rounded-full" style="width: 100%;"></div>
+                  </div>
+                  <div class="flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+                    <span>✓ 74/74 Tập Sẵn Sàng</span>
+                    <span>183.5 GB • Gigabit Cloud</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 1.2 LUỒNG ĐANG UPLOAD / SYNC (UPLOADING) -->
+            <div class="p-5 rounded-3xl bg-zinc-900/70 border border-emerald-500/20 shadow-xl space-y-4 relative overflow-hidden">
+              <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-sm border border-emerald-500/20">
+                    📤
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-xs sm:text-sm text-white">Nội Dung Đang Upload & Sync</h4>
+                    <p class="text-[10px] text-zinc-400">Đồng bộ cuốn chiếu sang Google Drive & NAS Storage</p>
+                  </div>
+                </div>
+                <button onclick="setTab('pipelines')" class="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1">
+                  Xem tiến trình ➔
+                </button>
+              </div>
+
+              <!-- Live Upload Items List -->
+              <div id="home-active-uploads-list" class="space-y-3 min-h-[110px]">
+                <!-- Populated by JS -->
+                <div class="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 space-y-2.5">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-xs text-white truncate max-w-xs">Cross Fight B-Daman eS [720p HDTV]</span>
+                    <span class="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 font-bold animate-pulse">⚡ Đang Sync 96%</span>
+                  </div>
+                  <div class="w-full bg-zinc-900 h-2 rounded-full overflow-hidden border border-emerald-500/20">
+                    <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500" style="width: 96%;"></div>
+                  </div>
+                  <div class="flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+                    <span>Đang sync tập 49/51 ➔ gdrive:Phim</span>
+                    <span>11.93 GB • Tự xóa đệm</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ==================== KHỐI 2: CÁC CLOUD ĐÃ KẾT NỐI (TÊN, PATH, DUNG LƯỢNG) ==================== -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-xs sm:text-sm text-white flex items-center gap-2">
+                <span>☁️</span> Các Kho Lưu Trữ Đã Kết Nối (Storage Clouds & Capacity)
+              </h3>
+              <button onclick="setTab('gdrive')" class="text-xs text-blue-400 hover:text-blue-300 font-semibold">
+                Quản lý thư viện ➔
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs" id="home-cloud-cards-grid">
+              
+              <!-- Cloud 1: Google Drive -->
+              <div class="p-5 rounded-3xl bg-zinc-900/70 border border-emerald-500/20 shadow-md space-y-3 relative overflow-hidden">
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xl border border-emerald-500/20 shrink-0">
+                      ☁️
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="font-bold text-white text-xs sm:text-sm">Google Drive</span>
+                        <span class="px-2 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold font-mono">🟢 Đang kết nối</span>
+                      </div>
+                      <div class="text-[11px] text-zinc-400 font-mono mt-0.5">📁 gdrive:Phim</div>
+                    </div>
+                  </div>
+                  <span class="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-lg border border-emerald-500/20">
+                    31 Shows (2,733 files)
+                  </span>
+                </div>
+
+                <!-- Capacity Bar -->
+                <div class="space-y-1.5 pt-1">
+                  <div class="flex justify-between text-[11px] text-zinc-400">
+                    <span>Đã dùng: <strong class="text-white font-mono" id="gdrive-used-val">~1.8 TB</strong></span>
+                    <span>Khả dụng: <strong class="text-emerald-400 font-mono" id="gdrive-avail-val">Không giới hạn</strong></span>
+                  </div>
+                  <div class="w-full bg-zinc-950 h-2 rounded-full overflow-hidden border border-zinc-800">
+                    <div class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full" style="width: 35%;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cloud 2: NAS Storage Server -->
+              <div class="p-5 rounded-3xl bg-zinc-900/70 border border-amber-500/20 shadow-md space-y-3 relative overflow-hidden">
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-xl border border-amber-500/20 shrink-0">
+                      🖥️
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="font-bold text-white text-xs sm:text-sm">NAS Storage (MergerFS Pool)</span>
+                        <span class="px-2 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold font-mono">🟢 Đang kết nối</span>
+                      </div>
+                      <div class="text-[11px] text-zinc-400 font-mono mt-0.5">📁 /srv/mergerfs/MainPool/Phim</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <a href="http://192.168.1.37:32400/web" target="_blank" class="px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500 text-amber-300 hover:text-black font-semibold text-[10px] transition border border-amber-500/20 shadow-sm flex items-center gap-1">
+                      <span>🎬</span> Plex
+                    </a>
+                    <a href="http://192.168.1.37:8096" target="_blank" class="px-2.5 py-1 rounded-xl bg-purple-500/10 hover:bg-purple-500 text-purple-300 hover:text-white font-semibold text-[10px] transition border border-purple-500/20 shadow-sm flex items-center gap-1">
+                      <span>🍿</span> Jellyfin
+                    </a>
+                    <a href="http://192.168.1.37:8080" target="_blank" class="px-2.5 py-1 rounded-xl bg-blue-500/10 hover:bg-blue-500 text-blue-300 hover:text-white font-semibold text-[10px] transition border border-blue-500/20 shadow-sm flex items-center gap-1">
+                      <span>📁</span> FileBrowser
+                    </a>
+                  </div>
+                </div>
+
+                <!-- Capacity Bar -->
+                <div class="space-y-1.5 pt-1">
+                  <div class="flex justify-between text-[11px] text-zinc-400">
+                    <span>Đã dùng: <strong class="text-white font-mono" id="nas-used-val">4.0 TB / 4.5 TB</strong></span>
+                    <span>Khả dụng: <strong class="text-amber-400 font-mono" id="nas-avail-val">259 GB Trống (95%)</strong></span>
+                  </div>
+                  <div class="w-full bg-zinc-950 h-2 rounded-full overflow-hidden border border-zinc-800">
+                    <div class="bg-gradient-to-r from-amber-500 to-red-500 h-full rounded-full" id="nas-cap-bar" style="width: 95%;"></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ==================== KHỐI 3: SỨC KHỎE CỦA MÁY (MACHINE & HARDWARE HEALTH) ==================== -->
+          <div class="p-5 rounded-3xl bg-zinc-900/70 border border-zinc-800/80 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold text-sm border border-purple-500/20">
+                  ⚡
+                </div>
+                <div>
+                  <h4 class="font-bold text-xs sm:text-sm text-white">Sức Khỏe Hệ Thống & Tài Nguyên Máy (Machine Health)</h4>
+                  <p class="text-[10px] text-zinc-400">Theo dõi CPU, RAM, Ổ cứng đệm và trạng thái tiến trình ngầm</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold font-mono">
+                🟢 Hệ thống ổn định
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono">
+              
+              <!-- CPU Health -->
+              <div class="p-3.5 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 space-y-2">
+                <div class="text-zinc-400 text-[11px] flex justify-between font-sans">
+                  <span>🖥️ CPU Load Average</span>
+                  <span class="text-emerald-400 font-bold font-mono" id="health-cpu-val">Load 2.3</span>
+                </div>
+                <div class="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+                  <div class="bg-emerald-500 h-full rounded-full" id="health-cpu-bar" style="width: 25%;"></div>
+                </div>
+                <div class="text-[10px] text-zinc-500">Mức tải tối ưu cho video streaming</div>
+              </div>
+
+              <!-- RAM Memory Health -->
+              <div class="p-3.5 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 space-y-2">
+                <div class="text-zinc-400 text-[11px] flex justify-between font-sans">
+                  <span>🧠 RAM Memory</span>
+                  <span class="text-blue-400 font-bold font-mono" id="health-ram-val">16.2 / 24.0 GB</span>
+                </div>
+                <div class="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+                  <div class="bg-blue-500 h-full rounded-full" id="health-ram-bar" style="width: 58%;"></div>
+                </div>
+                <div class="text-[10px] text-zinc-500">58% Đã dùng • Bộ nhớ đệm dồi dào</div>
+              </div>
+
+              <!-- NVMe Staging Disk Health -->
+              <div class="p-3.5 rounded-2xl bg-zinc-950/80 border border-zinc-800/80 space-y-2">
+                <div class="text-zinc-400 text-[11px] flex justify-between font-sans">
+                  <span>💾 Ổ Đệm Cục Bộ (NVMe)</span>
+                  <span class="text-purple-400 font-bold font-mono" id="health-disk-val">296 / 476 GB</span>
+                </div>
+                <div class="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+                  <div class="bg-purple-500 h-full rounded-full" id="health-disk-bar" style="width: 62%;"></div>
+                </div>
+                <div class="text-[10px] text-zinc-500">180 GB Khả dụng cho staging</div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ==================== KHỐI 4: MEDIA ĐÃ THÊM GẦN ĐÂY (RECENTLY ADDED MEDIA) ==================== -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-xs sm:text-sm text-white flex items-center gap-2">
+                <span>🎬</span> Media Đã Thêm Gần Đây (Recently Added & Synced)
+              </h3>
+              <button onclick="setTab('collection')" class="text-xs text-blue-400 hover:text-blue-300 font-semibold">
+                Xem toàn bộ kho ➔
+              </button>
+            </div>
+
+            <!-- Recent Posters Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5" id="home-recent-media-grid">
+              
+              <!-- 1. The Three-Eyed One -->
+              <div onclick="setTab('collection')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-amber-500/50 p-2.5 transition space-y-2">
+                <div class="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 relative">
+                  <img src="/api/poster?tvdb=320122" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+                  <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-amber-500 text-black font-mono text-[9px] font-black">480p DVD</span>
+                  <span class="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur text-emerald-400 font-bold text-[9px]">🇻🇳 Vietsub</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-xs text-white truncate group-hover:text-amber-400">The Three-Eyed One</h4>
+                  <p class="text-[10px] text-zinc-400 truncate">48/48 tập • NAS Storage</p>
+                </div>
+              </div>
+
+              <!-- 2. Black Jack -->
+              <div onclick="setTab('collection')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-blue-500/50 p-2.5 transition space-y-2">
+                <div class="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 relative">
+                  <img src="/api/poster?tvdb=78864" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+                  <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-purple-600 text-white font-mono text-[9px] font-bold">1080p BDRip</span>
+                  <span class="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur text-emerald-400 font-bold text-[9px]">🇻🇳 Vietsub</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-xs text-white truncate group-hover:text-blue-400">Black Jack (1993)</h4>
+                  <p class="text-[10px] text-zinc-400 truncate">12/12 tập • NAS & Drive</p>
+                </div>
+              </div>
+
+              <!-- 3. Monster -->
+              <div onclick="setTab('collection')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-blue-500/50 p-2.5 transition space-y-2">
+                <div class="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 relative">
+                  <img src="/api/poster?tvdb=74599" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+                  <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-blue-600 text-white font-mono text-[9px] font-bold">1080p BluRay</span>
+                  <span class="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur text-emerald-400 font-bold text-[9px]">🇻🇳 Vietsub</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-xs text-white truncate group-hover:text-blue-400">Monster (2004)</h4>
+                  <p class="text-[10px] text-zinc-400 truncate">74/74 tập • Google Drive</p>
+                </div>
+              </div>
+
+              <!-- 4. Young Kindaichi -->
+              <div onclick="setTab('collection')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-blue-500/50 p-2.5 transition space-y-2">
+                <div class="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 relative">
+                  <img src="/api/poster?tvdb=79354" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+                  <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-emerald-600 text-white font-mono text-[9px] font-bold">480p DVD</span>
+                  <span class="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur text-emerald-400 font-bold text-[9px]">🇻🇳 Vietsub</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-xs text-white truncate group-hover:text-blue-400">Thám Tử Kindaichi</h4>
+                  <p class="text-[10px] text-zinc-400 truncate">148 tập • Google Drive</p>
+                </div>
+              </div>
+
+              <!-- 5. WUKONG -->
+              <div onclick="setTab('collection')" class="group cursor-pointer rounded-2xl bg-zinc-950 border border-zinc-800/80 hover:border-blue-500/50 p-2.5 transition space-y-2">
+                <div class="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 relative">
+                  <img src="/api/poster?tvdb=454526" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+                  <span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded bg-amber-600 text-white font-mono text-[9px] font-bold">1080p WEB-DL</span>
+                  <span class="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur text-emerald-400 font-bold text-[9px]">🇻🇳 Vietsub</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-xs text-white truncate group-hover:text-blue-400">WUKONG (2025)</h4>
+                  <p class="text-[10px] text-zinc-400 truncate">12 tập • Google Drive</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+

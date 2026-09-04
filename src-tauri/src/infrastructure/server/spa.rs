@@ -6,14 +6,15 @@ use axum::{
 };
 use std::path::PathBuf;
 
-
 fn find_template_file(filename: &str) -> Option<PathBuf> {
     // Check possible locations
     let candidates = [
+        PathBuf::from(format!("frontend/{}", filename)),
+        PathBuf::from(format!("../frontend/{}", filename)),
         PathBuf::from(format!("templates/{}", filename)),
         PathBuf::from(format!("../templates/{}", filename)),
-        PathBuf::from(format!("../../templates/{}", filename)),
-        PathBuf::from(format!("/Volumes/512GB/AI Workspace/apps/media-hub/templates/{}", filename)),
+        PathBuf::from(format!("/Volumes/512GB/Studio Projects/media-hub/frontend/{}", filename)),
+        PathBuf::from(format!("/Volumes/512GB/Studio Projects/media-hub/templates/{}", filename)),
     ];
     for c in &candidates {
         if c.exists() && c.is_file() {
@@ -23,9 +24,38 @@ fn find_template_file(filename: &str) -> Option<PathBuf> {
     None
 }
 
+async fn render_template_with_includes(path: &PathBuf) -> Result<String, std::io::Error> {
+    let content = tokio::fs::read_to_string(path).await?;
+    let mut rendered = content;
+    let re = regex::Regex::new(r#"<!--\s*include\s*["']([^"']+)["']\s*-->"#).unwrap();
+
+    let mut iterations = 0;
+    while iterations < 5 && re.is_match(&rendered) {
+        iterations += 1;
+        let mut replacements = Vec::new();
+        for cap in re.captures_iter(&rendered) {
+            if let (Some(full_match), Some(sub_path)) = (cap.get(0), cap.get(1)) {
+                let sub_path_str = sub_path.as_str();
+                if let Some(partial_file) = find_template_file(sub_path_str) {
+                    if let Ok(partial_content) = tokio::fs::read_to_string(&partial_file).await {
+                        replacements.push((full_match.as_str().to_string(), partial_content));
+                    }
+                }
+            }
+        }
+        if replacements.is_empty() {
+            break;
+        }
+        for (placeholder, replacement) in replacements {
+            rendered = rendered.replace(&placeholder, &replacement);
+        }
+    }
+    Ok(rendered)
+}
+
 pub async fn handle_spa_index() -> impl IntoResponse {
     if let Some(path) = find_template_file("index.html") {
-        match tokio::fs::read_to_string(&path).await {
+        match render_template_with_includes(&path).await {
             Ok(content) => Html(content).into_response(),
             Err(e) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -49,30 +79,51 @@ pub async fn handle_static(AxumPath(file_path): AxumPath<String>) -> Response {
     }
 
     let candidates = [
+        PathBuf::from(format!("frontend/static/{}", clean_path)),
+        PathBuf::from(format!("../frontend/static/{}", clean_path)),
         PathBuf::from(format!("static/{}", clean_path)),
         PathBuf::from(format!("../static/{}", clean_path)),
-        PathBuf::from(format!("/Volumes/512GB/AI Workspace/apps/media-hub/static/{}", clean_path)),
-        PathBuf::from(format!("templates/{}", clean_path)),
-        PathBuf::from(format!("../templates/{}", clean_path)),
+        PathBuf::from(format!("templates/static/{}", clean_path)),
+        PathBuf::from(format!("../templates/static/{}", clean_path)),
+        PathBuf::from(format!("/Volumes/512GB/Studio Projects/media-hub/frontend/static/{}", clean_path)),
+        PathBuf::from(format!("/Volumes/512GB/Studio Projects/media-hub/static/{}", clean_path)),
     ];
 
-    for candidate in &candidates {
-        if candidate.exists() && candidate.is_file() {
-            if let Ok(bytes) = tokio::fs::read(candidate).await {
-                let mime = mime_guess::from_path(candidate)
-                    .first_or_octet_stream()
-                    .as_ref()
-                    .to_string();
-
-                return Response::builder()
-                    .status(StatusCode::OK)
-                    .header(header::CONTENT_TYPE, mime)
-                    .header(header::CACHE_CONTROL, "public, max-age=86400")
-                    .body(Body::from(bytes))
-                    .unwrap_or_else(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Error").into_response());
-            }
+    let mut found_path = None;
+    for c in &candidates {
+        if c.exists() && c.is_file() {
+            found_path = Some(c.clone());
+            break;
         }
     }
 
-    (StatusCode::NOT_FOUND, "Static file not found").into_response()
+    let path = match found_path {
+        Some(p) => p,
+        None => return (StatusCode::NOT_FOUND, "File not found").into_response(),
+    };
+
+    let mime_type = mime_guess::from_path(&path)
+        .first_or_octet_stream()
+        .as_ref()
+        .to_string();
+
+    match tokio::fs::read(&path).await {
+        Ok(bytes) => {
+            let cache_control = if clean_path.ends_with(".js") || clean_path.ends_with(".css") {
+                "no-cache, must-revalidate"
+            } else {
+                "public, max-age=3600"
+            };
+
+            Response::builder()
+                .status(StatusCode::OK)
+                .header(header::CONTENT_TYPE, mime_type)
+                .header(header::CACHE_CONTROL, cache_control)
+                .body(Body::from(bytes))
+                .unwrap_or_else(|_| {
+                    (StatusCode::INTERNAL_SERVER_ERROR, "Builder error").into_response()
+                })
+        }
+        Err(_) => (StatusCode::NOT_FOUND, "File read error").into_response(),
+    }
 }

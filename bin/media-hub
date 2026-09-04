@@ -15,7 +15,7 @@ done
 BIN_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 APP_DIR="$( cd -P "$BIN_DIR/.." >/dev/null 2>&1 && pwd )"
 TAURI_DIR="$APP_DIR/src-tauri"
-SERVER_SCRIPT="$APP_DIR/scripts/server.py"
+SERVER_SCRIPT="$APP_DIR/backend/server.py"
 RUST_RELEASE_BIN="$APP_DIR/target/release/media-hub"
 RUST_DEBUG_BIN="$APP_DIR/target/debug/media-hub"
 
@@ -422,7 +422,7 @@ cmd_help() {
   echo "Cú pháp: media-hub <command> [options]"
   echo ""
   echo "Lệnh hỗ trợ:"
-  echo "  app / desktop                  Mở ứng dụng Electron Desktop độc lập"
+  echo "  app / desktop                  Mở ứng dụng Desktop độc lập (Tauri 2 & Rust)"
   echo "  start [--open] [--port 8888]   Khởi chạy server Media Hub ngầm"
   echo "  stop                           Dừng server Media Hub"
   echo "  restart                        Khởi động lại server"

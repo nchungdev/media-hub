@@ -1,0 +1,128 @@
+          
+          <!-- ==================== 1. THƯ MỤC LÀM VIỆC MEDIA (WORKSPACE ROOT DIRECTORY) ==================== -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-blue-500/30 shadow-xl space-y-4 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-blue-600/10 text-blue-400 flex items-center justify-center font-bold text-base border border-blue-500/20 shadow-inner">📁</div>
+                <div>
+                  <h4 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                    Thư Mục Làm Việc Media (Workspace Root Directory)
+                    <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[10px] border border-blue-500/20 font-mono font-bold">Top Priority</span>
+                  </h4>
+                  <p class="text-[11px] text-zinc-400">Thư mục gốc lưu trữ kho phim, TV Shows, phụ đề và ngữ cảnh thực thi của AI Agent</p>
+                </div>
+              </div>
+              <button type="button" onclick="chooseNativeDirectory('cfg-workspace-dir')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-md shadow-blue-600/20">
+                <span>📂</span> Chọn Thư Mục...
+              </button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+              <div>
+                <label class="block text-zinc-300 font-semibold mb-1.5">Đường Dẫn Thư Mục Làm Việc Hiện Tại:</label>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="cfg-workspace-dir" placeholder="/Volumes/512GB/AI Workspace hoặc ~/Movies" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-blue-500 text-xs">
+                  <button type="button" onclick="chooseNativeDirectory('cfg-workspace-dir')" class="px-3.5 py-2.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 hover:text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shrink-0 shadow-sm">
+                    <span>📂</span> Duyệt Thư Mục
+                  </button>
+                </div>
+                <input type="hidden" id="cfg-hub-home" value="">
+              </div>
+
+              <div class="p-3 rounded-2xl bg-blue-500/[0.04] border border-blue-500/20 text-[11px] text-blue-300 flex items-start gap-2">
+                <span class="text-sm shrink-0">💡</span>
+                <p class="leading-relaxed">
+                  Media Hub tự động quét toàn bộ phim lẻ (Movies), phim bộ (TV Shows) và phụ đề trong thư mục này. Khi bạn kích hoạt dịch phụ đề hoặc gửi lệnh cho AI Agent, tham số <code>--add-dir</code> sẽ tự động trỏ đến đây.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==================== 2. CẤU HÌNH ANTIGRAVITY AI CLI (AGY / AGY2) ==================== -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-emerald-500/30 shadow-xl space-y-4 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-emerald-600/10 text-emerald-400 flex items-center justify-center font-bold text-base border border-emerald-500/20 shadow-inner">🤖</div>
+                <div>
+                  <h4 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                    Tích Hợp Antigravity AI CLI (agy / agy2)
+                    <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] border border-emerald-500/20 font-mono font-bold">Multi-Instance</span>
+                  </h4>
+                  <p class="text-[11px] text-zinc-400">Tự động kích hoạt dịch phụ đề ngầm khi bấm nút trên Web Dashboard</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div>
+                <label class="block text-zinc-400 font-medium mb-1">CLI Instance Mặc Định:</label>
+                <select id="cfg-agy-profile" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-emerald-500 font-medium">
+                  <option value="auto">🔄 Tự Động (Ưu tiên agy2 - Secondary, tự fallback agy - Primary)</option>
+                  <option value="agy2">⚡ agy2 (Secondary Instance - ~/.antigravity-instances/secondary)</option>
+                  <option value="agy">🛡️ agy (Primary Instance - ~/.gemini)</option>
+                </select>
+                <p class="text-[10px] text-zinc-500 mt-1">Khi bấm Dịch Phụ Đề trên web, lệnh sẽ được đẩy trực tiếp vào CLI đã chọn để chạy ngầm và cập nhật tiến độ.</p>
+              </div>
+
+              <div class="p-3.5 rounded-2xl bg-zinc-950/80 border border-zinc-800 flex flex-col justify-between">
+                <div>
+                  <span class="font-bold text-white text-[11px] flex items-center gap-1.5">
+                    <span>💡</span> Cơ chế Multi-Instance Concurrency:
+                  </span>
+                  <p class="text-[10px] text-zinc-400 mt-1 leading-relaxed">
+                    Hệ thống sẽ thử chạy CLI được chọn. Nếu gặp lỗi hết quota (<code>quota reached</code>), hệ thống sẽ tự động fallback sang instance còn lại để đảm bảo việc dịch phụ đề không bị gián đoạn.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Translation Quota Guard Settings -->
+              <div class="sm:col-span-2 pt-3 border-t border-zinc-800/60 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-zinc-400 font-medium mb-1">Hạn Mức Dịch Ngày (Tập / Ngày):</label>
+                  <input type="number" id="cfg-quota-daily" min="1" max="500" value="30" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-white font-mono focus:outline-none focus:border-emerald-500">
+                  <p class="text-[10px] text-zinc-500 mt-1">Mặc định: 30 tập/ngày. Khi chạm trần, hệ thống sẽ tự động tạm hoãn nhận lệnh dịch mới.</p>
+                </div>
+                <div>
+                  <label class="block text-zinc-400 font-medium mb-1">Hạn Mức Dịch Tuần (Tập / Tuần):</label>
+                  <input type="number" id="cfg-quota-weekly" min="1" max="2000" value="150" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-white font-mono focus:outline-none focus:border-emerald-500">
+                  <p class="text-[10px] text-zinc-500 mt-1">Mặc định: 150 tập/tuần (chuẩn an toàn 40% quota Flash tuần, bảo toàn 100% quota Pro).</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==================== 3. TRUY CẬP TỪ XA QUA CLOUDFLARE (TRYCLOUDFLARE) ==================== -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-amber-500/30 shadow-xl space-y-4 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-amber-600/10 text-amber-400 flex items-center justify-center font-bold text-base border border-amber-500/20 shadow-inner">🌐</div>
+                <div>
+                  <h4 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                    Truy Cập Từ Xa Qua Cloudflare (TryCloudflare Quick Tunnel)
+                    <span id="tunnel-badge-status" class="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 text-[10px] border border-zinc-700 font-mono font-bold">⚪ Đang Tắt</span>
+                  </h4>
+                  <p class="text-[11px] text-zinc-400">Tạo đường hầm HTTPS public miễn phí để truy cập Web Dashboard từ điện thoại, laptop ở bất cứ đâu</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" id="btn-tunnel-toggle" onclick="toggleCloudflareTunnel()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-amber-600/20">
+                  <span id="tunnel-btn-icon">⚡</span> <span id="tunnel-btn-text">Bật Truy Cập Từ Xa</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-3 text-xs">
+              <!-- Active URL Display -->
+              <div id="tunnel-active-box" class="hidden p-4 rounded-2xl bg-amber-500/[0.05] border border-amber-500/30 space-y-2.5">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span class="font-bold text-emerald-400 text-xs">Đường dẫn Public đang hoạt động (HTTPS):</span>
+                  </div>
+                  <div class="text-[10px] text-zinc-500 font-mono" id="tunnel-start-time"></div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="tunnel-public-url" readonly class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-amber-300 font-mono font-bold text-xs select-all focus:outline-none focus:border-amber-500 shadow-inner">

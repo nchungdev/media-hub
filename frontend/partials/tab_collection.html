@@ -1,0 +1,132 @@
+      <!-- ==================== TAB 3: BỘ SƯU TẬP MEDIA (UNIFIED COLLECTION) ==================== -->
+      <div id="tab-collection" class="hidden space-y-0">
+        
+        <!-- Pinned Header (Sticky Top-0 Flush) -->
+        <div class="sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 desktop-titlebar-pad flex flex-wrap items-center justify-between gap-3 shadow-sm app-drag-region">
+          <div class="flex items-center gap-3 app-no-drag">
+            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-base border border-amber-500/20 shadow-inner shrink-0">
+              🎬
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-bold text-sm sm:text-base text-white">Bộ Sưu Tập Media</h3>
+                <span id="collection-kpi-badge" class="px-2 py-0.5 text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-full font-mono">-- Mục</span>
+              </div>
+              <p class="text-xs text-zinc-400 hidden sm:block">Quản lý thống nhất Movies & TV Series • Giám sát 3 trạng thái Tải - Sync - Subtitle từng tập</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap app-no-drag">
+            <button onclick="openCrossStorageModal()" class="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" title="Đối chiếu chi tiết 3 kho lưu trữ">
+              <span>⚖️</span> So Sánh Kho
+            </button>
+            <button onclick="loadMediaCollections(true)" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded-xl transition shadow-md shadow-amber-500/20 flex items-center gap-1.5 shrink-0">
+              <span id="btn-icon-col-refresh">🔄</span> Làm Mới
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 sm:p-6 pb-28 lg:pb-10 space-y-4 w-full">
+          
+          <!-- KPI Summary Cards (4 Pillars) -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-lg shrink-0 border border-amber-500/20">
+                🎬
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Bộ Sưu Tập</div>
+                <div class="text-base font-bold text-white font-mono" id="col-kpi-total">--</div>
+                <div class="text-[10px] text-zinc-400 truncate" id="col-kpi-types">-- Series • -- Movies</div>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-lg shrink-0 border border-blue-500/20">
+                📥
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Tải Xuống (Video)</div>
+                <div class="text-base font-bold text-blue-400 font-mono" id="col-kpi-download">--</div>
+                <div class="text-[10px] text-zinc-400 truncate">Video cục bộ sẵn sàng</div>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-lg shrink-0 border border-emerald-500/20">
+                ☁️
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Đồng Bộ An Toàn</div>
+                <div class="text-base font-bold text-emerald-400 font-mono" id="col-kpi-synced">--</div>
+                <div class="text-[10px] text-emerald-400/80 truncate">🟢 Đã có cả NAS & Drive</div>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold text-lg shrink-0 border border-purple-500/20">
+                🌐
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Phụ Đề Vietsub</div>
+                <div class="text-base font-bold text-purple-400 font-mono" id="col-kpi-subtitles">--</div>
+                <div class="text-[10px] text-zinc-400 truncate">Hoàn tất 100% Vietsub</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter & Search Toolbar -->
+          <div class="bg-zinc-950/90 border border-zinc-800/80 p-3 rounded-2xl space-y-2.5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <!-- Search Box -->
+              <div class="flex-1 min-w-[220px] max-w-md relative">
+                <input type="text" id="collection-search" oninput="applyCollectionFilters()" placeholder="🔍 Tìm theo tên phim, tiếng Việt, TVDB ID..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 shadow-inner">
+              </div>
+
+              <!-- Type Tabs -->
+              <div class="flex items-center gap-1 bg-zinc-900/80 p-1 rounded-xl border border-zinc-800 text-xs font-semibold overflow-x-auto custom-scroll">
+                <button onclick="setCollectionTypeFilter('all')" id="col-type-all" class="col-type-btn px-3 py-1.5 rounded-lg bg-amber-500 text-black font-bold transition shadow-sm shrink-0">
+                  Tất Cả
+                </button>
+                <button onclick="setCollectionTypeFilter('series')" id="col-type-series" class="col-type-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                  📺 TV Series
+                </button>
+                <button onclick="setCollectionTypeFilter('movie')" id="col-type-movie" class="col-type-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                  🎬 Movies / OVA
+                </button>
+              </div>
+            </div>
+
+            <!-- Sub Filters: Sync Status & Subtitle Status -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-zinc-900 text-xs">
+              <!-- Sync Filter -->
+              <div class="flex items-center gap-1.5 overflow-x-auto custom-scroll py-0.5">
+                <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider shrink-0">Kho Lưu Trữ:</span>
+                <button onclick="setCollectionSyncFilter('all')" id="col-sync-all" class="col-sync-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-white font-bold transition text-[11px] shrink-0">Tất Cả</button>
+                <button onclick="setCollectionSyncFilter('synced_both')" id="col-sync-both" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🟢 Cả NAS & Drive</button>
+                <button onclick="setCollectionSyncFilter('only_nas')" id="col-sync-nas" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🟡 Chỉ NAS</button>
+                <button onclick="setCollectionSyncFilter('only_gdrive')" id="col-sync-drive" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🔵 Chỉ Drive</button>
+                <button onclick="setCollectionSyncFilter('unsynced')" id="col-sync-unsynced" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">⚪ Chưa Đồng Bộ</button>
+              </div>
+
+              <!-- Subtitle Filter -->
+              <div class="flex items-center gap-1.5 overflow-x-auto custom-scroll py-0.5">
+                <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider shrink-0">Phụ Đề:</span>
+                <button onclick="setCollectionSubFilter('all')" id="col-sub-all" class="col-sub-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-white font-bold transition text-[11px] shrink-0">Tất Cả</button>
+                <button onclick="setCollectionSubFilter('complete')" id="col-sub-complete" class="col-sub-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🎉 100% Vietsub</button>
+                <button onclick="setCollectionSubFilter('translating')" id="col-sub-translating" class="col-sub-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">⏳ Đang Dịch</button>
+                <button onclick="setCollectionSubFilter('missing')" id="col-sub-missing" class="col-sub-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">⚪ Chưa Dịch</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Collection Cards List -->
+          <div id="collections-list-container" class="space-y-3.5">
+            <!-- Populated dynamically by JS -->
+          </div>
+
+          <!-- Mobile Clearance Spacer -->
+          <div class="h-10 lg:hidden"></div>
+        </div>
+      </div>
+

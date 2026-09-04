@@ -1,0 +1,84 @@
+      <!-- ==================== TAB 7: LIVE CLI CONSOLE ==================== -->
+      <div id="tab-console" class="hidden space-y-0">
+        
+        <!-- Pinned Header (Sticky Top-0 Flush with macOS Drag Area) -->
+        <div class="sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 desktop-titlebar-pad flex flex-wrap items-center justify-between gap-3 shadow-sm app-drag-region">
+          <div class="flex items-center gap-3 app-no-drag">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-base border border-emerald-500/20 shrink-0">
+              📟
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-sm text-white">Antigravity CLI Live Console</h3>
+                <span id="tab-console-status-badge" class="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold flex items-center gap-1.5 border border-zinc-700">
+                  <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> IDLE
+                </span>
+              </div>
+              <p class="text-xs text-zinc-400 hidden sm:block">Giám sát trực tiếp dòng lệnh stdout/stderr thời gian thực của agy2 / agy</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap app-no-drag">
+            <button id="btn-cli-toggle" onclick="toggleCliProcess()" class="px-3.5 py-1.5 text-xs font-semibold bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-400 rounded-xl transition flex items-center gap-1.5 shadow-sm font-mono hidden">
+              <span id="btn-cli-toggle-icon">⏹</span> <span id="btn-cli-toggle-text">Dừng CLI</span>
+            </button>
+            <input type="text" id="tab-console-filter" oninput="filterTabConsoleLogs()" placeholder="🔍 Lọc log..." class="bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 w-32 sm:w-44 font-mono">
+            <button onclick="copyTabConsoleLogs()" class="px-3.5 py-1.5 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white rounded-xl transition flex items-center gap-1.5 shadow-sm font-mono">
+              <span>📋</span> Sao Chép
+            </button>
+            <button onclick="clearTabConsole()" class="px-3.5 py-1.5 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white rounded-xl transition flex items-center gap-1.5 shadow-sm font-mono">
+              <span>🧹</span> Xoá Log
+            </button>
+            <button onclick="pollTabConsoleLogs(true)" class="px-3.5 py-1.5 text-xs font-semibold bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 rounded-xl transition flex items-center gap-1.5 shadow-sm font-mono">
+              <span>🔄</span> Làm Mới
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 sm:p-6 pb-28 lg:pb-10 space-y-4 w-full">
+          
+          <!-- Active Job Banner (if any) -->
+          <div id="tab-console-active-bar" class="hidden p-3.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 shrink-0 text-xs font-mono text-emerald-300 flex items-center justify-between gap-3 shadow-lg">
+            <div class="flex items-center gap-2.5 truncate">
+              <span class="animate-spin text-base">⚙️</span>
+              <span class="truncate">Đang thực thi: <strong id="tab-active-cmd" class="text-white font-bold">--</strong></span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <span id="tab-active-context" class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30 text-[10px]" title="Ngữ cảnh tự động đã chọn">Context</span>
+              <span id="tab-active-cli" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">agy2</span>
+              <span id="tab-active-time" class="text-[11px] text-emerald-400/80">--:--:--</span>
+            </div>
+          </div>
+
+          <!-- Terminal Screen Container -->
+          <div class="bg-[#06090e] border border-zinc-800/80 rounded-3xl p-4 sm:p-5 font-mono text-xs text-zinc-300 shadow-2xl flex flex-col h-[calc(100vh-14rem)] min-h-[480px]">
+            
+            <!-- Terminal Output Area -->
+            <div id="tab-console-output" class="flex-1 overflow-y-auto custom-scroll space-y-1 select-text leading-relaxed font-mono pr-2">
+              <div class="text-zinc-600 select-none py-2">/* --- Antigravity CLI Live Console Initialized. Ready for commands. --- */</div>
+            </div>
+
+            <!-- Terminal Footer Controls -->
+            <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500 pt-3 mt-2 shrink-0 border-t border-zinc-900 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-1.5 cursor-pointer select-none text-zinc-400 hover:text-zinc-200">
+                  <input type="checkbox" id="tab-autoscroll-chk" checked class="rounded bg-zinc-900 border-zinc-700 text-emerald-500 focus:ring-0">
+                  <span>Tự động cuộn (Auto-scroll)</span>
+                </label>
+                <span class="text-zinc-700">•</span>
+                <span class="text-zinc-500">Tự làm mới: <b class="text-emerald-400">1.2s</b></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span>Dung lượng log: <b id="tab-console-line-count" class="text-zinc-300 font-bold">0</b> dòng</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+

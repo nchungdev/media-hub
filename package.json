@@ -1,0 +1,17 @@
+{
+  "name": "antigravity-media-hub",
+  "version": "2.5.0",
+  "description": "Antigravity Media Hub & Command Center",
+  "scripts": {
+    "dev": "cargo run --manifest-path src-tauri/Cargo.toml",
+    "tauri:dev": "cargo tauri dev",
+    "tauri:build": "cargo tauri build",
+    "server": "python3 backend/server.py",
+    "server:python": "python3 backend/server.py",
+    "server:rust": "cargo run --manifest-path src-tauri/Cargo.toml -- --server",
+    "cli": "./bin/media-hub",
+    "start": "./bin/media-hub start --foreground"
+  },
+  "author": "Antigravity Team",
+  "license": "MIT"
+}

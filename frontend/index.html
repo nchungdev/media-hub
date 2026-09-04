@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Antigravity Hub">
+  <meta name="theme-color" content="#09090b">
+  <title>Antigravity Media Hub & Command Center</title>
+  <script>
+    // Universal API Origin Resolver for Tauri (tauri://), Localhost, and Tunnel
+    (function() {
+      const isCustomScheme = window.location.protocol === 'tauri:' ||
+                             window.location.protocol === 'file:' ||
+                             window.location.origin.includes('tauri.localhost');
+      if (isCustomScheme) {
+        const origFetch = window.fetch;
+        window.fetch = function(input, init) {
+          if (typeof input === 'string' && input.startsWith('/')) {
+            input = 'http://127.0.0.1:8888' + input;
+          } else if (input instanceof Request && input.url.startsWith('/')) {
+            input = new Request('http://127.0.0.1:8888' + input.url, init);
+          }
+          return origFetch.call(this, input, init);
+        };
+      }
+    })();
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/artplayer/dist/artplayer.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' }
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+</head>
+<body class="h-screen overflow-hidden flex bg-[#09090b] antialiased selection:bg-blue-500 selection:text-white">
+
+  <!-- Desktop Navigation Sidebar -->
+  <!-- include "partials/sidebar.html" -->
+
+  <!-- Main View Area (Right Content) -->
+  <div class="flex-1 flex flex-col h-screen overflow-y-auto custom-scroll">
+    <!-- Mobile Top Bar Header -->
+    <!-- include "partials/header_mobile.html" -->
+
+    <!-- Main Content Panels -->
+    <main class="flex-1 flex flex-col w-full min-h-0">
+      <!-- include "partials/tab_home.html" -->
+      <!-- include "partials/tab_pipelines.html" -->
+      <!-- include "partials/tab_torbox.html" -->
+      <!-- include "partials/tab_collection.html" -->
+      <!-- include "partials/tab_agent.html" -->
+      <!-- include "partials/tab_subtitles.html" -->
+      <!-- include "partials/tab_settings.html" -->
+      <!-- include "partials/tab_tokens.html" -->
+      <!-- include "partials/tab_console.html" -->
+    </main>
+  </div>
+
+  <!-- Mobile Bottom App Bar -->
+  <!-- include "partials/mobile_bottom_nav.html" -->
+
+  <!-- Global Toast Container -->
+  <div id="toast-container" class="fixed top-5 right-5 z-[99999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"></div>
+
+  <!-- Full Screen Dedicated Video Player -->
+  <!-- include "partials/player.html" -->
+
+  <!-- Modals & Dialogs -->
+  <!-- include "partials/modals_toolbox.html" -->
+  <!-- include "partials/modals_storage.html" -->
+
+  <!-- Modern Vanilla ES Modules Architecture -->
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

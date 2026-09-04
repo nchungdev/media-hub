@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Desktop App",
+      "type": "shell",
+      "command": "cargo run --manifest-path src-tauri/Cargo.toml",
+      "problemMatcher": ["$rustc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Run Python Server",
+      "type": "shell",
+      "command": "python3 backend/server.py",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Rust Server (Headless)",
+      "type": "shell",
+      "command": "cargo run --manifest-path src-tauri/Cargo.toml -- --server",
+      "problemMatcher": ["$rustc"]
+    }
+  ]
+}

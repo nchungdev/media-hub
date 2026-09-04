@@ -1,0 +1,210 @@
+  <!-- ==================== MODAL: CROSS-STORAGE SYNC & SCAN (GDRIVE VS NAS VS LOCAL) ==================== -->
+  <div id="modal-cross-storage" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-3 sm:p-6 overflow-y-auto custom-scroll">
+    <div class="bg-zinc-950 border border-zinc-800 w-full max-w-5xl rounded-3xl p-5 sm:p-7 space-y-5 shadow-2xl relative animate-fade-in my-auto max-h-[90vh] flex flex-col">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-4 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-lg shadow-blue-600/30">
+            🔄
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-white flex items-center gap-2">
+              Đối Chiếu & Đề Xuất Đồng Bộ Đa Kho Lưu Trữ
+              <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[10px] border border-blue-500/20 font-mono font-bold">Cloud ⟷ NAS ⟷ Local</span>
+            </h3>
+            <p class="text-xs text-zinc-400">Quét kiểm tra phim đã có trên Google Drive, NAS Storage hay Máy tính và đưa ra các đề xuất hành động thông minh</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-cross-storage')" class="w-8 h-8 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition text-sm">✕</button>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0 text-xs font-mono" id="cross-kpi-container">
+        <div class="p-3 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-1">
+          <div class="text-zinc-500 text-[10px] uppercase font-bold">Tổng Phim Quét</div>
+          <div class="text-lg font-bold text-white" id="cross-total-shows">--</div>
+        </div>
+        <div class="p-3 rounded-2xl bg-emerald-950/20 border border-emerald-500/20 space-y-1">
+          <div class="text-emerald-400 text-[10px] uppercase font-bold">Đồng Bộ Cả 2 Kho</div>
+          <div class="text-lg font-bold text-emerald-400" id="cross-synced-both">--</div>
+        </div>
+        <div class="p-3 rounded-2xl bg-blue-950/20 border border-blue-500/20 space-y-1">
+          <div class="text-blue-400 text-[10px] uppercase font-bold">Chỉ Có Trên Drive</div>
+          <div class="text-lg font-bold text-blue-400" id="cross-only-gdrive">--</div>
+        </div>
+        <div class="p-3 rounded-2xl bg-amber-950/20 border border-amber-500/20 space-y-1">
+          <div class="text-amber-400 text-[10px] uppercase font-bold">Chỉ Có Trên NAS</div>
+          <div class="text-lg font-bold text-amber-400" id="cross-only-nas">--</div>
+        </div>
+      </div>
+
+      <!-- Table of Shows Comparison (Scrollable) -->
+      <div class="flex-1 overflow-y-auto custom-scroll border border-zinc-800/80 rounded-2xl bg-zinc-900/40 min-h-[300px]">
+        <table class="w-full text-left text-xs text-zinc-300">
+          <thead class="bg-zinc-950 text-zinc-400 uppercase text-[10px] tracking-wider sticky top-0 z-10 border-b border-zinc-800">
+            <tr>
+              <th class="px-4 py-3">Tên Phim & Series</th>
+              <th class="px-3 py-3 text-center">Google Drive</th>
+              <th class="px-3 py-3 text-center">NAS Storage</th>
+              <th class="px-3 py-3 text-center">Máy Cục Bộ</th>
+              <th class="px-4 py-3 text-right">Đề Xuất Hành Động</th>
+            </tr>
+          </thead>
+          <tbody id="cross-storage-tbody" class="divide-y divide-zinc-800/60">
+            <tr>
+              <td colspan="5" class="p-8 text-center text-zinc-500">
+                <div class="animate-pulse">⏳ Đang quét và đối chiếu dữ liệu giữa các kho lưu trữ...</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-between pt-2 shrink-0 border-t border-zinc-800 flex-wrap gap-2 text-xs">
+        <div class="text-zinc-400 text-[11px]">
+          💡 Hệ thống tự động so sánh hash tên thư mục chuẩn hóa TVDB ID giữa các kho lưu trữ.
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="executeAllProposals()" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center gap-1.5 text-xs">
+            <span>⚡</span> Thực Thi Toàn Bộ Đề Xuất
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: CONFIRM TRANSLATE SINGLE EPISODE ==================== -->
+  <div id="modal-confirm-translate-episode" onclick="if(event.target === this) closeModal('modal-confirm-translate-episode')" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-950 border border-zinc-800 w-full max-w-md rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl relative animate-fade-in" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-lg border border-amber-500/30">
+            🚀
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Xác Nhận Dịch Phụ Đề AI</h3>
+            <p class="text-[11px] text-zinc-400">Dịch thuật chuyên sâu tập phim</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-confirm-translate-episode')" class="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition text-xs">✕</button>
+      </div>
+
+      <div class="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-2 text-left">
+        <div class="text-xs text-zinc-300">
+          Phim: <strong class="text-white font-bold" id="confirm-trans-show-title">--</strong>
+        </div>
+        <div class="text-xs text-zinc-300">
+          Tập: <strong class="text-amber-400 font-mono font-bold" id="confirm-trans-ep-key">--</strong>
+        </div>
+        <div class="text-[11px] text-zinc-400 leading-relaxed pt-1">
+          💡 Hệ thống sẽ tự động chuyển ngữ theo Glossary nhân vật và xuất đầy đủ 3 định dạng: <strong class="text-zinc-200">.vi.ass, .vi.srt, .vi.vtt</strong>.
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button onclick="closeModal('modal-confirm-translate-episode')" class="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-xl text-xs font-semibold transition">
+          Hủy
+        </button>
+        <button onclick="confirmTranslateSingleEpisode()" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-amber-600/20 flex items-center gap-1.5">
+          <span>🚀</span> Tiến Hành Dịch Ngay
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: DOWNLOAD EPISODE SUBTITLES ==================== -->
+  <div id="modal-download-episode-sub" onclick="if(event.target === this) closeModal('modal-download-episode-sub')" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-950 border border-zinc-800 w-full max-w-md rounded-3xl p-5 sm:p-6 space-y-4 shadow-2xl relative animate-fade-in" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-lg border border-emerald-500/30">
+            📥
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Tải Phụ Đề Vietsub</h3>
+            <p class="text-[11px] text-zinc-400">Chọn định dạng phụ đề muốn tải</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-download-episode-sub')" class="w-7 h-7 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition text-xs">✕</button>
+      </div>
+
+      <div class="space-y-2 text-left">
+        <div class="text-xs text-zinc-400">
+          Phim: <strong class="text-white font-bold" id="download-sub-show-title">--</strong> • Tập: <strong class="text-emerald-400 font-mono font-bold" id="download-sub-ep-key">--</strong>
+        </div>
+        <div class="space-y-2 pt-1" id="download-sub-files-list">
+          <!-- Populated dynamically with download buttons -->
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end pt-2">
+        <button onclick="closeModal('modal-download-episode-sub')" class="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 rounded-xl text-xs font-semibold transition">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: WORKSPACE SETUP ==================== -->
+  <div id="modal-workspace-setup" onclick="if(event.target === this) closeModal('modal-workspace-setup')" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl space-y-5 relative overflow-hidden animate-fade-in text-left" onclick="event.stopPropagation()">
+      <div class="absolute top-0 right-0 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <div class="flex items-center justify-between border-b border-zinc-800/80 pb-3.5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xl shadow-inner">
+            📁
+          </div>
+          <div>
+            <h3 class="font-bold text-base sm:text-lg text-white">Thiết Lập Thư Mục Làm Việc</h3>
+            <p class="text-xs text-zinc-400">Chọn thư mục lưu trữ media, dự án và dữ liệu cho Media Hub</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-workspace-setup')" class="w-8 h-8 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center text-xs transition">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <p class="text-zinc-300 leading-relaxed">
+          Media Hub sẽ quét toàn bộ phim lẻ (Movies), phim bộ (TV Shows), bóc tách phụ đề và khởi chạy <strong>Antigravity AI Agent</strong> bên trong thư mục này:
+        </p>
+
+        <div class="space-y-2">
+          <label class="block text-zinc-300 font-semibold">Đường dẫn Thư mục Làm việc (Workspace Path):</label>
+          <div class="flex items-center gap-2">
+            <input type="text" id="ws-modal-input" placeholder="/Volumes/512GB/AI Workspace hoặc ~/Movies" class="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-white font-mono text-xs focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <button type="button" onclick="chooseNativeDirectory('ws-modal-input')" class="px-4 py-2.5 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-300 hover:text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shrink-0 shadow-sm">
+              <span>📂</span> Duyệt Thư Mục...
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Workspace Suggestions -->
+        <div id="ws-modal-suggestions" class="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-2">
+          <div class="text-[11px] text-zinc-400 font-semibold">Gợi ý Thư mục:</div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="setWorkspaceInputPath('/Volumes/512GB/AI Workspace')" class="px-3 py-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-700 rounded-xl text-zinc-300 font-mono text-[11px] transition flex items-center gap-1.5">
+              <span>💾</span> /Volumes/512GB/AI Workspace
+            </button>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300 flex items-start gap-2.5">
+          <span class="text-base shrink-0">💡</span>
+          <span>Khi chọn thư mục mới, app sẽ tự động quét lại toàn bộ danh mục phụ đề Subtitle Studio và cập nhật workspace cho Antigravity CLI.</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800">
+        <button type="button" onclick="closeModal('modal-workspace-setup')" class="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-semibold transition">
+          Đóng
+        </button>
+        <button type="button" onclick="applyWorkspaceSetup()" id="btn-apply-ws" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-blue-600/30">
+          <span>🚀</span> Áp Dụng & Quét Dữ Liệu
+        </button>
+      </div>
+    </div>
+  </div>
+

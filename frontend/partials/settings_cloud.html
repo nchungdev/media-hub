@@ -1,0 +1,208 @@
+                    <input type="text" id="cfg-ytdlp-bin" value="/opt/homebrew/bin/yt-dlp" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-white font-mono text-[11px] focus:outline-none focus:border-amber-500">
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ==================== 2. TMDB & SIÊU DỮ LIỆU ==================== -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-blue-500/20 shadow-xl space-y-4 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-blue-600/10 text-blue-400 flex items-center justify-center font-bold text-sm border border-blue-500/20 shadow-inner">🎬</div>
+                <div>
+                  <h4 class="font-bold text-xs sm:text-sm text-white">TMDb & Siêu Dữ Liệu</h4>
+                  <p class="text-[11px] text-zinc-400">API Key, ngôn ngữ và tự động tải poster/metadata NFO chuẩn Plex</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="status-badge-tmdb" class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700 flex items-center gap-1.5 transition-all">
+                  <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Đang kiểm tra...
+                </span>
+                <span class="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono font-bold">tmdb</span>
+              </div>
+            </div>
+
+            <div class="space-y-4 text-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="sm:col-span-2">
+                  <label class="block text-zinc-400 font-medium mb-1.5 flex items-center justify-between">
+                    <span>🎬 TMDb API Key v3</span>
+                    <span class="text-[9px] text-blue-400 font-mono">themoviedb.org</span>
+                  </label>
+                  <input type="password" id="cfg-tmdb-key" placeholder="Dán TMDb API Key v3 vào đây..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                  <label class="block text-zinc-400 font-medium mb-1.5">Ngôn Ngữ Mặc Định</label>
+                  <select id="cfg-tmdb-lang" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-blue-500">
+                    <option value="vi-VN" selected>🇻🇳 vi-VN (Tiếng Việt)</option>
+                    <option value="en-US">🇺🇸 en-US (English)</option>
+                    <option value="ja-JP">🇯🇵 ja-JP (Tiếng Nhật)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="pt-2 border-t border-zinc-800/60 flex flex-wrap gap-4 text-zinc-300">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" id="cfg-tmdb-auto-poster" checked class="w-4 h-4 rounded border-zinc-700 text-blue-600 focus:ring-0">
+                  <span>Tự động tải Poster & Fanart chất lượng cao khi quét phim</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" id="cfg-tmdb-auto-nfo" checked class="w-4 h-4 rounded border-zinc-700 text-blue-600 focus:ring-0">
+                  <span>Tự động tạo file metadata <code class="text-blue-400 font-mono">.nfo</code> chuẩn Plex/Kodi</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==================== 3. NAS STORAGE (SSH) ==================== -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-amber-500/20 shadow-xl space-y-4 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-amber-600/10 text-amber-400 flex items-center justify-center font-bold text-sm border border-amber-500/20 shadow-inner">🖥️</div>
+                <div>
+                  <h4 class="font-bold text-xs sm:text-sm text-white">NAS Storage (SSH)</h4>
+                  <p class="text-[11px] text-zinc-400">Kết nối SSH nội bộ tới NAS Synology/QNAP và tự động dò thư mục Plex</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span id="status-badge-nas" class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700 flex items-center gap-1.5 transition-all">
+                  <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Đang kiểm tra...
+                </span>
+                <button onclick="scanNasLibraries()" class="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600 border border-amber-500/30 text-amber-300 hover:text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                  <span>🔍</span> Quét Thư Mục NAS
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-3.5 text-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div class="sm:col-span-2">
+                  <label class="block text-zinc-400 font-medium mb-1.5">NAS Host IP / Domain</label>
+                  <input type="text" id="cfg-nas-host" placeholder="ví dụ: 192.168.1.50 hoặc nas.local" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                  <label class="block text-zinc-400 font-medium mb-1.5">SSH User</label>
+                  <input type="text" id="cfg-nas-user" value="admin" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                  <label class="block text-zinc-400 font-medium mb-1.5">SSH Port</label>
+                  <input type="number" id="cfg-nas-port" value="22" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-amber-500">
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="block text-zinc-400 font-medium mb-1.5">SSH Key / Auth Path (Tùy chọn)</label>
+                  <input type="text" id="cfg-nas-ssh-key" placeholder="ví dụ: ~/.ssh/id_rsa" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-amber-500">
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="block text-zinc-400 font-medium mb-1.5">Thư Mục Plex Trên NAS (Plex Library Path)</label>
+                  <input type="text" id="cfg-nas-path" value="/volume1/video/TV Shows" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-amber-500">
+                </div>
+                <div class="sm:col-span-4">
+                  <div id="nas-scan-results" class="hidden mt-1 p-3 rounded-xl bg-zinc-950 border border-zinc-800 text-xs space-y-1.5"></div>
+                </div>
+              </div>
+
+              <!-- NAS Sync Option Checkbox -->
+              <div class="pt-2 border-t border-zinc-800/60">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" id="cfg-target-nas" class="w-4 h-4 rounded border-zinc-700 text-amber-500 focus:ring-0">
+                  <span class="text-white font-medium">🖥️ Kích hoạt đẩy phim tự động lên NAS Storage sau khi tải</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==================== 4. GOOGLE DRIVE (RCLONE) ==================== -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-emerald-500/20 shadow-xl space-y-4 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-emerald-600/10 text-emerald-400 flex items-center justify-center font-bold text-sm border border-emerald-500/20 shadow-inner">☁️</div>
+                <div>
+                  <h4 class="font-bold text-xs sm:text-sm text-white">Google Drive (Rclone)</h4>
+                  <p class="text-[11px] text-zinc-400">Remote Rclone, thư mục lưu Cloud và số luồng truyền tải</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span id="status-badge-gdrive" class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700 flex items-center gap-1.5 transition-all">
+                  <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Đang kiểm tra...
+                </span>
+                <button onclick="checkGDriveConnection()" class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/30 text-emerald-300 hover:text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                  <span>🔍</span> Kiểm Tra Kết Nối Drive
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-3.5 text-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-zinc-400 font-medium mb-1.5">Tên Remote Rclone</label>
+                  <input type="text" id="cfg-gdrive-remote" value="gdrive" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                  <label class="block text-zinc-400 font-medium mb-1.5">Thư Mục Root Trên Drive</label>
+                  <input type="text" id="cfg-gdrive-root" value="Phim" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                  <label class="block text-zinc-400 font-medium mb-1.5">Số Luồng Truyền Tải (Transfers)</label>
+                  <input type="number" id="cfg-sync-transfers" value="4" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-emerald-500">
+                </div>
+              </div>
+
+              <!-- GDrive Sync Option Checkbox -->
+              <div class="pt-2 border-t border-zinc-800/60">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" id="cfg-target-drive" checked class="w-4 h-4 rounded border-zinc-700 text-emerald-500 focus:ring-0">
+                  <span class="text-white font-medium">☁️ Kích hoạt đẩy phim tự động lên Google Drive sau khi tải</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==================== 5. BỘ ĐỆM & DỌN DẸP ==================== -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-rose-500/20 shadow-xl space-y-4 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-rose-600/10 text-rose-400 flex items-center justify-center font-bold text-sm border border-rose-500/20 shadow-inner">🗑️</div>
+                <div>
+                  <h4 class="font-bold text-xs sm:text-sm text-white">Bộ Đệm & Dọn Dẹp</h4>
+                  <p class="text-[11px] text-zinc-400">Thư mục đệm tạm và cơ chế giải phóng dung lượng ổ cứng (Auto-Purge)</p>
+                </div>
+              </div>
+              <button onclick="purgeStagingManual()" class="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600 border border-rose-500/30 text-rose-300 hover:text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                <span>🧹</span> Dọn Dẹp Bộ Đệm
+              </button>
+            </div>
+
+            <div class="space-y-3.5 text-xs">
+              <div>
+                <label class="block text-zinc-400 font-medium mb-1.5">Thư Mục Bộ Đệm Tạm Thời (Staging Buffer Directory)</label>
+                <p class="text-[10px] text-zinc-500 mt-1">Nơi lưu file video tạm trong khi tải trước khi được đẩy lên NAS/Google Drive</p>
+              </div>
+
+              <!-- Auto-Purge Card Checkbox -->
+              <div class="pt-2 border-t border-zinc-800/60">
+                <label class="flex items-center gap-2.5 cursor-pointer p-3 rounded-2xl bg-rose-500/[0.04] border border-rose-500/30">
+                  <input type="checkbox" id="cfg-auto-purge" checked class="w-4 h-4 rounded border-zinc-700 text-rose-500 focus:ring-0">
+                  <div>
+                    <span class="text-rose-400 font-bold">🗑️ Tự động giải phóng bộ đệm (Auto-Purge Garbage Collection)</span>
+                    <p class="text-[10px] text-zinc-400 mt-0.5">Tự động xóa sạch file đệm trên ổ cứng máy sau khi đã đồng bộ an toàn 100% lên các đích được chọn (Google Drive / NAS Storage)</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons -->
+          <div class="flex justify-end gap-3 pt-2">
+            <button onclick="fetchSettings()" class="px-5 py-2.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-300 transition shadow-sm">
+              Khôi Phục Mặc Định
+            </button>
+            <button onclick="saveSettings()" class="px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-blue-600/30">

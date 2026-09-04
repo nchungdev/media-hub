@@ -1,0 +1,44 @@
+  <!-- Mobile Bottom App Bar (Native iOS/Android Web App Navigation) -->
+  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800/80 px-2 py-1.5 flex items-center justify-around shadow-2xl safe-bottom font-sans">
+    <!-- 1. media-hub -->
+    <button onclick="setTab('home')" id="mobile-tab-btn-home" class="flex flex-col items-center justify-center flex-1 py-1 text-blue-400 font-bold transition">
+      <span class="text-base">🏠</span>
+      <span class="text-[9px] mt-0.5 tracking-tight font-semibold">Tổng Quan</span>
+    </button>
+
+    <!-- 2. Quản Lý Tải Xuống -->
+    <button onclick="setTab('torbox')" id="mobile-tab-btn-torbox" class="flex flex-col items-center justify-center flex-1 py-1 text-zinc-400 transition relative">
+      <span class="text-base">📥</span>
+      <span class="text-[9px] mt-0.5 tracking-tight font-semibold">Tải Xuống</span>
+      <span id="mobile-tab-badge-torbox" class="absolute top-1 right-2 px-1 py-0.2 text-[7px] bg-purple-500 text-white rounded-full font-mono">--</span>
+    </button>
+
+    <!-- 3. Bộ Sưu Tập Media -->
+    <button onclick="setTab('collection')" id="mobile-tab-btn-collection" class="flex flex-col items-center justify-center flex-1 py-1 text-zinc-400 transition relative">
+      <span class="text-base">🎬</span>
+      <span class="text-[9px] mt-0.5 tracking-tight font-semibold">Bộ Sưu Tập</span>
+    </button>
+
+    <!-- 4. Dịch Thuật Phụ Đề -->
+    <button onclick="setTab('subtitles')" id="mobile-tab-btn-subtitles" class="flex flex-col items-center justify-center flex-1 py-1 text-zinc-400 transition relative">
+      <span class="text-base">🌐</span>
+      <span class="text-[9px] mt-0.5 tracking-tight font-semibold">Phụ Đề</span>
+    </button>
+
+    <!-- 5. Settings -->
+    <button onclick="setTab('settings')" id="mobile-tab-btn-settings" class="flex flex-col items-center justify-center flex-1 py-1 text-zinc-400 transition">
+      <span class="text-base">⚙️</span>
+      <span class="text-[9px] mt-0.5 tracking-tight font-semibold">Cài Đặt</span>
+    </button>
+
+    <!-- 6. AI Agent -->
+    <button onclick="setTab('agent')" id="mobile-tab-btn-agent" class="flex flex-col items-center justify-center flex-1 py-1 text-zinc-400 transition relative">
+      <span class="text-base">🤖</span>
+      <span class="text-[9px] mt-0.5 tracking-tight font-semibold">AI Agent</span>
+      <span class="absolute top-1 right-2 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+    </button>
+  </nav>
+
+
+
+  <!-- Global Toast Notification Container -->

@@ -89,7 +89,7 @@ impl AgentService {
     }
 
     pub fn trigger_worker(&self) {
-        let worker_script = "/Volumes/512GB/AI Workspace/apps/media-hub/scripts/core/agent_bridge.py";
+        let worker_script = "/Volumes/512GB/AI Workspace/apps/media-hub/backend/core/agent_bridge.py";
         if std::path::Path::new(worker_script).exists() {
             let _ = Command::new("python3")
                 .arg(worker_script)

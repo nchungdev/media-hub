@@ -1,0 +1,190 @@
+      <!-- ==================== TAB 6: TOKEN USAGE & ANALYTICS ==================== -->
+      <div id="tab-tokens" class="hidden space-y-0">
+        
+        <!-- Pinned Header (Sticky Top-0 Flush) -->
+        <div class="sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 desktop-titlebar-pad flex flex-wrap items-center justify-between gap-3 shadow-sm app-drag-region">
+          <div class="flex items-center gap-3 app-no-drag">
+            <div class="w-9 h-9 rounded-xl bg-cyan-600/10 text-cyan-400 flex items-center justify-center font-bold text-base border border-cyan-500/20 shrink-0">
+              📊
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-sm text-white">Báo Cáo Sử Dụng Token & Chi Phí AI</h3>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 font-bold border border-cyan-500/20 font-mono">
+                  media-id Scoped
+                </span>
+              </div>
+              <p class="text-xs text-zinc-400 hidden sm:block">Theo dõi lượng Token Input / Output / Thinking và ước tính chi phí API cho từng bộ phim</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 app-no-drag">
+            <button onclick="loadTokenUsageReport()" class="px-3.5 py-1.5 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white rounded-xl transition flex items-center gap-1.5 shadow-sm">
+              <span class="text-cyan-400">🔄</span> Làm Mới
+            </button>
+            <button onclick="openLiveConsoleModal()" class="px-3.5 py-1.5 text-xs font-semibold bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 text-emerald-400 rounded-xl transition flex items-center gap-1.5 shadow-sm font-mono">
+              <span>📟</span> Live Console
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 sm:p-6 pb-28 lg:pb-10 space-y-6 w-full">
+          
+          <!-- 4 Stat Summary Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- Card 1: Total Tokens -->
+            <div class="p-4 rounded-3xl bg-zinc-900/70 border border-cyan-500/20 shadow-lg space-y-2 relative overflow-hidden">
+              <div class="flex items-center justify-between text-xs text-zinc-400 font-medium">
+                <span>Tổng Token Đã Dùng</span>
+                <span class="text-base">🪙</span>
+              </div>
+              <div class="text-2xl font-black text-white font-mono" id="token-stat-total">0</div>
+              <div class="text-[11px] text-zinc-500 font-mono flex items-center gap-2 pt-1 border-t border-zinc-800/60">
+                <span>In: <b id="token-stat-in" class="text-zinc-400">0</b></span>
+                <span>•</span>
+                <span>Out: <b id="token-stat-out" class="text-zinc-400">0</b></span>
+              </div>
+            </div>
+
+            <!-- Card 2: Estimated Cost -->
+            <div class="p-4 rounded-3xl bg-zinc-900/70 border border-emerald-500/20 shadow-lg space-y-2 relative overflow-hidden">
+              <div class="flex items-center justify-between text-xs text-zinc-400 font-medium">
+                <span>Ước Tính Chi Phí ($ USD)</span>
+                <span class="text-base">💵</span>
+              </div>
+              <div class="text-2xl font-black text-emerald-400 font-mono" id="token-stat-cost">$0.000000</div>
+              <div class="text-[11px] text-zinc-500 font-mono flex items-center gap-1 pt-1 border-t border-zinc-800/60">
+                <span>⚡ Model:</span>
+                <span class="text-emerald-400 font-bold">Gemini Flash</span>
+              </div>
+            </div>
+
+            <!-- Card 3: Interaction Turns -->
+            <div class="p-4 rounded-3xl bg-zinc-900/70 border border-purple-500/20 shadow-lg space-y-2 relative overflow-hidden">
+              <div class="flex items-center justify-between text-xs text-zinc-400 font-medium">
+                <span>Lượt Gọi & Tool Calls</span>
+                <span class="text-base">💬</span>
+              </div>
+              <div class="text-2xl font-black text-purple-400 font-mono" id="token-stat-turns">0</div>
+              <div class="text-[11px] text-zinc-500 font-mono flex items-center gap-1 pt-1 border-t border-zinc-800/60">
+                <span>Tool Calls: <b id="token-stat-tools" class="text-zinc-400">0</b></span>
+              </div>
+            </div>
+
+            <!-- Card 4: Active Media Sessions -->
+            <div class="p-4 rounded-3xl bg-zinc-900/70 border border-amber-500/20 shadow-lg space-y-2 relative overflow-hidden">
+              <div class="flex items-center justify-between text-xs text-zinc-400 font-medium">
+                <span>Session media-id Đang Mở</span>
+                <span class="text-base">🎬</span>
+              </div>
+              <div class="text-2xl font-black text-amber-400 font-mono" id="token-stat-sessions">0</div>
+              <div class="text-[11px] text-zinc-500 font-mono flex items-center gap-1 pt-1 border-t border-zinc-800/60">
+                <span>Cache Context Độc Lập</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- 4.1 TRANSLATION QUOTA GUARD CARD -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-zinc-800 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="text-xl">🛡️</span>
+                <div>
+                  <h4 class="font-bold text-sm text-white flex items-center gap-2">
+                    Translation Quota Guard (Hạn Mức An Toàn Gemini Flash)
+                    <span id="token-quota-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">🟢 AN TOÀN</span>
+                  </h4>
+                  <p class="text-[11px] text-zinc-400">Chốt chặn tự động bảo vệ tài khoản tránh lỗi 429 Resource Exhausted và bảo toàn 100% quota Pro</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="resetQuotaGuard('day')" class="px-3 py-1.5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-xl transition flex items-center gap-1">
+                  <span>🔄</span> Reset Ngày
+                </button>
+                <button onclick="resetQuotaGuard('all')" class="px-3 py-1.5 text-xs font-semibold bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 rounded-xl transition flex items-center gap-1">
+                  <span>⚠️</span> Reset Toàn Bộ
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              <!-- Day stats -->
+              <div class="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-zinc-400 font-medium flex items-center gap-1.5">
+                    <span>📅</span> Hạn mức ngày hôm nay:
+                  </span>
+                  <span class="font-mono font-bold text-white" id="token-quota-day-text">0 / 30 tập (0%)</span>
+                </div>
+                <div class="w-full h-2.5 bg-zinc-800 rounded-full overflow-hidden">
+                  <div id="token-quota-day-bar" class="h-full bg-emerald-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-zinc-500 font-mono pt-0.5">
+                  <span>Ước tính: <b id="token-quota-day-tokens" class="text-zinc-300">0</b> tokens</span>
+                  <span id="token-quota-day-reset" class="text-zinc-400">Reset sau: --</span>
+                </div>
+              </div>
+
+              <!-- Week stats -->
+              <div class="p-4 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-zinc-400 font-medium flex items-center gap-1.5">
+                    <span>📆</span> Hạn mức tuần (40% Flash Budget):
+                  </span>
+                  <span class="font-mono font-bold text-white" id="token-quota-week-text">0 / 150 tập (0%)</span>
+                </div>
+                <div class="w-full h-2.5 bg-zinc-800 rounded-full overflow-hidden">
+                  <div id="token-quota-week-bar" class="h-full bg-cyan-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-zinc-500 font-mono pt-0.5">
+                  <span>Ước tính: <b id="token-quota-week-tokens" class="text-zinc-300">0</b> tokens</span>
+                  <span id="token-quota-week-reset" class="text-zinc-400">Reset sau: --</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detailed Sessions Table -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-zinc-800 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3.5 flex-wrap gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="text-lg">📑</span>
+                <div>
+                  <h4 class="font-bold text-sm text-white">Chi Tiết Token Theo Từng Dự Án (media-id)</h4>
+                  <p class="text-[11px] text-zinc-400">Bấm "Reset Cache" nếu muốn xóa bỏ hoàn toàn lịch sử của phim đã hoàn thành để tiết kiệm bộ nhớ</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto custom-scroll">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="border-b border-zinc-800 text-zinc-400 font-mono text-[11px]">
+                    <th class="pb-3 font-semibold">Media ID / Dự Án</th>
+                    <th class="pb-3 font-semibold">Conversation UUID</th>
+                    <th class="pb-3 font-semibold text-center">Lượt Gọi</th>
+                    <th class="pb-3 font-semibold text-right">Input Tokens</th>
+                    <th class="pb-3 font-semibold text-right">Output Tokens</th>
+                    <th class="pb-3 font-semibold text-right">Tổng Tokens</th>
+                    <th class="pb-3 font-semibold text-right">Chi Phí ($)</th>
+                    <th class="pb-3 font-semibold text-center">Hoạt Động Cuối</th>
+                    <th class="pb-3 font-semibold text-right">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody id="token-report-tbody" class="divide-y divide-zinc-800/60 font-mono">
+                  <tr>
+                    <td colspan="9" class="py-8 text-center text-zinc-500 font-sans">
+                      <div class="animate-pulse">⏳ Đang tải dữ liệu báo cáo token...</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+

@@ -221,9 +221,10 @@ def resolve_dirs(cfg=None, create=False):
             cfg.get("queue_path") or os.path.join(home, ".agent_queue.json")),
     }
     if create:
-        for key, path in dirs.items():
-            if key.endswith("_path") or not isinstance(path, (str, Path)) or not path:
-                continue   # files, booleans or empty paths
+        for key in ("media_hub_home", "workspace_dir", "staging_dir", "logs_dir", "cache_dir"):
+            path = dirs.get(key)
+            if not isinstance(path, (str, Path)) or not path:
+                continue
             try:
                 Path(path).mkdir(parents=True, exist_ok=True)
             except Exception as e:
