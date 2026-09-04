@@ -2,7 +2,8 @@ use crate::domain::traits::{
     ICollectionService, IQuotaService, ISettingsService, ISubtitleService, ITunnelService,
 };
 use crate::services::{
-    aria2_service::Aria2Service, sync_worker, watcher_service,
+    aria2_service::Aria2Service, jellyfin_indexer, library_indexer, sync_worker,
+    watcher_service,
     agent_service::AgentService, artwork_service::ArtworkService,
     collection_service::CollectionService, dashboard_service::DashboardService,
     gdrive_service::GDriveService, health_service::HealthService, job_store::JobStore,
@@ -71,6 +72,16 @@ impl AppState {
         // nen worker khong can phan biet nguon.
         let aria2 = Arc::new(Aria2Service::new(settings.clone()));
         sync_worker::start(aria2.clone(), job_store.clone());
+
+        // Ba worker index doc lap cho 3 nguon (local / NAS / Google Drive).
+        // Nguon nao cham hay hong thi chi nguon do thieu du lieu, khong keo
+        // sap ca thu vien; aggregator gop lai khi co API goi toi.
+        library_indexer::start(home.clone(), settings.clone(), job_store.clone());
+
+        // Worker thu 4: theo doi DB cua Jellyfin tren NAS. Jellyfin da quet san
+        // thu vien va luu Tmdb/Tvdb id cho tung muc, nen day la bang tra cuu
+        // "NAS da co phim nay chua" dang tin hon doc ten thu muc.
+        jellyfin_indexer::start(home.clone(), settings.clone(), job_store.clone());
         let dashboard = Arc::new(DashboardService::new(settings.clone(), job_store.clone()));
         let gdrive = Arc::new(GDriveService::new(settings.clone()));
         let nas = Arc::new(NasService::new(settings.clone()));

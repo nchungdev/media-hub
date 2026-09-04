@@ -39,6 +39,22 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_jobs_one_active_per_torrent
 CREATE INDEX IF NOT EXISTS idx_jobs_status  ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_jobs_updated ON jobs(updated_at DESC);
 
+CREATE TABLE IF NOT EXISTS library_index (
+    source      TEXT    NOT NULL,
+    media_key   TEXT    NOT NULL,
+    franchise   TEXT    NOT NULL DEFAULT '',
+    title       TEXT    NOT NULL DEFAULT '',
+    folder      TEXT    NOT NULL,
+    media_type  TEXT    NOT NULL DEFAULT 'series',
+    path        TEXT    NOT NULL DEFAULT '',
+    updated_at  REAL    NOT NULL,
+    -- Khoa theo media_key chu KHONG theo folder: mot title co ca Tmdb lan Tvdb
+    -- se sinh 2 dong khac media_key, va ta muon giu ca hai de tra bang ID nao
+    -- cung trung. Khoa theo folder se de bep mat mot trong hai.
+    PRIMARY KEY (source, media_key)
+);
+CREATE INDEX IF NOT EXISTS idx_lib_key ON library_index(media_key);
+
 CREATE TABLE IF NOT EXISTS collections_cache (
     id          INTEGER PRIMARY KEY CHECK (id = 1),
     payload     TEXT    NOT NULL,
@@ -75,6 +91,30 @@ impl JobStore {
 
         // DB cu da co bang jobs roi thi CREATE TABLE IF NOT EXISTS khong them cot moi,
         // nen phai ALTER rieng. Cot da ton tai se bao loi -> bo qua co y.
+        // Bang library_index ban dau dat PK (source, folder) lam mat dong khi
+        // mot title co nhieu provider id. Bo bang cu di, indexer dung lai ngay.
+        let needs_rebuild: bool = conn
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_index_list('library_index')
+                  WHERE origin='pk'",
+                [],
+                |r| r.get::<_, i64>(0),
+            )
+            .map(|_| {
+                conn.query_row(
+                    "SELECT COUNT(*) FROM pragma_table_info('library_index') WHERE pk > 0 AND name='folder'",
+                    [],
+                    |r| r.get::<_, i64>(0),
+                )
+                .unwrap_or(0)
+                    > 0
+            })
+            .unwrap_or(false);
+        if needs_rebuild {
+            let _ = conn.execute_batch("DROP TABLE IF EXISTS library_index;");
+            let _ = conn.execute_batch(SCHEMA);
+        }
+
         for col in [
             "ALTER TABLE jobs ADD COLUMN franchise TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE jobs ADD COLUMN source_uri TEXT NOT NULL DEFAULT ''",
@@ -198,6 +238,77 @@ impl JobStore {
             "UPDATE jobs SET status='cancelled', message='Đã huỷ theo yêu cầu', updated_at=?, finished_at=? WHERE id=?",
             params![now, now, job_id],
         );
+    }
+
+    /// Thay toan bo index cua mot nguon trong 1 transaction.
+    /// Xoa sach roi ghi lai de muc da bien mat ben nguon cung bien mat trong DB.
+    pub fn replace_library_source(
+        &self,
+        source: &str,
+        rows: &[(String, String, String, String, String, String)],
+    ) -> Result<usize, String> {
+        let mut conn = self.conn.lock().unwrap();
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        tx.execute("DELETE FROM library_index WHERE source=?", params![source])
+            .map_err(|e| e.to_string())?;
+
+        let now = now_secs();
+        let mut n = 0usize;
+        for (media_key, franchise, title, folder, media_type, path) in rows {
+            let r = tx.execute(
+                "INSERT OR REPLACE INTO library_index
+                 (source, media_key, franchise, title, folder, media_type, path, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                params![source, media_key, franchise, title, folder, media_type, path, now],
+            );
+            if r.is_ok() {
+                n += 1;
+            }
+        }
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(n)
+    }
+
+    /// Doc toan bo index cua ca 3 nguon.
+    /// Tra ve: (source, media_key, franchise, title, folder, media_type, path)
+    pub fn load_library_index(&self) -> Vec<(String, String, String, String, String, String, String)> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = match conn.prepare(
+            "SELECT source, media_key, franchise, title, folder, media_type, path FROM library_index",
+        ) {
+            Ok(s) => s,
+            Err(_) => return Vec::new(),
+        };
+        let rows = stmt.query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, String>(3)?,
+                r.get::<_, String>(4)?,
+                r.get::<_, String>(5)?,
+                r.get::<_, String>(6)?,
+            ))
+        });
+        match rows {
+            Ok(it) => it.filter_map(|r| r.ok()).collect(),
+            Err(_) => Vec::new(),
+        }
+    }
+
+    pub fn library_counts(&self) -> Vec<(String, i64)> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = match conn
+            .prepare("SELECT source, COUNT(*) FROM library_index GROUP BY source ORDER BY source")
+        {
+            Ok(s) => s,
+            Err(_) => return Vec::new(),
+        };
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)));
+        match rows {
+            Ok(it) => it.filter_map(|r| r.ok()).collect(),
+            Err(_) => Vec::new(),
+        }
     }
 
     pub fn save_collections_snapshot(&self, payload: &str) {

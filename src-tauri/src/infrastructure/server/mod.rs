@@ -44,6 +44,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         // Library
         .route("/api/library/cross_check", get(handle_cross_check).post(handle_cross_check))
         .route("/api/library/stats", get(handle_library_stats))
+        .route("/api/library/unified", get(handle_unified_library))
         .route("/api/library/build/status", get(handle_library_build_status))
         .route("/api/library/build", post(handle_library_build))
         .route("/api/library/refresh", post(handle_library_refresh))

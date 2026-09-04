@@ -58,3 +58,12 @@ pub async fn handle_library_build_cancel(
         "message": "Đã yêu cầu dừng tiến trình dựng metadata."
     }))
 }
+
+/// Thu vien hop nhat 3 nguon, gom theo franchise, danh dau
+/// co mat o local / NAS / Google Drive.
+pub async fn handle_unified_library(
+    State(state): State<Arc<AppState>>,
+) -> Json<serde_json::Value> {
+    let lib = crate::services::library_aggregator::aggregate(&state.job_store);
+    Json(serde_json::to_value(lib).unwrap_or_else(|_| serde_json::json!({})))
+}
