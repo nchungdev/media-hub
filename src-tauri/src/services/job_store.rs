@@ -47,6 +47,10 @@ CREATE TABLE IF NOT EXISTS library_index (
     folder      TEXT    NOT NULL,
     media_type  TEXT    NOT NULL DEFAULT 'series',
     path        TEXT    NOT NULL DEFAULT '',
+    -- Dinh danh title theo tung nguon. Mot title co the mang nhieu media_key
+    -- (tmdb + tvdb + imdb); cac dong cung (source, item_uid) la CUNG mot phim,
+    -- nho vay aggregator hop nhat duoc thay vi dem thanh nhieu muc.
+    item_uid    TEXT    NOT NULL DEFAULT '',
     updated_at  REAL    NOT NULL,
     -- Khoa theo media_key chu KHONG theo folder: mot title co ca Tmdb lan Tvdb
     -- se sinh 2 dong khac media_key, va ta muon giu ca hai de tra bang ID nao
@@ -119,6 +123,7 @@ impl JobStore {
             "ALTER TABLE jobs ADD COLUMN franchise TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE jobs ADD COLUMN source_uri TEXT NOT NULL DEFAULT ''",
             "ALTER TABLE jobs ADD COLUMN gid TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE library_index ADD COLUMN item_uid TEXT NOT NULL DEFAULT ''",
         ] {
             let _ = conn.execute(col, []);
         }
@@ -245,7 +250,7 @@ impl JobStore {
     pub fn replace_library_source(
         &self,
         source: &str,
-        rows: &[(String, String, String, String, String, String)],
+        rows: &[(String, String, String, String, String, String, String)],
     ) -> Result<usize, String> {
         let mut conn = self.conn.lock().unwrap();
         let tx = conn.transaction().map_err(|e| e.to_string())?;
@@ -254,12 +259,12 @@ impl JobStore {
 
         let now = now_secs();
         let mut n = 0usize;
-        for (media_key, franchise, title, folder, media_type, path) in rows {
+        for (media_key, franchise, title, folder, media_type, path, item_uid) in rows {
             let r = tx.execute(
                 "INSERT OR REPLACE INTO library_index
-                 (source, media_key, franchise, title, folder, media_type, path, updated_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                params![source, media_key, franchise, title, folder, media_type, path, now],
+                 (source, media_key, franchise, title, folder, media_type, path, item_uid, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                params![source, media_key, franchise, title, folder, media_type, path, item_uid, now],
             );
             if r.is_ok() {
                 n += 1;
@@ -271,10 +276,13 @@ impl JobStore {
 
     /// Doc toan bo index cua ca 3 nguon.
     /// Tra ve: (source, media_key, franchise, title, folder, media_type, path)
-    pub fn load_library_index(&self) -> Vec<(String, String, String, String, String, String, String)> {
+    pub fn load_library_index(
+        &self,
+    ) -> Vec<(String, String, String, String, String, String, String, String)> {
         let conn = self.conn.lock().unwrap();
         let mut stmt = match conn.prepare(
-            "SELECT source, media_key, franchise, title, folder, media_type, path FROM library_index",
+            "SELECT source, media_key, franchise, title, folder, media_type, path, item_uid
+               FROM library_index",
         ) {
             Ok(s) => s,
             Err(_) => return Vec::new(),
@@ -288,6 +296,7 @@ impl JobStore {
                 r.get::<_, String>(4)?,
                 r.get::<_, String>(5)?,
                 r.get::<_, String>(6)?,
+                r.get::<_, String>(7)?,
             ))
         });
         match rows {

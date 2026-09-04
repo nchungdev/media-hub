@@ -1,6 +1,6 @@
 use crate::services::job_store::JobStore;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -11,9 +11,13 @@ pub struct UnifiedItem {
     pub franchise: String,
     #[serde(rename = "type")]
     pub media_type: String,
-    pub in_local: bool,
+    /// Draft = ban local trong .media-hub, chua publish len NAS/Drive.
+    pub in_draft: bool,
+    /// Da publish len NAS (Jellyfin va/hoac Plex nhin thay).
     pub in_nas: bool,
-    pub in_gdrive: bool,
+    pub in_drive: bool,
+    /// Nguon nao xac nhan co mat: draft / jellyfin / plex / drive
+    pub seen_by: Vec<String>,
     /// Ten thu muc tai tung noi (co the khac nhau giua 3 nguon).
     pub folders: HashMap<String, String>,
     pub paths: HashMap<String, String>,
@@ -27,6 +31,8 @@ pub struct UnifiedFranchise {
     pub only_remote: usize,
     pub everywhere: usize,
     pub items: Vec<UnifiedItem>,
+    /// Franchise chi co dung mot title (phim le).
+    pub is_single: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,70 +47,122 @@ pub struct UnifiedLibrary {
 /// nen khong tu khai bao duoc franchise, va cung khong co ban local de muon.
 pub const UNCLASSIFIED: &str = "Chưa phân loại";
 
+/// Union-find de gop cac media_key cung tro toi mot title.
+struct Dsu {
+    parent: HashMap<String, String>,
+}
+
+impl Dsu {
+    fn new() -> Self {
+        Self { parent: HashMap::new() }
+    }
+    fn find(&mut self, x: &str) -> String {
+        let p = self.parent.entry(x.to_string()).or_insert_with(|| x.to_string()).clone();
+        if p == x {
+            return p;
+        }
+        let root = self.find(&p);
+        self.parent.insert(x.to_string(), root.clone());
+        root
+    }
+    fn union(&mut self, a: &str, b: &str) {
+        let (ra, rb) = (self.find(a), self.find(b));
+        if ra != rb {
+            self.parent.insert(ra, rb);
+        }
+    }
+}
+
 pub fn aggregate(job_store: &Arc<JobStore>) -> UnifiedLibrary {
     let rows = job_store.load_library_index();
 
-    // Ban do media_key -> franchise.
-    // Uu tien local (thu muc do chinh nguoi dung sap xep), sau do moi den
-    // BoxSet cua Jellyfin -- nho vay nhung title chi co tren NAS van co
-    // franchise thay vi roi hết vao nhom "Chua phan loai".
+    // Buoc 1: noi cac media_key thuoc cung mot title.
+    // Mot phim thuong mang nhieu id (tmdb + tvdb + imdb); neu gom theo tung
+    // key rieng thi mot phim bi dem thanh nhieu muc. Cac dong cung
+    // (source, item_uid) chac chan la cung mot phim -> hop nhat khoa cua chung.
+    let mut dsu = Dsu::new();
+    let mut by_item: HashMap<(String, String), Vec<String>> = HashMap::new();
+    for (source, key, _f, _t, _fo, _mt, _p, item_uid) in &rows {
+        if item_uid.is_empty() {
+            continue;
+        }
+        by_item
+            .entry((source.clone(), item_uid.clone()))
+            .or_default()
+            .push(key.clone());
+    }
+    for keys in by_item.values() {
+        for w in keys.windows(2) {
+            dsu.union(&w[0], &w[1]);
+        }
+    }
+
+    // Buoc 2: franchise theo tung nhom (uu tien local, roi den BoxSet/TMDb).
     let mut franchise_of: HashMap<String, String> = HashMap::new();
-    for (source, key, franchise, _t, _f, _mt, _p) in &rows {
+    for (source, key, franchise, _t, _fo, _mt, _p, _u) in &rows {
         if franchise.is_empty() {
             continue;
         }
-        match source.as_str() {
-            "local" => {
-                franchise_of.insert(key.clone(), franchise.clone());
-            }
-            _ => {
-                franchise_of
-                    .entry(key.clone())
-                    .or_insert_with(|| franchise.clone());
-            }
-        }
-    }
-    // Chay lai vong nua de local luon thang neu co ca hai.
-    for (source, key, franchise, _t, _f, _mt, _p) in &rows {
-        if source == "local" && !franchise.is_empty() {
-            franchise_of.insert(key.clone(), franchise.clone());
+        let root = dsu.find(key);
+        if source == "local" {
+            franchise_of.insert(root, franchise.clone());
+        } else {
+            franchise_of.entry(root).or_insert_with(|| franchise.clone());
         }
     }
 
     let mut items: HashMap<String, UnifiedItem> = HashMap::new();
     let mut counts_by_source: HashMap<String, usize> = HashMap::new();
+    let mut seen_title: HashMap<String, HashSet<String>> = HashMap::new();
 
-    for (source, key, _franchise, title, folder, media_type, path) in &rows {
-        *counts_by_source.entry(source.clone()).or_insert(0) += 1;
+    for (source, key, _franchise, title, folder, media_type, path, _u) in &rows {
+        let root = dsu.find(key);
+        seen_title
+            .entry(source.clone())
+            .or_default()
+            .insert(root.clone());
 
-        let it = items.entry(key.clone()).or_insert_with(|| UnifiedItem {
-            media_key: key.clone(),
+        let it = items.entry(root.clone()).or_insert_with(|| UnifiedItem {
+            media_key: root.clone(),
             title: title.clone(),
+            // Khong thuoc collection nao -> chinh no la mot franchise don le,
+            // thay vi don het vao mot ro "chua phan loai" khong co y nghia.
             franchise: franchise_of
-                .get(key)
+                .get(&root)
                 .cloned()
-                .unwrap_or_else(|| UNCLASSIFIED.to_string()),
+                .unwrap_or_else(|| title.clone()),
             media_type: media_type.clone(),
-            in_local: false,
+            in_draft: false,
             in_nas: false,
-            in_gdrive: false,
+            in_drive: false,
+            seen_by: Vec::new(),
             folders: HashMap::new(),
             paths: HashMap::new(),
         });
 
         match source.as_str() {
-            "local" => it.in_local = true,
-            "nas" => it.in_nas = true,
-            "gdrive" => it.in_gdrive = true,
+            "local" => it.in_draft = true,
+            // Jellyfin va Plex deu mo ta cung thu vien NAS.
+            "jellyfin" | "plex" => it.in_nas = true,
+            "gdrive" => it.in_drive = true,
             _ => {}
         }
+        if !it.seen_by.contains(source) {
+            it.seen_by.push(source.clone());
+        }
         it.folders.insert(source.clone(), folder.clone());
-        it.paths.insert(source.clone(), path.clone());
-
-        // Ban local uu tien lam ten hien thi vi da duoc chuan hoa ky nhat.
+        if !path.is_empty() {
+            it.paths.insert(source.clone(), path.clone());
+        }
         if source == "local" && !title.is_empty() {
             it.title = title.clone();
         }
+    }
+
+    // Dem theo nguon: so TITLE rieng biet, khong phai so dong (mot title
+    // mang nhieu id se sinh nhieu dong).
+    for (src, roots) in seen_title {
+        counts_by_source.insert(src, roots.len());
     }
 
     // Gom theo franchise
@@ -122,12 +180,12 @@ pub fn aggregate(job_store: &Arc<JobStore>) -> UnifiedLibrary {
             items.sort_by(|a, b| a.title.to_lowercase().cmp(&b.title.to_lowercase()));
             let only_local = items
                 .iter()
-                .filter(|i| i.in_local && !i.in_nas && !i.in_gdrive)
+                .filter(|i| i.in_draft && !i.in_nas && !i.in_drive)
                 .count();
-            let only_remote = items.iter().filter(|i| !i.in_local).count();
+            let only_remote = items.iter().filter(|i| !i.in_draft).count();
             let everywhere = items
                 .iter()
-                .filter(|i| i.in_local && i.in_nas && i.in_gdrive)
+                .filter(|i| i.in_draft && i.in_nas && i.in_drive)
                 .count();
             UnifiedFranchise {
                 name,
@@ -135,6 +193,7 @@ pub fn aggregate(job_store: &Arc<JobStore>) -> UnifiedLibrary {
                 only_local,
                 only_remote,
                 everywhere,
+                is_single: items.len() == 1,
                 items,
             }
         })

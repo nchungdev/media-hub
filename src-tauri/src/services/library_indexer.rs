@@ -2,13 +2,12 @@ use crate::domain::traits::ISettingsService;
 use crate::services::job_store::JobStore;
 use regex::Regex;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::sync::Arc;
 use std::time::Duration;
 
 /// Mot dong index truoc khi ghi xuong DB.
 /// (media_key, franchise, title, folder, media_type, path)
-type Row = (String, String, String, String, String, String);
+type Row = (String, String, String, String, String, String, String);
 
 /// Khoa doi chieu giua 3 nguon.
 ///
@@ -84,13 +83,15 @@ pub fn index_local(home: &Path) -> Vec<Row> {
                     if folder.starts_with('.') {
                         continue;
                     }
+                    let full = it.path().to_string_lossy().to_string();
                     rows.push((
                         media_key(&folder),
                         fr_name.clone(),
                         clean_title(&folder),
                         folder,
                         mtype.to_string(),
-                        it.path().to_string_lossy().to_string(),
+                        full.clone(),
+                        full, // item_uid: duong dan la dinh danh duy nhat cua title
                     ));
                 }
             }
@@ -99,126 +100,8 @@ pub fn index_local(home: &Path) -> Vec<Row> {
     rows
 }
 
-// ============================ NGUON 2: NAS ============================
-
-pub fn index_nas(settings: &Arc<dyn ISettingsService>) -> Vec<Row> {
-    let cfg = settings.load();
-    if cfg.nas_host.is_empty() || cfg.nas_path.is_empty() {
-        return Vec::new();
-    }
-
-    let mut rows = Vec::new();
-    for (sub, mtype) in [("TV Shows", "series"), ("Movies", "movie")] {
-        let remote_dir = format!("{}/{}", cfg.nas_path.trim_end_matches('/'), sub);
-
-        let mut cmd = Command::new("ssh");
-        cmd.arg("-p")
-            .arg(cfg.nas_port.to_string())
-            .arg("-o")
-            .arg("BatchMode=yes")
-            .arg("-o")
-            .arg("ConnectTimeout=6")
-            .arg("-o")
-            .arg("StrictHostKeyChecking=no");
-
-        if !cfg.nas_ssh_key.is_empty() {
-            let key = expand_tilde(&cfg.nas_ssh_key);
-            if key.exists() {
-                cmd.arg("-i").arg(key);
-            }
-        }
-
-        cmd.arg(format!("{}@{}", cfg.nas_user, cfg.nas_host))
-            .arg(format!("ls -1 \"{}\"", remote_dir));
-
-        if let Ok(out) = cmd.output() {
-            if out.status.success() {
-                for line in String::from_utf8_lossy(&out.stdout).lines() {
-                    let folder = line.trim();
-                    if folder.is_empty() || folder.starts_with('.') {
-                        continue;
-                    }
-                    rows.push((
-                        media_key(folder),
-                        String::new(), // NAS phang -> chua biet franchise
-                        clean_title(folder),
-                        folder.to_string(),
-                        mtype.to_string(),
-                        format!("{}/{}", remote_dir, folder),
-                    ));
-                }
-            }
-        }
-    }
-    rows
-}
-
-// ============================ NGUON 3: GOOGLE DRIVE ============================
-
-pub fn index_gdrive(settings: &Arc<dyn ISettingsService>) -> Vec<Row> {
-    let cfg = settings.load();
-    if cfg.gdrive_remote.is_empty() {
-        return Vec::new();
-    }
-
-    let rclone = which_rclone();
-    let mut rows = Vec::new();
-
-    for (sub, mtype) in [("TV Shows", "series"), ("Movies", "movie")] {
-        let remote = format!(
-            "{}:{}/{}",
-            cfg.gdrive_remote,
-            cfg.gdrive_root.trim_matches('/'),
-            sub
-        );
-
-        let out = Command::new(&rclone)
-            .arg("lsf")
-            .arg("--dirs-only")
-            .arg("--max-depth")
-            .arg("1")
-            .arg(&remote)
-            .output();
-
-        if let Ok(out) = out {
-            if out.status.success() {
-                for line in String::from_utf8_lossy(&out.stdout).lines() {
-                    let folder = line.trim().trim_end_matches('/');
-                    if folder.is_empty() || folder.starts_with('.') {
-                        continue;
-                    }
-                    rows.push((
-                        media_key(folder),
-                        String::new(), // Drive phang -> chua biet franchise
-                        clean_title(folder),
-                        folder.to_string(),
-                        mtype.to_string(),
-                        format!("{}/{}", remote, folder),
-                    ));
-                }
-            }
-        }
-    }
-    rows
-}
-
-fn which_rclone() -> String {
-    for c in [
-        "/opt/homebrew/bin/rclone",
-        "/usr/local/bin/rclone",
-    ] {
-        if Path::new(c).exists() {
-            return c.to_string();
-        }
-    }
-    if let Some(home) = dirs::home_dir() {
-        let p = home.join(".local/bin/rclone");
-        if p.exists() {
-            return p.to_string_lossy().to_string();
-        }
-    }
-    "rclone".to_string()
-}
+// NGUON 2 (NAS) va 3 (Drive) da chuyen sang jellyfin_indexer / plex_indexer
+// / gdrive_nfo_indexer -- chung lay ID that thay vi doan tu ten thu muc.
 
 // ============================ WORKER NEN ============================
 
@@ -227,7 +110,7 @@ fn which_rclone() -> String {
 /// lieu, khong keo sap ca thu vien.
 pub fn start(
     home: PathBuf,
-    settings: Arc<dyn ISettingsService>,
+    _settings: Arc<dyn ISettingsService>,
     job_store: Arc<JobStore>,
 ) {
     // Local chu yeu chay theo su kien tu watcher_service (notify). Vong lap nay
@@ -252,26 +135,10 @@ pub fn start(
         });
     }
 
-    // NAS: qua SSH nen thua hon.
-    {
-        let st = settings.clone();
-        let js = job_store.clone();
-        std::thread::spawn(move || loop {
-            crate::services::worker_status::begin("indexer/nas");
-            let rows = index_nas(&st);
-            match js.replace_library_source("nas", &rows) {
-                Ok(n) => {
-                    log::info!("[indexer/nas] {} muc", n);
-                    crate::services::worker_status::ok("indexer/nas", n as i64, "ls qua SSH");
-                }
-                Err(e) => {
-                    log::error!("[indexer/nas] loi: {}", e);
-                    crate::services::worker_status::err("indexer/nas", &e);
-                }
-            }
-            std::thread::sleep(Duration::from_secs(600));
-        });
-    }
+    // Nguon NAS doc ten thu muc da bo: no sinh khoa du phong "name-<ten>"
+    // cho thu muc khong co tag {tvdb-}, ma khoa do khong bao gio khop voi
+    // khoa ID that tu Jellyfin/Plex -> mot phim bi dem hai lan.
+    // Gio NAS do jellyfin_indexer va plex_indexer dam nhiem (co ID that).
 
     // Google Drive do gdrive_nfo_indexer dam nhiem: no doc <uniqueid> trong
     // file .nfo that thay vi doan id tu ten thu muc, chinh xac hon.

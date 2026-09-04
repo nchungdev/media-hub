@@ -124,7 +124,7 @@ fn parse_db(
     db: &Path,
     tmdb_key: &str,
     coll_cache: &Path,
-) -> Result<Vec<(String, String, String, String, String, String)>, String> {
+) -> Result<Vec<(String, String, String, String, String, String, String)>, String> {
     let uri = format!("file:{}?mode=ro&immutable=1", db.to_string_lossy());
     let conn = Connection::open_with_flags(
         &uri,
@@ -144,6 +144,16 @@ fn parse_db(
     for (k, v) in tmdb_collection_franchises(&conn, tmdb_key, coll_cache) {
         franchise_map.entry(k).or_insert(v);
     }
+
+    // Lop thu ba: hoi thang TMDb tung phim con trong. Jellyfin bo sot khong it
+    // (vd Ant-Man khong duoc gan TmdbCollection du TMDb co collection "Nguoi Kien").
+    let movie_cache = coll_cache
+        .parent()
+        .unwrap_or(Path::new("."))
+        .join("tmdb_movie_collections.json");
+    for (k, v) in tmdb_movie_collections(&conn, tmdb_key, &movie_cache, &franchise_map) {
+        franchise_map.entry(k).or_insert(v);
+    }
     log::info!(
         "[indexer/jellyfin] franchise: {} tu BoxSet, {} tong (them TMDb Collection)",
         n_boxset,
@@ -152,13 +162,13 @@ fn parse_db(
 
     let mut stmt = conn
         .prepare(
-            "SELECT b.Name, b.Path, b.Type, p.ProviderId, p.ProviderValue
+            "SELECT b.Name, b.Path, b.Type, p.ProviderId, p.ProviderValue, b.Id
                FROM BaseItems b
                JOIN BaseItemProviders p ON p.ItemId = b.Id
               WHERE b.Type IN (
                     'MediaBrowser.Controller.Entities.Movies.Movie',
                     'MediaBrowser.Controller.Entities.TV.Series')
-                AND p.ProviderId IN ('Tmdb','Tvdb')",
+                AND p.ProviderId IN ('Tmdb','Tvdb','Imdb')",
         )
         .map_err(|e| e.to_string())?;
 
@@ -171,18 +181,20 @@ fn parse_db(
                 r.get::<_, String>(2)?,
                 r.get::<_, String>(3)?,
                 r.get::<_, String>(4)?,
+                r.get::<_, String>(5)?,
             ))
         })
         .map_err(|e| e.to_string())?;
 
     for row in it.flatten() {
-        let (name, path, itype, provider, value) = row;
+        let (name, path, itype, provider, value, item_id) = row;
         if value.trim().is_empty() {
             continue;
         }
         let media_key = match provider.as_str() {
             "Tvdb" => format!("tvdb-{}", value.trim()),
             "Tmdb" => format!("tmdb-{}", value.trim()),
+            "Imdb" => format!("imdb-{}", value.trim()),
             _ => continue,
         };
         let media_type = if itype.ends_with("Movie") {
@@ -203,6 +215,7 @@ fn parse_db(
             folder,
             media_type.to_string(),
             path,
+            item_id,
         ));
     }
 
@@ -404,6 +417,97 @@ fn tmdb_collection_franchises(
                     out.insert(k.clone(), name.clone());
                 }
             }
+        }
+    }
+    out
+}
+
+/// Hoi TMDb `belongs_to_collection` cho tung phim chua co franchise.
+/// Cache ca ket qua rong (phim khong thuoc collection nao) de khoi hoi lai.
+fn tmdb_movie_collections(
+    conn: &Connection,
+    api_key: &str,
+    cache_path: &Path,
+    already: &std::collections::HashMap<String, String>,
+) -> std::collections::HashMap<String, String> {
+    use std::collections::HashMap;
+    let mut out: HashMap<String, String> = HashMap::new();
+    if api_key.trim().is_empty() {
+        return out;
+    }
+
+    // Chi lam voi PHIM: TMDb khong co khai niem collection cho TV series.
+    let mut movie_ids: Vec<String> = Vec::new();
+    if let Ok(mut stmt) = conn.prepare(
+        "SELECT DISTINCT p.ProviderValue
+           FROM BaseItems b JOIN BaseItemProviders p ON p.ItemId = b.Id
+          WHERE b.Type = 'MediaBrowser.Controller.Entities.Movies.Movie'
+            AND p.ProviderId = 'Tmdb'",
+    ) {
+        if let Ok(it) = stmt.query_map([], |r| r.get::<_, String>(0)) {
+            for v in it.flatten() {
+                let v = v.trim().to_string();
+                if !v.is_empty() && !already.contains_key(&format!("tmdb-{}", v)) {
+                    movie_ids.push(v);
+                }
+            }
+        }
+    }
+    if movie_ids.is_empty() {
+        return out;
+    }
+
+    // Cache: id -> ten collection ("" nghia la da hoi va phim khong co collection)
+    let mut cache: HashMap<String, String> = std::fs::read_to_string(cache_path)
+        .ok()
+        .and_then(|t| serde_json::from_str(&t).ok())
+        .unwrap_or_default();
+
+    let missing: Vec<String> = movie_ids
+        .iter()
+        .filter(|id| !cache.contains_key(*id))
+        .cloned()
+        .collect();
+
+    if !missing.is_empty() {
+        log::info!("[indexer/jellyfin] hoi TMDb collection cho {} phim", missing.len());
+        if let Ok(rt) = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+        {
+            let client = reqwest::Client::new();
+            rt.block_on(async {
+                for id in &missing {
+                    let url = format!(
+                        "https://api.themoviedb.org/3/movie/{}?api_key={}&language=vi-VN",
+                        id, api_key
+                    );
+                    match client.get(&url).send().await {
+                        Ok(resp) => {
+                            if let Ok(v) = resp.json::<serde_json::Value>().await {
+                                let name = v
+                                    .get("belongs_to_collection")
+                                    .and_then(|c| c.get("name"))
+                                    .and_then(|n| n.as_str())
+                                    .unwrap_or("")
+                                    .trim()
+                                    .to_string();
+                                cache.insert(id.clone(), name);
+                            }
+                        }
+                        Err(_) => {}
+                    }
+                }
+            });
+            if let Ok(txt) = serde_json::to_string_pretty(&cache) {
+                let _ = std::fs::write(cache_path, txt);
+            }
+        }
+    }
+
+    for (id, name) in &cache {
+        if !name.is_empty() {
+            out.insert(format!("tmdb-{}", id), name.clone());
         }
     }
     out

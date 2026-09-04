@@ -3,7 +3,7 @@ use crate::domain::traits::{
 };
 use crate::services::{
     aria2_service::Aria2Service, gdrive_nfo_indexer, jellyfin_indexer, library_indexer,
-    sync_worker,
+    plex_indexer, sync_worker,
     watcher_service,
     agent_service::AgentService, artwork_service::ArtworkService,
     collection_service::CollectionService, dashboard_service::DashboardService,
@@ -92,6 +92,10 @@ impl AppState {
         // Google Drive khong co Plex/Jellyfin quet san nen phai tu doc .nfo
         // trong tung thu muc de lay <uniqueid> that.
         gdrive_nfo_indexer::start(home.clone(), settings.clone(), job_store.clone());
+
+        // Plex quet cung thu vien NAS nhung nhan dien khac Jellyfin, nen title
+        // ben nay chua nhan ra thi ben kia co the da co.
+        plex_indexer::start(home.clone(), settings.clone(), job_store.clone());
         let dashboard = Arc::new(DashboardService::new(settings.clone(), job_store.clone()));
         let gdrive = Arc::new(GDriveService::new(settings.clone()));
         let nas = Arc::new(NasService::new(settings.clone()));

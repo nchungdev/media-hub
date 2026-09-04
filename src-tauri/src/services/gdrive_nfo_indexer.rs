@@ -40,7 +40,7 @@ pub fn start(home: PathBuf, settings: Arc<dyn ISettingsService>, job_store: Arc<
     });
 }
 
-type Row = (String, String, String, String, String, String);
+type Row = (String, String, String, String, String, String, String);
 
 fn build_index(settings: &Arc<dyn ISettingsService>, cache: &Path) -> Result<Vec<Row>, String> {
     let cfg = settings.load();
@@ -113,6 +113,7 @@ fn build_index(settings: &Arc<dyn ISettingsService>, cache: &Path) -> Result<Vec
                                 folder.clone(),
                                 mtype.to_string(),
                                 remote_path.clone(),
+                                remote_path.clone(),
                             ));
                             found = true;
                         }
@@ -125,7 +126,8 @@ fn build_index(settings: &Arc<dyn ISettingsService>, cache: &Path) -> Result<Vec
                                 title,
                                 folder.clone(),
                                 mtype.to_string(),
-                                remote_path,
+                                remote_path.clone(),
+                                remote_path.clone(),
                             ));
                         }
                     }
@@ -139,7 +141,8 @@ fn build_index(settings: &Arc<dyn ISettingsService>, cache: &Path) -> Result<Vec
                             clean_title(&folder),
                             folder.clone(),
                             mtype.to_string(),
-                            remote_path,
+                            remote_path.clone(),
+                            remote_path.clone(),
                         ));
                     }
                 }

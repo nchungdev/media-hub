@@ -12,6 +12,7 @@ pub mod library_aggregator;
 pub mod library_indexer;
 pub mod library_service;
 pub mod nas_service;
+pub mod plex_indexer;
 pub mod quota_service;
 pub mod settings_service;
 pub mod streaming_service;
