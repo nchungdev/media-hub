@@ -83,6 +83,17 @@ CREATE TABLE IF NOT EXISTS library_key_map (
 );
 CREATE INDEX IF NOT EXISTS idx_keymap_root ON library_key_map(root_key);
 
+-- TMDb/TVDB khong co khai niem "collection" cho series (chi co cho phim),
+-- nen nhieu series cung mot vu tru (vd Bay Vien Ngoc Rong / GT / Kai, hay
+-- moi mua Super Sentai) khong co API nao de tra franchise. Bang nay luu ket
+-- qua agy daemon suy luan tu ten phim. franchise='' nghia la da hoi va xac
+-- nhan la phim/series doc lap, khong phai chua hoi -- tranh hoi lai moi lan.
+CREATE TABLE IF NOT EXISTS franchise_ai_cache (
+    root_key    TEXT    NOT NULL PRIMARY KEY,
+    franchise   TEXT    NOT NULL DEFAULT '',
+    checked_at  REAL    NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS collections_cache (
     id          INTEGER PRIMARY KEY CHECK (id = 1),
     payload     TEXT    NOT NULL,
@@ -419,6 +430,83 @@ impl JobStore {
         let conn = self.conn.lock().unwrap();
         conn.query_row("SELECT COUNT(*) FROM library_unified", [], |r| r.get(0))
             .unwrap_or(0)
+    }
+
+    /// Danh sach title dang la franchise don le (chua tung duoc AI hoi qua).
+    /// franchise = title chinh la quy uoc "chua gom nhom" cua aggregator.
+    pub fn list_uncached_for_ai(&self, limit: usize) -> Vec<(String, String, String)> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = match conn.prepare(
+            "SELECT u.root_key, u.title, u.media_type
+               FROM library_unified u
+              WHERE u.franchise = u.title
+                AND NOT EXISTS (
+                    SELECT 1 FROM franchise_ai_cache c WHERE c.root_key = u.root_key
+                )
+              ORDER BY u.root_key
+              LIMIT ?",
+        ) {
+            Ok(s) => s,
+            Err(_) => return Vec::new(),
+        };
+        let rows = stmt.query_map(params![limit as i64], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?, r.get::<_, String>(2)?))
+        });
+        match rows {
+            Ok(it) => it.filter_map(|r| r.ok()).collect(),
+            Err(_) => Vec::new(),
+        }
+    }
+
+    /// Ghi ket qua AI cho mot loat title trong 1 transaction.
+    /// franchise rong = da hoi, xac nhan la doc lap (van cache de khoi hoi lai).
+    pub fn save_ai_franchise_batch(&self, results: &[(String, String)]) {
+        let mut conn = self.conn.lock().unwrap();
+        let now = now_secs();
+        let tx = match conn.transaction() {
+            Ok(t) => t,
+            Err(_) => return,
+        };
+        for (root_key, franchise) in results {
+            let _ = tx.execute(
+                "INSERT OR REPLACE INTO franchise_ai_cache (root_key, franchise, checked_at)
+                 VALUES (?, ?, ?)",
+                params![root_key, franchise, now],
+            );
+        }
+        let _ = tx.commit();
+    }
+
+    /// Ban do root_key -> ten franchise, chi lay nhung dong AI THAT SU tim
+    /// ra franchise (bo qua dong franchise rong = da xac nhan doc lap).
+    pub fn load_ai_franchise_map(&self) -> std::collections::HashMap<String, String> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = match conn
+            .prepare("SELECT root_key, franchise FROM franchise_ai_cache WHERE franchise != ''")
+        {
+            Ok(s) => s,
+            Err(_) => return std::collections::HashMap::new(),
+        };
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)));
+        match rows {
+            Ok(it) => it.filter_map(|r| r.ok()).collect(),
+            Err(_) => std::collections::HashMap::new(),
+        }
+    }
+
+    pub fn ai_cache_count(&self) -> (i64, i64) {
+        let conn = self.conn.lock().unwrap();
+        let total: i64 = conn
+            .query_row("SELECT COUNT(*) FROM franchise_ai_cache", [], |r| r.get(0))
+            .unwrap_or(0);
+        let found: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM franchise_ai_cache WHERE franchise != ''",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap_or(0);
+        (total, found)
     }
 
     pub fn save_collections_snapshot(&self, payload: &str) {

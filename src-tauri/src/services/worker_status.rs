@@ -96,6 +96,18 @@ pub fn set_enabled(name: &str, enabled: bool) -> bool {
     false
 }
 
+/// Tat co `enabled` ma KHONG dong bo `state`/`message` -- dung khi worker tu
+/// tat sau khi xong mot luot (vd franchise_ai_classifier), de giu lai thong
+/// diep tong ket huu ich thay vi bi de thanh "da dung theo yeu cau" chung
+/// chung. set_enabled(false) van la lua chon dung khi NGUOI DUNG bam Stop.
+pub fn disable_silently(name: &str) {
+    if let Ok(mut r) = registry().lock() {
+        if let Some(e) = r.get_mut(name) {
+            e.enabled = false;
+        }
+    }
+}
+
 pub fn is_enabled(name: &str) -> bool {
     registry()
         .lock()

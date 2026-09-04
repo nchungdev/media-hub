@@ -212,12 +212,19 @@ class MediaCollectionManager:
                         if m_ep:
                             s_num = int(m_ep.group(1))
                             e_num = int(m_ep.group(2))
-                            ep_key = f"S{s_num:02d}E{e_num:02d}"
-                            if ep_key not in episodes_dict:
-                                episodes_dict[ep_key] = {
-                                    "key": ep_key,
-                                    "season_num": s_num,
-                                    "ep_num": e_num,
+                        else:
+                            m_ep2 = re.search(r"(?:^|[^\w])(?:E|Episode|Ep\.?)\s*(\d+)", f, re.IGNORECASE) or re.search(r"-\s*(\d{1,4})\s*(?:\[|\.|\s|$)", f)
+                            if m_ep2:
+                                s_num = 1
+                                e_num = int(m_ep2.group(1))
+                            else:
+                                continue
+                        ep_key = f"S{s_num:02d}E{e_num:02d}"
+                        if ep_key not in episodes_dict:
+                            episodes_dict[ep_key] = {
+                                "key": ep_key,
+                                "season_num": s_num,
+                                "ep_num": e_num,
                                     "name": f,
                                     "video": False,
                                     "in_nas": in_nas,

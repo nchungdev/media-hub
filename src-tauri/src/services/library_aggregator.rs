@@ -112,7 +112,10 @@ pub fn aggregate_with_keymap(
         }
     }
 
-    // Buoc 2: franchise theo tung nhom (uu tien local, roi den BoxSet/TMDb).
+    // Buoc 2: franchise theo tung nhom.
+    // Do uu tien: local (nguoi dung tu sap) > BoxSet/TMDb Collection (Jellyfin)
+    // > AI (agy suy tu ten, danh cho truong hop TMDb/TVDB khong co khai niem
+    // "collection" cho series -- vd Bay Vien Ngoc Rong / GT / Kai).
     let mut franchise_of: HashMap<String, String> = HashMap::new();
     for (source, key, franchise, _t, _fo, _mt, _p, _u) in &rows {
         if franchise.is_empty() {
@@ -124,6 +127,10 @@ pub fn aggregate_with_keymap(
         } else {
             franchise_of.entry(root).or_insert_with(|| franchise.clone());
         }
+    }
+    for (key, franchise) in job_store.load_ai_franchise_map() {
+        let root = dsu.find(&key);
+        franchise_of.entry(root).or_insert(franchise);
     }
 
     let mut items: HashMap<String, UnifiedItem> = HashMap::new();

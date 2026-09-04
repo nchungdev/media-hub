@@ -178,13 +178,77 @@ impl AgyDaemon {
     }
 
     /// Gui mot luot vao daemon. Tra ve Err neu daemon chua san sang.
+    ///
+    /// Dinh dang dung xac dinh bang cach do tay qua pipe truc tiep (agy tu
+    /// choi cac dang khac voi loi ro rang trong "result.error"):
+    ///   {"event":"user","message":{"role":"user","content":[{"type":"text","text":"..."}]}}
+    /// Dang cu {"type":"user","content":"..."} bi agy tu choi ngay o buoc
+    /// parse, nen moi lenh day qua day tu truoc gio deu that bai am tham --
+    /// day chinh la ly do hang doi agent_queue khong bao gio chay duoc.
     pub fn send(&self, content: &str) -> Result<(), String> {
         let mut guard = self.stdin.lock().map_err(|_| "khoa stdin hong".to_string())?;
         let si = guard.as_mut().ok_or("daemon chua chay")?;
-        let msg = json!({ "type": "user", "content": content });
+        let msg = json!({
+            "event": "user",
+            "message": {
+                "role": "user",
+                "content": [{ "type": "text", "text": content }]
+            }
+        });
         writeln!(si, "{}", msg).map_err(|e| format!("ghi stdin that bai: {}", e))?;
         si.flush().map_err(|e| format!("flush that bai: {}", e))?;
         Ok(())
+    }
+
+    /// Gui mot luot va CHO ket qua (dung cho tac vu can cau tra loi ngay,
+    /// vd phan loai franchise). Khac voi send() la fire-and-forget cho
+    /// agent_queue / Live Console.
+    ///
+    /// Danh dau vi tri cuoi hang doi su kien truoc khi gui, roi doi den khi
+    /// thay mot event "result" MOI xuat hien sau vi tri do -- tranh doc nham
+    /// ket qua cua luot truoc con sot trong buffer.
+    pub fn ask(&self, prompt: &str, timeout: Duration) -> Result<String, String> {
+        let start_len = self.events.lock().map(|e| e.len()).unwrap_or(0);
+        self.send(prompt)?;
+
+        let step = Duration::from_millis(300);
+        let mut waited = Duration::ZERO;
+        while waited < timeout {
+            std::thread::sleep(step);
+            waited += step;
+
+            let found = {
+                let q = match self.events.lock() {
+                    Ok(q) => q,
+                    Err(_) => continue,
+                };
+                if q.len() <= start_len {
+                    None
+                } else {
+                    q.iter().skip(start_len).find(|e| e.get("event").and_then(|v| v.as_str()) == Some("result")).cloned()
+                }
+            };
+
+            if let Some(ev) = found {
+                let result = ev.get("result").cloned().unwrap_or(json!({}));
+                let status = result.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                if status == "SUCCESS" {
+                    let text = result
+                        .get("response")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string();
+                    return Ok(text);
+                }
+                let err = result
+                    .get("error")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("agy tra loi loi khong ro")
+                    .to_string();
+                return Err(err);
+            }
+        }
+        Err(format!("het thoi gian cho ({}s) khong thay ket qua", timeout.as_secs()))
     }
 
     pub fn status(&self) -> Value {

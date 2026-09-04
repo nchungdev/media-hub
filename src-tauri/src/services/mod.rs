@@ -4,6 +4,7 @@ pub mod aria2_service;
 pub mod artwork_service;
 pub mod collection_service;
 pub mod dashboard_service;
+pub mod franchise_ai_classifier;
 pub mod gdrive_nfo_indexer;
 pub mod gdrive_service;
 pub mod health_service;

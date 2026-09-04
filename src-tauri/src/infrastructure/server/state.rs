@@ -2,7 +2,8 @@ use crate::domain::traits::{
     ICollectionService, IQuotaService, ISettingsService, ISubtitleService, ITunnelService,
 };
 use crate::services::{
-    agy_daemon::AgyDaemon, aria2_service::Aria2Service, gdrive_nfo_indexer, jellyfin_indexer,
+    agy_daemon::AgyDaemon, aria2_service::Aria2Service, franchise_ai_classifier,
+    gdrive_nfo_indexer, jellyfin_indexer,
     library_indexer,
     plex_indexer, sync_worker,
     watcher_service,
@@ -104,6 +105,12 @@ impl AppState {
         // Plex quet cung thu vien NAS nhung nhan dien khac Jellyfin, nen title
         // ben nay chua nhan ra thi ben kia co the da co.
         plex_indexer::start(home.clone(), settings.clone(), job_store.clone());
+
+        // Phan loai franchise bang AI cho title khong co API nao tra duoc
+        // (TMDb/TVDB khong co "collection" cho series). Tat mac dinh, nguoi
+        // dung tu bam Start trong tab Dich Vu khi can, vi moi lan chay ton
+        // token that.
+        franchise_ai_classifier::start(agy.clone(), job_store.clone());
         let dashboard = Arc::new(DashboardService::new(settings.clone(), job_store.clone()));
         let gdrive = Arc::new(GDriveService::new(settings.clone()));
         let nas = Arc::new(NasService::new(settings.clone()));

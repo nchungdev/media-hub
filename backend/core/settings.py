@@ -62,7 +62,9 @@ def load_unified_settings():
         "gdrive_root": "Phim",
         "sync_targets": ["drive"],
         "sync_transfers": 4,
-        "auto_purge": True
+        "auto_purge": True,
+        "cloudflare_tunnel_token": "",
+        "cloudflare_tunnel_hostname": ""
     }
 
     # 1. Load global application settings first (to determine user's chosen workspace)
