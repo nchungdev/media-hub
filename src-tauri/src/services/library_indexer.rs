@@ -230,7 +230,8 @@ pub fn start(
     settings: Arc<dyn ISettingsService>,
     job_store: Arc<JobStore>,
 ) {
-    // Local: quet nhanh, chay day hon.
+    // Local chu yeu chay theo su kien tu watcher_service (notify). Vong lap nay
+    // chi la luoi an toan phong khi notify bo sot su kien, nen de thua tay.
     {
         let home = home.clone();
         let js = job_store.clone();
@@ -247,7 +248,7 @@ pub fn start(
                     crate::services::worker_status::err("indexer/local", &e);
                 }
             }
-            std::thread::sleep(Duration::from_secs(60));
+            std::thread::sleep(Duration::from_secs(900));
         });
     }
 

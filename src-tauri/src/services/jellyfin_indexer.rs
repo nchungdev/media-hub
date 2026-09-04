@@ -105,7 +105,11 @@ fn sync_once(
     }
 
     // 3. Doc ban cache local, khong dung toi DB that tren NAS nua.
-    let rows = parse_db(local_db)?;
+    let coll_cache = local_db
+        .parent()
+        .unwrap_or(Path::new("."))
+        .join("tmdb_collections.json");
+    let rows = parse_db(local_db, &cfg.tmdb_api_key, &coll_cache)?;
     let n = job_store
         .replace_library_source("jellyfin", &rows)
         .map_err(|e| e.to_string())?;
@@ -116,7 +120,11 @@ fn sync_once(
 
 /// Rut tung phim/series kem Tmdb/Tvdb id, quy ve dung dinh dang media_key
 /// ma cac indexer khac dang dung ("tvdb-123" / "tmdb-456").
-fn parse_db(db: &Path) -> Result<Vec<(String, String, String, String, String, String)>, String> {
+fn parse_db(
+    db: &Path,
+    tmdb_key: &str,
+    coll_cache: &Path,
+) -> Result<Vec<(String, String, String, String, String, String)>, String> {
     let uri = format!("file:{}?mode=ro&immutable=1", db.to_string_lossy());
     let conn = Connection::open_with_flags(
         &uri,
@@ -127,9 +135,18 @@ fn parse_db(db: &Path) -> Result<Vec<(String, String, String, String, String, St
     // Truoc het dung ban do media_key -> ten BoxSet.
     // Jellyfin luu thanh vien BoxSet trong cot Data (JSON, khoa LinkedChildren),
     // khong quan he hoa, nen phai doc JSON roi noi lai qua ItemId.
-    let franchise_map = boxset_franchises(&conn);
+    let mut franchise_map = boxset_franchises(&conn);
+    let n_boxset = franchise_map.len();
+
+    // Nguon thu hai: TMDb Collection. Jellyfin luu san collection id cho tung
+    // muc, chi thieu ten -- lay ten qua TMDb API roi cache lai. BoxSet duoc
+    // uu tien vi do chinh nguoi dung sap, TMDb chi lap cho phan con trong.
+    for (k, v) in tmdb_collection_franchises(&conn, tmdb_key, coll_cache) {
+        franchise_map.entry(k).or_insert(v);
+    }
     log::info!(
-        "[indexer/jellyfin] {} muc co franchise tu BoxSet",
+        "[indexer/jellyfin] franchise: {} tu BoxSet, {} tong (them TMDb Collection)",
+        n_boxset,
         franchise_map.len()
     );
 
@@ -282,6 +299,114 @@ fn boxset_franchises(conn: &Connection) -> std::collections::HashMap<String, Str
     }
 
     map
+}
+
+/// Ban do media_key -> ten TMDb Collection.
+/// Jellyfin luu collection id trong BaseItemProviders nhung khong luu ten,
+/// nen phai hoi TMDb mot lan roi cache xuong dia -- 71 collection thi chi
+/// ton 71 loi goi cho lan dau, cac lan sau doc cache.
+fn tmdb_collection_franchises(
+    conn: &Connection,
+    api_key: &str,
+    cache_path: &Path,
+) -> std::collections::HashMap<String, String> {
+    use std::collections::{HashMap, HashSet};
+    let mut out: HashMap<String, String> = HashMap::new();
+    if api_key.trim().is_empty() {
+        return out;
+    }
+
+    // 1. ItemId -> collection id, va ItemId -> media_key
+    let mut coll_of: HashMap<String, String> = HashMap::new();
+    let mut keys_of: HashMap<String, Vec<String>> = HashMap::new();
+
+    if let Ok(mut stmt) = conn.prepare(
+        "SELECT ItemId, ProviderId, ProviderValue FROM BaseItemProviders
+          WHERE ProviderId IN ('TmdbCollection','Tmdb','Tvdb')",
+    ) {
+        if let Ok(it) = stmt.query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+            ))
+        }) {
+            for (item_id, provider, value) in it.flatten() {
+                let v = value.trim().to_string();
+                if v.is_empty() {
+                    continue;
+                }
+                match provider.as_str() {
+                    "TmdbCollection" => {
+                        coll_of.insert(item_id, v);
+                    }
+                    "Tvdb" => keys_of.entry(item_id).or_default().push(format!("tvdb-{}", v)),
+                    "Tmdb" => keys_of.entry(item_id).or_default().push(format!("tmdb-{}", v)),
+                    _ => {}
+                }
+            }
+        }
+    }
+    if coll_of.is_empty() {
+        return out;
+    }
+
+    // 2. Ten collection: doc cache truoc, chi hoi TMDb phan con thieu
+    let mut names: HashMap<String, String> = std::fs::read_to_string(cache_path)
+        .ok()
+        .and_then(|t| serde_json::from_str(&t).ok())
+        .unwrap_or_default();
+
+    let wanted: HashSet<String> = coll_of.values().cloned().collect();
+    let missing: Vec<String> = wanted
+        .iter()
+        .filter(|id| !names.contains_key(*id))
+        .cloned()
+        .collect();
+
+    if !missing.is_empty() {
+        if let Ok(rt) = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+        {
+            let client = reqwest::Client::new();
+            rt.block_on(async {
+                for id in &missing {
+                    let url = format!(
+                        "https://api.themoviedb.org/3/collection/{}?api_key={}&language=vi-VN",
+                        id, api_key
+                    );
+                    match client.get(&url).send().await {
+                        Ok(resp) => {
+                            if let Ok(v) = resp.json::<serde_json::Value>().await {
+                                if let Some(n) = v.get("name").and_then(|n| n.as_str()) {
+                                    if !n.trim().is_empty() {
+                                        names.insert(id.clone(), n.trim().to_string());
+                                    }
+                                }
+                            }
+                        }
+                        Err(e) => log::warn!("[indexer/jellyfin] TMDb collection {}: {}", id, e),
+                    }
+                }
+            });
+            if let Ok(txt) = serde_json::to_string_pretty(&names) {
+                let _ = std::fs::write(cache_path, txt);
+            }
+        }
+    }
+
+    // 3. Rap lai: media_key -> ten collection
+    for (item_id, coll_id) in &coll_of {
+        if let Some(name) = names.get(coll_id) {
+            if let Some(keys) = keys_of.get(item_id) {
+                for k in keys {
+                    out.insert(k.clone(), name.clone());
+                }
+            }
+        }
+    }
+    out
 }
 
 fn ssh_capture(settings: &Arc<dyn ISettingsService>, remote_cmd: &str) -> Result<String, String> {

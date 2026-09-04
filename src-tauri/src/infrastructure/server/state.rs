@@ -67,7 +67,12 @@ impl AppState {
 
         // Watcher nen: theo doi .media-hub/_franchise, tu dong lam moi + luu
         // collections_cache vao DB moi khi co thay doi file (them/xoa/doi ten).
-        watcher_service::start(home.join("_franchise"), collections.clone(), job_store.clone());
+        watcher_service::start(
+            home.join("_franchise"),
+            home.clone(),
+            collections.clone(),
+            job_store.clone(),
+        );
 
         // Hang doi tai: aria2 nhan ca magnet lan link https (TorBox cap hoac DDL),
         // nen worker khong can phan biet nguon.

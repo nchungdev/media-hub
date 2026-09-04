@@ -1,5 +1,6 @@
 use crate::domain::traits::ICollectionService;
 use crate::services::job_store::JobStore;
+use crate::services::library_indexer;
 use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -8,7 +9,12 @@ use std::time::Duration;
 /// Lang nghe thay doi trong .media-hub/_franchise (them/xoa/doi ten file, thu muc)
 /// va tu dong lam moi cache collections + ghi lai vao SQLite (job_store) de FE
 /// khong can bam refresh thu cong sau moi lan them phim/tap moi.
-pub fn start(franchise_root: PathBuf, collections: Arc<dyn ICollectionService>, job_store: Arc<JobStore>) {
+pub fn start(
+    franchise_root: PathBuf,
+    home: PathBuf,
+    collections: Arc<dyn ICollectionService>,
+    job_store: Arc<JobStore>,
+) {
     if !franchise_root.exists() {
         let _ = std::fs::create_dir_all(&franchise_root);
     }
@@ -35,6 +41,7 @@ pub fn start(franchise_root: PathBuf, collections: Arc<dyn ICollectionService>, 
 
         // Quet lan dau ngay khi khoi dong, dam bao DB co du lieu tu dau.
         refresh_and_persist(&collections, &job_store);
+        reindex_local(&home, &job_store);
 
         for result in rx {
             match result {
@@ -48,12 +55,27 @@ pub fn start(franchise_root: PathBuf, collections: Arc<dyn ICollectionService>, 
                             events.len()
                         );
                         refresh_and_persist(&collections, &job_store);
+                        // Index local chay ngay theo su kien, khong doi vong polling.
+                        reindex_local(&home, &job_store);
                     }
                 }
                 Err(e) => log::warn!("[watcher] loi su kien: {:?}", e),
             }
         }
     });
+}
+
+fn reindex_local(home: &PathBuf, job_store: &Arc<JobStore>) {
+    crate::services::worker_status::begin("indexer/local");
+    let rows = library_indexer::index_local(home);
+    match job_store.replace_library_source("local", &rows) {
+        Ok(n) => crate::services::worker_status::ok(
+            "indexer/local",
+            n as i64,
+            "chay theo su kien tu watcher",
+        ),
+        Err(e) => crate::services::worker_status::err("indexer/local", &e),
+    }
 }
 
 fn refresh_and_persist(collections: &Arc<dyn ICollectionService>, job_store: &Arc<JobStore>) {
