@@ -22,6 +22,7 @@ pub struct AgyDaemon {
     settings: Arc<dyn ISettingsService>,
     stdin: Arc<Mutex<Option<ChildStdin>>>,
     child: Arc<Mutex<Option<Child>>>,
+    child_pid: Arc<Mutex<Option<u32>>>,
     events: Arc<Mutex<VecDeque<Value>>>,
     profile: Arc<Mutex<String>>,
 }
@@ -32,6 +33,7 @@ impl AgyDaemon {
             settings,
             stdin: Arc::new(Mutex::new(None)),
             child: Arc::new(Mutex::new(None)),
+            child_pid: Arc::new(Mutex::new(None)),
             events: Arc::new(Mutex::new(VecDeque::new())),
             profile: Arc::new(Mutex::new(String::new())),
         }
@@ -52,6 +54,11 @@ impl AgyDaemon {
     pub fn start(self: &Arc<Self>) {
         let me = Arc::clone(self);
         std::thread::spawn(move || loop {
+            if !crate::services::worker_status::is_enabled("agy_daemon") {
+                crate::services::worker_status::sleep_interruptible("agy_daemon", Duration::from_secs(2));
+                continue;
+            }
+
             let profile = {
                 let cfg = me.settings.load();
                 let p = cfg.agy_cli_profile.trim().to_string();
@@ -79,15 +86,18 @@ impl AgyDaemon {
             match me.spawn_once(&bin, &profile) {
                 Ok(mut child) => {
                     *me.profile.lock().unwrap() = profile.clone();
+                    let pid = child.id();
+                    *me.child_pid.lock().unwrap() = Some(pid);
                     crate::services::worker_status::ok(
                         "agy_daemon",
                         me.events.lock().map(|e| e.len() as i64).unwrap_or(0),
-                        &format!("dang chay profile '{}' (pid {})", profile, child.id()),
+                        &format!("dang chay profile '{}' (pid {})", profile, pid),
                     );
                     // Chan o day cho toi khi tien trinh thoat -> vong lap bat lai.
                     let _ = child.wait();
                     log::warn!("[agy_daemon] tien trinh thoat, se bat lai sau 5 giay");
                     *me.stdin.lock().unwrap() = None;
+                    *me.child_pid.lock().unwrap() = None;
                     *me.child.lock().unwrap() = None;
                     crate::services::worker_status::err("agy_daemon", "tien trinh da thoat");
                 }
@@ -99,6 +109,12 @@ impl AgyDaemon {
 
             std::thread::sleep(Duration::from_secs(5));
         });
+    }
+
+    pub fn stop(&self) {
+        if let Some(pid) = *self.child_pid.lock().unwrap() {
+            let _ = std::process::Command::new("kill").arg("-15").arg(pid.to_string()).output();
+        }
     }
 
     fn spawn_once(&self, bin: &PathBuf, profile: &str) -> Result<Child, String> {
@@ -136,7 +152,7 @@ impl AgyDaemon {
                         continue;
                     }
                     let ev: Value = serde_json::from_str(&line)
-                        .unwrap_or_else(|_| json!({ "type": "raw", "text": line }));
+                        .unwrap_or_else(|_| json!({ "event": "raw", "type": "raw", "text": line }));
                     if let Ok(mut q) = events.lock() {
                         q.push_back(ev);
                         while q.len() > MAX_EVENTS {

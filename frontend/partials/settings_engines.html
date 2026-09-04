@@ -1,33 +1,3 @@
-                  <button type="button" onclick="copyTunnelUrl()" class="px-3.5 py-2.5 bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/30 text-amber-300 hover:text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shrink-0 shadow-sm">
-                    <span>📋</span> Sao Chép
-                  </button>
-                  <button type="button" onclick="openTunnelUrl()" class="px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shrink-0 shadow-sm">
-                    <span>🔗</span> Mở Trình Duyệt
-                  </button>
-                </div>
-              </div>
-
-              <!-- Binary & Info Note -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] text-zinc-400">
-                <div class="p-3 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
-                  <span>Tiện ích Cloudflare:</span>
-                  <span id="tunnel-binary-path" class="font-mono text-zinc-300">Đang kiểm tra...</span>
-                </div>
-                <div class="p-3 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between">
-                  <span>Cổng nội bộ ánh xạ:</span>
-                  <span class="font-mono text-amber-400 font-bold" id="tunnel-local-port">127.0.0.1:8888</span>
-                </div>
-              </div>
-
-              <div class="p-3 rounded-2xl bg-amber-500/[0.04] border border-amber-500/20 text-[11px] text-amber-300 flex items-start gap-2">
-                <span class="text-sm shrink-0">💡</span>
-                <p class="leading-relaxed">
-                  Tính năng <strong>TryCloudflare Quick Tunnel</strong> tạo kết nối ngược (reverse tunnel) an toàn ra mạng Cloudflare Edge mà <strong>không cần mở port modem (No Port Forwarding)</strong>, không cần tên miền riêng và hoàn toàn miễn phí.
-                </p>
-              </div>
-            </div>
-          </div>
-
           <!-- ==================== 4. QUẢN LÝ BỘ TẢI & 4 DOWNLOAD ENGINES ==================== -->
           <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-purple-500/20 shadow-xl space-y-5 relative overflow-hidden">
             <div class="absolute top-0 right-0 w-48 h-48 bg-purple-500/5 rounded-full blur-3xl pointer-events-none"></div>
@@ -188,3 +158,10 @@
                   </div>
                   <div>
                     <label class="block text-zinc-500 text-[10px] mb-1">Đường Dẫn Binary</label>
+                    <input type="text" id="cfg-ytdlp-bin" value="/opt/homebrew/bin/yt-dlp" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-white font-mono text-[11px] focus:outline-none focus:border-amber-500">
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>

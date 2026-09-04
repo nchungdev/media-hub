@@ -55,7 +55,7 @@ get_running_pid() {
     fi
   fi
   local lsof_pid
-  lsof_pid=$(lsof -ti:$DEFAULT_PORT 2>/dev/null || true)
+  lsof_pid=$(lsof -tiTCP:$DEFAULT_PORT -sTCP:LISTEN 2>/dev/null || true)
   if [ -n "$lsof_pid" ]; then
     echo "$lsof_pid" | head -n1
     return 0

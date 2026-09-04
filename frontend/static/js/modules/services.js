@@ -51,67 +51,91 @@ export async function loadServicesStatus() {
     document.getElementById('services-errors').textContent = data.errors ?? 0;
 
     if (!workers.length) {
-      box.innerHTML = `<div class="p-8 text-center text-zinc-500 text-sm">
+      box.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-zinc-500 text-sm">
         Chưa có worker nào báo cáo. Chúng đăng ký sau vòng chạy đầu tiên.
-      </div>`;
+      </td></tr>`;
       return;
     }
 
     box.innerHTML = workers.map((w) => {
       const meta = WORKER_META[w.name] || { icon: '⚙️', label: w.name, desc: '' };
-      const st = STATE_STYLE[w.state] || STATE_STYLE.idle;
+      const isStopped = w.enabled === false || w.state === 'stopped';
+      const st = isStopped 
+        ? { cls: 'bg-zinc-800 text-zinc-400 border-zinc-700 shadow-sm', dot: 'bg-zinc-500', text: 'Đã dừng' }
+        : (STATE_STYLE[w.state] || STATE_STYLE.idle);
+
       // items = -1 la quy uoc "khong co gi de lam", vd DB khong doi nen bo qua.
       const items = w.items === -1 ? '—' : w.items;
       const errBadge = w.errors > 0
-        ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 font-mono">${w.errors} lỗi</span>`
+        ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/30 font-mono font-bold">${w.errors} lỗi</span>`
         : '';
 
       return `
-      <div class="px-4 sm:px-5 py-3.5 border-b border-zinc-800/60 last:border-0 hover:bg-zinc-900/40 transition">
-        <div class="flex items-start justify-between gap-4 flex-wrap">
-          <div class="flex items-start gap-3 min-w-0">
-            <div class="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-base shrink-0">
+      <tr class="hover:bg-zinc-900/60 transition">
+        <!-- Cột 1: Dịch vụ -->
+        <td class="px-4 py-3.5 min-w-[220px] sm:min-w-[260px]">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-base shrink-0 shadow-inner">
               ${meta.icon}
             </div>
             <div class="min-w-0">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="font-bold text-sm text-white">${esc(meta.label)}</span>
-                <span class="inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full border font-bold ${st.cls}">
-                  <span class="w-1.5 h-1.5 rounded-full ${st.dot}"></span>${st.text}
-                </span>
-                ${errBadge}
+              <div class="font-bold text-sm text-white flex items-center gap-1.5 truncate">
+                <span>${esc(meta.label)}</span>
+                <span class="text-[10px] font-mono text-zinc-500">(${esc(w.name)})</span>
               </div>
-              <div class="text-xs text-zinc-500 mt-0.5">${esc(meta.desc)}</div>
-              ${w.message ? `<div class="text-xs text-zinc-400 mt-1 font-mono truncate">${esc(w.message)}</div>` : ''}
+              <div class="text-xs text-zinc-400 mt-0.5">${esc(meta.desc)}</div>
+              ${w.message ? `<div class="text-[11px] text-zinc-500 mt-0.5 font-mono truncate" title="${esc(w.message)}">${esc(w.message)}</div>` : ''}
             </div>
           </div>
-          <div class="flex items-center gap-5 text-right shrink-0">
-            <div>
-              <div class="text-sm font-bold text-white font-mono">${items}</div>
-              <div class="text-[10px] text-zinc-500 uppercase tracking-wide">mục</div>
-            </div>
-            <div>
-              <div class="text-sm font-bold text-zinc-300 font-mono">${w.runs ?? 0}</div>
-              <div class="text-[10px] text-zinc-500 uppercase tracking-wide">lượt chạy</div>
-            </div>
-            <div class="hidden sm:block min-w-[92px]">
-              <div class="text-xs font-semibold text-zinc-400">${timeAgo(w.last_finish)}</div>
-              <div class="text-[10px] text-zinc-500 uppercase tracking-wide">lần cuối</div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              ${w.enabled === false
-                ? `<button onclick="controlWorker('${esc(w.name)}','start')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition">▶ Bật</button>`
-                : `<button onclick="controlWorker('${esc(w.name)}','stop')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition">⏸ Dừng</button>`}
-              <button onclick="controlWorker('${esc(w.name)}','restart')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 transition">↻ Chạy lại</button>
-            </div>
+        </td>
+
+        <!-- Cột 2: Trạng Thái (CỘT RIÊNG) -->
+        <td class="px-3 py-3.5 text-center w-36">
+          <div class="inline-flex items-center justify-center flex-wrap gap-1">
+            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-bold ${st.cls}">
+              <span class="w-2 h-2 rounded-full ${st.dot}"></span>
+              ${st.text}
+            </span>
+            ${errBadge}
           </div>
-        </div>
-      </div>`;
+        </td>
+
+        <!-- Cột 3: Mục -->
+        <td class="px-3 py-3.5 text-center w-24">
+          <span class="font-mono text-sm font-bold text-white">${items}</span>
+        </td>
+
+        <!-- Cột 4: Lượt Chạy -->
+        <td class="px-3 py-3.5 text-center w-24">
+          <span class="font-mono text-sm font-bold text-zinc-300">${w.runs ?? 0}</span>
+        </td>
+
+        <!-- Cột 5: Lần Cuối -->
+        <td class="px-3 py-3.5 text-center w-32">
+          <span class="text-xs font-semibold text-zinc-400 font-mono">${timeAgo(w.last_finish)}</span>
+        </td>
+
+        <!-- Cột 6: Thao Tác (Start / Restart / Stop) -->
+        <td class="px-4 py-3.5 text-right min-w-[190px]">
+          <div class="flex items-center justify-end gap-1.5">
+            ${isStopped
+              ? `<button onclick="controlWorker('${esc(w.name)}','start')" class="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 transition flex items-center gap-1 shadow-sm" title="Khởi động / Bật service này">
+                  <span>▶</span> Start
+                 </button>`
+              : `<button onclick="controlWorker('${esc(w.name)}','stop')" class="px-2.5 py-1 rounded-xl text-xs font-bold bg-zinc-900 hover:bg-red-600 text-zinc-300 hover:text-white border border-zinc-700 hover:border-red-500/30 transition flex items-center gap-1 shadow-sm" title="Tạm dừng service này">
+                  <span>⏸</span> Stop
+                 </button>`}
+            <button onclick="controlWorker('${esc(w.name)}','restart')" class="px-2.5 py-1 rounded-xl text-xs font-bold bg-violet-600/20 hover:bg-violet-600 text-violet-400 hover:text-white border border-violet-500/30 transition flex items-center gap-1 shadow-sm" title="Chạy lại chu kỳ ngay lập tức">
+              <span>↻</span> Restart
+            </button>
+          </div>
+        </td>
+      </tr>`;
     }).join('');
   } catch (e) {
-    box.innerHTML = `<div class="p-8 text-center text-red-400 text-sm">
+    box.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-400 text-sm">
       Không tải được trạng thái worker: ${esc(e?.message || e)}
-    </div>`;
+    </td></tr>`;
   }
 }
 

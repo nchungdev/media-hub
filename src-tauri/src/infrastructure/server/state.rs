@@ -59,13 +59,14 @@ impl AppState {
         let artwork = Arc::new(ArtworkService::new(app_state_dir.clone()));
         let subtitles = Arc::new(SubtitleService::new());
         let tunnel = Arc::new(TunnelService::new(app_state_dir.clone(), settings.clone()));
-        let collections: Arc<dyn ICollectionService> = Arc::new(CollectionService::new(settings.clone()));
-        let streaming = Arc::new(StreamingService::new(settings.clone()));
-        let torbox = Arc::new(TorboxService::new(settings.clone()));
 
         let job_store = Arc::new(
             JobStore::new(Some(app_state_dir.join("media_hub.db"))).expect("Failed to init JobStore"),
         );
+        let collections: Arc<dyn ICollectionService> =
+            Arc::new(CollectionService::new(settings.clone(), Some(job_store.clone())));
+        let streaming = Arc::new(StreamingService::new(settings.clone()));
+        let torbox = Arc::new(TorboxService::new(settings.clone()));
 
         // Watcher nen: theo doi .media-hub/_franchise, tu dong lam moi + luu
         // collections_cache vao DB moi khi co thay doi file (them/xoa/doi ten).

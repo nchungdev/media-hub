@@ -208,3 +208,128 @@
     </div>
   </div>
 
+  <!-- ==================== MODAL: SYNC MEDIA (VIDEO & SUBTITLE SELECTION) ==================== -->
+  <div id="modal-sync-media" onclick="if(event.target === this) closeModal('modal-sync-media')" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto custom-scroll">
+    <div class="bg-zinc-950 border border-zinc-800 w-full max-w-2xl rounded-3xl p-5 sm:p-7 space-y-5 shadow-2xl relative animate-fade-in my-auto text-left" onclick="event.stopPropagation()">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-zinc-800/80 pb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-lg shadow-sm">
+            🔄
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-white flex items-center gap-2">
+              Đồng Bộ Nội Dung Media
+              <span id="sync-media-ep-badge" class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[10px] border border-blue-500/20 font-mono font-bold">--</span>
+            </h3>
+            <p class="text-xs text-zinc-400" id="sync-media-show-title">--</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-sync-media')" class="w-8 h-8 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition text-xs">✕</button>
+      </div>
+
+      <div class="space-y-4 max-h-[65vh] overflow-y-auto custom-scroll pr-1">
+        
+        <!-- Section 1: Danh sách Video (Chất lượng) -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span>🎬</span> Tệp Video Cần Đồng Bộ
+            </span>
+            <span class="text-[11px] text-zinc-500 font-mono" id="sync-video-count">-- video</span>
+          </div>
+          <div id="sync-media-video-list" class="space-y-2">
+            <!-- Dynamic video items -->
+          </div>
+        </div>
+
+        <!-- Section 2: Danh sách Subtitle -->
+        <div class="space-y-2 pt-2 border-t border-zinc-800/60">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span>💬</span> Tệp Phụ Đề Cần Đồng Bộ
+            </span>
+            <label class="flex items-center gap-1.5 text-[11px] text-zinc-400 cursor-pointer hover:text-white transition">
+              <input type="checkbox" id="sync-select-all-subs" onchange="toggleAllSyncSubs(this.checked)" checked class="rounded border-zinc-700 bg-zinc-900 text-blue-600 focus:ring-0">
+              <span>Chọn tất cả</span>
+            </label>
+          </div>
+          <div id="sync-media-sub-list" class="space-y-2 max-h-48 overflow-y-auto custom-scroll p-1">
+            <!-- Dynamic subtitle items -->
+          </div>
+        </div>
+
+        <!-- Section 3: Chiều Đồng Bộ (Direction) -->
+        <div class="space-y-2 pt-2 border-t border-zinc-800/60">
+          <span class="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+            <span>⇄</span> Chiều Đồng Bộ Dữ Liệu
+          </span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <label class="flex items-center gap-2.5 p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 hover:border-blue-500/50 cursor-pointer transition">
+              <input type="radio" name="sync-direction" value="local_to_nas" checked class="text-blue-600 focus:ring-0">
+              <div>
+                <div class="font-bold text-white flex items-center gap-1.5">Local ➔ NAS Storage</div>
+                <div class="text-[10px] text-zinc-400">Đẩy từ máy tính lên NAS gia đình</div>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-2.5 p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 hover:border-blue-500/50 cursor-pointer transition">
+              <input type="radio" name="sync-direction" value="local_to_gdrive" class="text-blue-600 focus:ring-0">
+              <div>
+                <div class="font-bold text-white flex items-center gap-1.5">Local ➔ Google Drive</div>
+                <div class="text-[10px] text-zinc-400">Backup lên đám mây Google Drive</div>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-2.5 p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 hover:border-blue-500/50 cursor-pointer transition">
+              <input type="radio" name="sync-direction" value="local_to_both" class="text-blue-600 focus:ring-0">
+              <div>
+                <div class="font-bold text-white flex items-center gap-1.5">Local ➔ Cả Hai (NAS & Drive)</div>
+                <div class="text-[10px] text-zinc-400">Phân phối tới cả 2 kho đích</div>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-2.5 p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 hover:border-blue-500/50 cursor-pointer transition">
+              <input type="radio" name="sync-direction" value="nas_to_local" class="text-blue-600 focus:ring-0">
+              <div>
+                <div class="font-bold text-white flex items-center gap-1.5">NAS Storage ➔ Local</div>
+                <div class="text-[10px] text-zinc-400">Tải tập/sub từ NAS về máy để xử lý</div>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-2.5 p-3 rounded-xl bg-zinc-900/80 border border-zinc-800 hover:border-blue-500/50 cursor-pointer transition sm:col-span-2">
+              <input type="radio" name="sync-direction" value="gdrive_to_local" class="text-blue-600 focus:ring-0">
+              <div>
+                <div class="font-bold text-white flex items-center gap-1.5">Google Drive ➔ Local</div>
+                <div class="text-[10px] text-zinc-400">Kéo media từ đám mây Google Drive về máy tính</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Section 4: Tuỳ chọn mở rộng -->
+        <div class="p-3 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 text-xs flex items-center justify-between">
+          <div class="space-y-0.5">
+            <span class="font-semibold text-zinc-300">Tự động xóa tệp cục bộ sau khi đồng bộ thành công (Auto-Purge)</span>
+            <p class="text-[10px] text-zinc-500">Giúp giải phóng bộ nhớ ổ cứng sau khi đã đẩy an toàn lên kho lưu trữ</p>
+          </div>
+          <input type="checkbox" id="sync-opt-autopurge" class="rounded border-zinc-700 bg-zinc-900 text-blue-600 focus:ring-0">
+        </div>
+
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-between pt-3 border-t border-zinc-800">
+        <button type="button" onclick="closeModal('modal-sync-media')" class="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-semibold transition">
+          Hủy Bỏ
+        </button>
+        <button type="button" onclick="startMediaSync()" id="btn-start-sync-media" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-blue-600/30">
+          <span>🚀</span> Bắt Đầu Đồng Bộ
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+

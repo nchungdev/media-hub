@@ -202,6 +202,15 @@ import { showToast } from '../../core/toast.js';
         window.currentAgyProfile = cfg.agy_cli_profile || 'auto';
         if (document.getElementById('cfg-agy-profile')) document.getElementById('cfg-agy-profile').value = window.currentAgyProfile;
 
+        window.currentCloudflareToken = cfg.cloudflare_tunnel_token || '';
+        window.currentCloudflareHostname = cfg.cloudflare_tunnel_hostname || '';
+        if (document.getElementById('cfg-cloudflare-tunnel-token')) {
+          document.getElementById('cfg-cloudflare-tunnel-token').value = window.currentCloudflareToken;
+        }
+        if (document.getElementById('cfg-cloudflare-tunnel-hostname')) {
+          document.getElementById('cfg-cloudflare-tunnel-hostname').value = window.currentCloudflareHostname;
+        }
+
         // Update NAS glance card in library view
         const nasPathEl = document.getElementById('nas-path-display');
         if (nasPathEl) nasPathEl.textContent = '📁 ' + (cfg.nas_path || '/volume1/video/TV Shows');
@@ -293,7 +302,13 @@ import { showToast } from '../../core/toast.js';
         sync_transfers: parseInt(document.getElementById('cfg-sync-transfers')?.value || 4),
         sync_targets: targets,
         auto_purge: !!document.getElementById('cfg-auto-purge')?.checked,
-        agy_cli_profile: document.getElementById('cfg-agy-profile')?.value || 'auto'
+        agy_cli_profile: document.getElementById('cfg-agy-profile')?.value || 'auto',
+        cloudflare_tunnel_token: document.getElementById('cfg-cloudflare-tunnel-token')?.value !== undefined 
+          ? document.getElementById('cfg-cloudflare-tunnel-token').value.trim() 
+          : (window.currentCloudflareToken || ''),
+        cloudflare_tunnel_hostname: document.getElementById('cfg-cloudflare-tunnel-hostname')?.value !== undefined 
+          ? document.getElementById('cfg-cloudflare-tunnel-hostname').value.trim() 
+          : (window.currentCloudflareHostname || '')
       };
 
       try {

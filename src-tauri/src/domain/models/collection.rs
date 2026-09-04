@@ -30,12 +30,28 @@ pub struct SubtitleStatus {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VideoFileInfo {
+    pub name: String,
+    pub path: String,
+    pub quality: String,
+    pub size_mb: f32,
+    #[serde(default)]
+    pub in_nas: bool,
+    #[serde(default)]
+    pub in_gdrive: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SubtitleFileInfo {
     pub name: String,
     pub path: String,
     pub lang: String,
     pub format: String,
     pub size_kb: f32,
+    #[serde(default)]
+    pub is_internal: bool,
+    #[serde(default)]
+    pub track_id: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,6 +67,8 @@ pub struct EpisodeInfo {
     pub has_eng_sub: bool,
     #[serde(default)]
     pub subtitle_files: Vec<SubtitleFileInfo>,
+    #[serde(default)]
+    pub video_files: Vec<VideoFileInfo>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -105,11 +123,20 @@ pub struct FranchiseGroup {
     pub item_ids: Vec<String>,
 }
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SourceCount {
+    pub movies: usize,
+    pub series: usize,
+    pub total: usize,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollectionsResponse {
     pub collections: Vec<CollectionItem>,
     /// Gom nhom san theo franchise de UI khong phai tu tinh lai.
     pub franchises: Vec<FranchiseGroup>,
     pub summary: CollectionSummary,
+    #[serde(default)]
+    pub counts_detail: std::collections::HashMap<String, SourceCount>,
     pub timestamp: f64,
 }

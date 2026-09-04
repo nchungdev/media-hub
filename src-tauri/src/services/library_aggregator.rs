@@ -47,12 +47,7 @@ pub struct UnifiedLibrary {
     pub unclassified: usize,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct SourceCount {
-    pub movies: usize,
-    pub series: usize,
-    pub total: usize,
-}
+pub use crate::domain::models::collection::SourceCount;
 
 /// Nhan cho nhung muc chi ton tai tren NAS/Drive: chung phang theo chuan Plex
 /// nen khong tu khai bao duoc franchise, va cung khong co ban local de muon.

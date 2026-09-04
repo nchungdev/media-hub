@@ -9,45 +9,137 @@ let rawTabConsoleLines = [];
 
     async function pollTabConsoleLogs(forceScroll = false) {
       try {
-        const res = await fetch('/api/agent/live_logs');
-        const data = await res.json();
-        window.rawTabConsoleLogs = data.logs || [];
+        // 1. Fetch live events from /api/agy/events and status from /api/agy/status
+        const [eventsRes, statusRes, legacyRes] = await Promise.all([
+          fetch('/api/agy/events').catch(() => null),
+          fetch('/api/agy/status').catch(() => null),
+          fetch('/api/agent/live_logs').catch(() => null)
+        ]);
+
+        let agyEvents = [];
+        if (eventsRes && eventsRes.ok) {
+          const eventsData = await eventsRes.json().catch(() => null);
+          if (eventsData && Array.isArray(eventsData.events)) {
+            agyEvents = eventsData.events;
+          }
+        }
+
+        let agyStatus = null;
+        if (statusRes && statusRes.ok) {
+          agyStatus = await statusRes.json().catch(() => null);
+        }
+
+        let legacyData = null;
+        if (legacyRes && legacyRes.ok) {
+          legacyData = await legacyRes.json().catch(() => null);
+        }
+
+        if (agyEvents.length > 0) {
+          window.rawTabConsoleLogs = agyEvents.map((ev, idx) => {
+            // CRITICAL: Dùng khóa event chứ không phải type theo chuẩn Antigravity stream-json
+            const eventKey = ev.event !== undefined ? ev.event : (ev.type || 'info');
+
+            const t = ev.time || ev.timestamp || (ev.created_at ? new Date(ev.created_at).toLocaleTimeString() : new Date().toLocaleTimeString());
+
+            let txt = '';
+            if (typeof ev.content === 'string') {
+              txt = ev.content;
+            } else if (Array.isArray(ev.content)) {
+              txt = ev.content.map(c => typeof c === 'string' ? c : (c.text || JSON.stringify(c))).join('\n');
+            } else if (ev.text) {
+              txt = ev.text;
+            } else if (ev.message) {
+              txt = ev.message;
+            } else if (ev.name || ev.tool || ev.tool_call) {
+              const tName = ev.name || ev.tool || ev.tool_call?.name || 'tool';
+              const args = ev.args || ev.parameters || ev.tool_call?.args;
+              txt = `⚙️ Gọi Tool [${tName}]` + (args ? `: ${typeof args === 'object' ? JSON.stringify(args) : args}` : '');
+            } else if (ev.result !== undefined || ev.output !== undefined) {
+              const resVal = ev.result !== undefined ? ev.result : ev.output;
+              txt = typeof resVal === 'object' ? JSON.stringify(resVal) : String(resVal);
+            } else if (ev.error) {
+              txt = typeof ev.error === 'object' ? (ev.error.message || JSON.stringify(ev.error)) : String(ev.error);
+            } else {
+              const clean = { ...ev };
+              delete clean.event;
+              delete clean.type;
+              delete clean.time;
+              delete clean.timestamp;
+              txt = Object.keys(clean).length > 0 ? JSON.stringify(clean) : String(eventKey);
+            }
+
+            let lvl = 'info';
+            const ekLower = String(eventKey).toLowerCase();
+            if (ekLower === 'thought' || ekLower === 'thinking') {
+              lvl = 'thinking';
+            } else if (ekLower.includes('tool')) {
+              lvl = 'tool';
+            } else if (ekLower === 'subagent' || ekLower.includes('agent')) {
+              lvl = 'subagent';
+            } else if (ekLower === 'user') {
+              lvl = 'system';
+            } else if (ekLower === 'assistant' || ekLower === 'output' || ekLower === 'message') {
+              lvl = 'output';
+            } else if (ekLower === 'error' || ekLower.includes('fail')) {
+              lvl = 'error';
+            } else if (ekLower === 'warning' || ekLower === 'warn') {
+              lvl = 'warning';
+            } else if (ekLower === 'status' || ekLower === 'system') {
+              lvl = 'system';
+            } else if (ekLower === 'success') {
+              lvl = 'success';
+            }
+
+            return {
+              time: t,
+              text: txt,
+              level: lvl,
+              event: eventKey
+            };
+          });
+        } else if (legacyData && Array.isArray(legacyData.logs) && legacyData.logs.length > 0) {
+          window.rawTabConsoleLogs = legacyData.logs;
+        } else if (!window.rawTabConsoleLogs) {
+          window.rawTabConsoleLogs = [];
+        }
         
         // Update indicators
         const badge = document.getElementById('tab-console-status-badge');
         const sideDot = document.getElementById('tab-dot-console');
         const activeBar = document.getElementById('tab-console-active-bar');
 
-        if (data.is_running) {
+        const isRunning = (agyStatus && agyStatus.running) || (legacyData && legacyData.is_running);
+        const activeProfile = (agyStatus && agyStatus.profile) || (legacyData?.active_job?.cli) || window.currentAgyProfile || 'agy';
+
+        if (isRunning) {
           if (badge) {
             badge.className = 'px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold flex items-center gap-1.5 border border-emerald-500/30 animate-pulse';
-            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> ${data.active_job?.status === 'attached' ? 'ATTACHED' : 'RUNNING'} (${data.active_job?.cli || 'CLI'})`;
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> RUNNING (${activeProfile})`;
           }
           if (sideDot) {
             sideDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0';
           }
           if (activeBar) {
             activeBar.classList.remove('hidden');
-            if (document.getElementById('tab-active-cmd')) document.getElementById('tab-active-cmd').textContent = data.active_job?.command || '--';
-            if (document.getElementById('tab-active-cli')) document.getElementById('tab-active-cli').textContent = data.active_job?.cli || 'CLI';
-            if (document.getElementById('tab-active-time')) document.getElementById('tab-active-time').textContent = 'Bắt đầu: ' + (data.active_job?.start_time || '--');
+            if (document.getElementById('tab-active-cmd')) {
+              document.getElementById('tab-active-cmd').textContent = legacyData?.active_job?.command || `agy stream-json (${activeProfile})`;
+            }
+            if (document.getElementById('tab-active-cli')) {
+              document.getElementById('tab-active-cli').textContent = activeProfile;
+            }
+            if (document.getElementById('tab-active-time')) {
+              document.getElementById('tab-active-time').textContent = 'Sự kiện: ' + (agyStatus?.events_buffered ?? window.rawTabConsoleLogs.length);
+            }
             if (document.getElementById('tab-active-context')) {
-              const ctx = data.active_job?.media_id || 'system';
+              const ctx = legacyData?.active_job?.media_id || 'daemon';
               document.getElementById('tab-active-context').textContent = '🎯 ' + ctx;
             }
           }
-          // Show stop button (red)
           updateCliToggleBtn(true);
-          // Restore activeTranslatingBatches from server state
-          if (data.active_job?.showTitle) {
-            window.activeTranslatingBatches = window.activeTranslatingBatches || new Set();
-            const showKey = data.active_job.media_id || data.active_job.showTitle;
-            window.activeTranslatingBatches.add(showKey);
-          }
         } else {
           if (badge) {
             badge.className = 'px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold flex items-center gap-1.5 border border-zinc-700';
-            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> IDLE`;
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> IDLE (${activeProfile})`;
           }
           if (sideDot) {
             sideDot.className = 'w-2 h-2 rounded-full bg-zinc-600 shrink-0';
@@ -55,12 +147,13 @@ let rawTabConsoleLines = [];
           if (activeBar) {
             activeBar.classList.add('hidden');
           }
-          // Show start button (green) — only if queue has pending items
           updateCliToggleBtn(false);
         }
 
         renderTabConsoleLogs(forceScroll);
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error polling tab console logs:', e);
+      }
     }
 
     function updateCliToggleBtn(isRunning) {
@@ -151,9 +244,15 @@ let rawTabConsoleLines = [];
           colorClass = "text-red-400 font-bold font-mono text-xs";
         }
         
+        let eventBadge = '';
+        if (l.event && l.event !== 'raw' && l.event !== 'info') {
+          eventBadge = `<span class="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase opacity-85 ${colorClass} bg-zinc-900/90 border border-zinc-800 shrink-0 select-none">${l.event}</span>`;
+        }
+        
         return `<div class="flex items-start gap-2 hover:bg-zinc-900/50 py-0.5 px-1.5 rounded transition ${bgClass}">
           <span class="text-zinc-600 select-none shrink-0 font-mono text-[10px] pt-0.5">[${l.time}]</span>
-          <span class="${colorClass} break-all select-text font-mono text-xs flex-1">${l.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+          ${eventBadge}
+          <span class="${colorClass} break-all select-text font-mono text-xs flex-1">${(l.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
         </div>`;
       }).join('');
 
@@ -169,9 +268,9 @@ let rawTabConsoleLines = [];
 
     async function clearTabConsole() {
       try {
-        await fetch('/api/agent/live_logs/clear', {method: 'POST'});
+        await fetch('/api/agent/live_logs/clear', {method: 'POST'}).catch(() => null);
         window.rawTabConsoleLogs = [];
-        pollTabConsoleLogs(true);
+        renderTabConsoleLogs(true);
         showToast('🧹 Đã xóa sạch console log', 'info');
       } catch (e) {}
     }

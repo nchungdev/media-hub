@@ -30,34 +30,34 @@
           
           <!-- Ba kho lưu trữ: Draft (chưa publish) / JellyPlex (NAS) / Drive -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-lg shrink-0 border border-amber-500/20">
+            <div onclick="setCollectionSyncFilter('unsynced')" class="cursor-pointer hover:border-amber-500/50 hover:bg-zinc-900/50 transition p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3 group" title="Bấm để lọc các mục Draft local">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-lg shrink-0 border border-amber-500/20 group-hover:scale-105 transition">
                 📝
               </div>
               <div class="min-w-0">
-                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Draft</div>
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider group-hover:text-amber-400 transition">Draft</div>
                 <div class="text-base font-bold text-amber-400 font-mono" id="col-kpi-draft">--</div>
                 <div class="text-[10px] text-zinc-400 truncate" id="col-kpi-draft-detail">-- Movies • -- Series</div>
               </div>
             </div>
 
-            <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-lg shrink-0 border border-emerald-500/20">
+            <div onclick="setCollectionSyncFilter('only_nas')" class="cursor-pointer hover:border-emerald-500/50 hover:bg-zinc-900/50 transition p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3 group" title="Bấm để lọc các mục trên JellyPlex">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-lg shrink-0 border border-emerald-500/20 group-hover:scale-105 transition">
                 🖥️
               </div>
               <div class="min-w-0">
-                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">JellyPlex</div>
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider group-hover:text-emerald-400 transition">JellyPlex</div>
                 <div class="text-base font-bold text-emerald-400 font-mono" id="col-kpi-jellyplex">--</div>
                 <div class="text-[10px] text-zinc-400 truncate" id="col-kpi-jellyplex-detail">-- Movies • -- Series</div>
               </div>
             </div>
 
-            <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-lg shrink-0 border border-blue-500/20">
+            <div onclick="setCollectionSyncFilter('only_gdrive')" class="cursor-pointer hover:border-blue-500/50 hover:bg-zinc-900/50 transition p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3 group" title="Bấm để lọc các mục trên Google Drive">
+              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-lg shrink-0 border border-blue-500/20 group-hover:scale-105 transition">
                 ☁️
               </div>
               <div class="min-w-0">
-                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Drive</div>
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider group-hover:text-blue-400 transition">Drive</div>
                 <div class="text-base font-bold text-blue-400 font-mono" id="col-kpi-drive">--</div>
                 <div class="text-[10px] text-zinc-400 truncate" id="col-kpi-drive-detail">-- Movies • -- Series</div>
               </div>
@@ -68,8 +68,15 @@
           <div class="bg-zinc-950/90 border border-zinc-800/80 p-3 rounded-2xl space-y-2.5 shadow-sm">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <!-- Search Box -->
-              <div class="flex-1 min-w-[220px] max-w-md relative">
+              <div class="flex-1 min-w-[200px] max-w-sm relative">
                 <input type="text" id="collection-search" oninput="applyCollectionFilters()" placeholder="🔍 Tìm theo tên phim, tiếng Việt, TVDB ID..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 shadow-inner">
+              </div>
+
+              <!-- Franchise Selector Dropdown -->
+              <div class="shrink-0 min-w-[160px] max-w-[220px]">
+                <select id="col-franchise-select" onchange="setCollectionFranchiseFilter(this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-2 text-xs text-amber-400 font-semibold focus:outline-none focus:border-amber-500 shadow-inner cursor-pointer truncate" title="Lọc theo Franchise">
+                  <option value="all">👑 Tất Cả Franchise</option>
+                </select>
               </div>
 
               <!-- Type Tabs -->

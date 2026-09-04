@@ -183,6 +183,7 @@ export function setTab(tab, updateUrl = true) {
     if (typeof window.fetchData === 'function') window.fetchData();
   } else if (tab === 'collection') {
     if (typeof window.loadMediaCollections === 'function') window.loadMediaCollections();
+    if (typeof window.loadStorageKpis === 'function') window.loadStorageKpis();
   } else if (tab === 'torbox') {
     if (typeof window.fetchTorrents === 'function') window.fetchTorrents();
   } else if (tab === 'subtitles') {

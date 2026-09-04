@@ -15,16 +15,30 @@ pub async fn handle_services_status(
 /// "Dung" khong lam thread thoat ma chi ha co `enabled` -- vong lap van song
 /// nhung bo qua viec, nho vay bat lai duoc ma khong phai khoi dong lai app.
 pub async fn handle_worker_control(
+    State(state): State<Arc<AppState>>,
     axum::extract::Path((name, action)): axum::extract::Path<(String, String)>,
 ) -> Json<Value> {
     use crate::services::worker_status as ws;
 
     let (ok, message) = match action.as_str() {
-        "stop" => (ws::set_enabled(&name, false), "đã dừng"),
-        "start" => (ws::set_enabled(&name, true), "đã bật"),
+        "stop" => {
+            let ok = ws::set_enabled(&name, false);
+            if name == "agy_daemon" {
+                state.agy.stop();
+            }
+            (ok, "đã dừng")
+        }
+        "start" => {
+            let ok = ws::set_enabled(&name, true);
+            ws::request_run(&name);
+            (ok, "đã bật")
+        }
         "restart" => {
             ws::set_enabled(&name, true);
             ws::request_run(&name);
+            if name == "agy_daemon" {
+                state.agy.stop();
+            }
             (true, "đã yêu cầu chạy lại ngay")
         }
         _ => (false, "hành động không hợp lệ (stop|start|restart)"),

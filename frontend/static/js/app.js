@@ -9,13 +9,13 @@ import { apiFetch } from './core/api.js';
 import { getInitialTab, setTab, initRouter } from './core/router.js';
 
 // Feature Modules
-import './modules/overview.js';
-import './modules/torbox.js';
-import './modules/collections.js';
-import './modules/subtitles.js';
-import './modules/settings.js';
-import './modules/agent.js';
-import './modules/services.js';
+import './modules/overview.js?v=2.6.1';
+import './modules/torbox.js?v=2.6.1';
+import './modules/collections.js?v=2.6.1';
+import './modules/subtitles.js?v=2.6.1';
+import './modules/settings.js?v=2.6.1';
+import './modules/agent.js?v=2.6.1';
+import './modules/services.js?v=2.6.1';
 
 // Setup Native Bridge
 document.addEventListener('DOMContentLoaded', () => {
