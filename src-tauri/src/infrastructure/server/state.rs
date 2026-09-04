@@ -2,7 +2,8 @@ use crate::domain::traits::{
     ICollectionService, IQuotaService, ISettingsService, ISubtitleService, ITunnelService,
 };
 use crate::services::{
-    aria2_service::Aria2Service, gdrive_nfo_indexer, jellyfin_indexer, library_indexer,
+    agy_daemon::AgyDaemon, aria2_service::Aria2Service, gdrive_nfo_indexer, jellyfin_indexer,
+    library_indexer,
     plex_indexer, sync_worker,
     watcher_service,
     agent_service::AgentService, artwork_service::ArtworkService,
@@ -34,6 +35,7 @@ pub struct AppState {
     pub tmdb: Arc<TmdbService>,
     pub agent: Arc<AgentService>,
     pub aria2: Arc<Aria2Service>,
+    pub agy: Arc<AgyDaemon>,
 }
 
 impl AppState {
@@ -76,6 +78,11 @@ impl AppState {
 
         // Hang doi tai: aria2 nhan ca magnet lan link https (TorBox cap hoac DDL),
         // nen worker khong can phan biet nguon.
+        // Mot tien trinh agy song thuong truc o che do stream-json, thay vi
+        // spawn lai cho moi lenh. Profile lay tu config (agy hoac agy2).
+        let agy = Arc::new(AgyDaemon::new(settings.clone()));
+        agy.start();
+
         let aria2 = Arc::new(Aria2Service::new(settings.clone()));
         sync_worker::start(aria2.clone(), job_store.clone());
 
@@ -126,6 +133,7 @@ impl AppState {
             tmdb,
             agent,
             aria2,
+            agy,
         }
     }
 }

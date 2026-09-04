@@ -1,4 +1,5 @@
 pub mod agent_service;
+pub mod agy_daemon;
 pub mod aria2_service;
 pub mod artwork_service;
 pub mod collection_service;

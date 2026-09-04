@@ -81,6 +81,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .route("/api/tunnel/stop", post(handle_tunnel_stop))
         // AI Agent Bridge
         .route("/api/agent/queue", get(handle_agent_queue))
+        .route("/api/agy/status", get(handle_agy_status))
+        .route("/api/agy/events", get(handle_agy_events))
+        .route("/api/agy/send", post(handle_agy_send))
         .route("/api/agent/token_usage", get(handle_token_usage))
         .route("/api/agent/live_logs", get(handle_agent_live_logs))
         .route("/api/agent/live_logs/clear", post(handle_agent_logs_clear))
