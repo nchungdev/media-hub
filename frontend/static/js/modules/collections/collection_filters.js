@@ -26,22 +26,45 @@ window.selectedCollectionSeason = {};
         if (data && data.collections) {
           window.allMediaCollections = data.collections;
           
-          // Update KPI Summary
           const sm = data.summary || {};
-          if (document.getElementById('col-kpi-total')) document.getElementById('col-kpi-total').innerText = sm.total_items || 0;
-          if (document.getElementById('col-kpi-types')) document.getElementById('col-kpi-types').innerText = `${sm.total_series || 0} Series • ${sm.total_movies || 0} Movies`;
-          if (document.getElementById('col-kpi-download')) document.getElementById('col-kpi-download').innerText = `${sm.total_series + sm.total_movies} Sẵn Sàng`;
-          if (document.getElementById('col-kpi-synced')) document.getElementById('col-kpi-synced').innerText = `${sm.synced_both || 0} / ${sm.total_items || 0}`;
-          if (document.getElementById('col-kpi-subtitles')) document.getElementById('col-kpi-subtitles').innerText = `${sm.sub_complete || 0} Phim (100%)`;
           if (document.getElementById('collection-kpi-badge')) document.getElementById('collection-kpi-badge').innerText = `${sm.total_items || 0} Bộ Phim`;
           if (document.getElementById('sidebar-collection-count')) document.getElementById('sidebar-collection-count').innerText = sm.total_items || 0;
 
+          loadStorageKpis();
           applyCollectionFilters();
         }
       } catch (e) {
         console.error("loadMediaCollections error:", e);
       } finally {
         if (btnIcon) btnIcon.classList.remove('animate-spin');
+      }
+    }
+
+    /**
+     * Ba thẻ kho lưu trữ: Draft (bản local chưa publish) / JellyPlex (Jellyfin
+     * và Plex gộp lại vì cùng mô tả thư viện NAS) / Drive.
+     * Số liệu lấy từ thư viện hợp nhất, đã khử trùng theo TMDb/TVDB id.
+     */
+    async function loadStorageKpis() {
+      const set = (id, txt) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = txt;
+      };
+      try {
+        const res = await fetch('/api/library/unified');
+        const d = await res.json();
+        const cd = d.counts_detail || {};
+        for (const key of ['draft', 'jellyplex', 'drive']) {
+          const c = cd[key] || { movies: 0, series: 0, total: 0 };
+          set(`col-kpi-${key}`, c.total || 0);
+          set(`col-kpi-${key}-detail`, `${c.movies || 0} Movies • ${c.series || 0} Series`);
+        }
+      } catch (e) {
+        console.error('loadStorageKpis error:', e);
+        for (const key of ['draft', 'jellyplex', 'drive']) {
+          set(`col-kpi-${key}`, '--');
+          set(`col-kpi-${key}-detail`, 'không tải được');
+        }
       }
     }
 
@@ -136,6 +159,7 @@ window.selectedCollectionSeason = {};
 
 export {
   loadMediaCollections,
+  loadStorageKpis,
   setCollectionTypeFilter,
   setCollectionSyncFilter,
   setCollectionSubFilter,

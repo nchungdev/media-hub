@@ -28,49 +28,38 @@
 
         <div class="p-4 sm:p-6 pb-28 lg:pb-10 space-y-4 w-full">
           
-          <!-- KPI Summary Cards (4 Pillars) -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <!-- Ba kho lưu trữ: Draft (chưa publish) / JellyPlex (NAS) / Drive -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
               <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-lg shrink-0 border border-amber-500/20">
-                🎬
+                📝
               </div>
               <div class="min-w-0">
-                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Bộ Sưu Tập</div>
-                <div class="text-base font-bold text-white font-mono" id="col-kpi-total">--</div>
-                <div class="text-[10px] text-zinc-400 truncate" id="col-kpi-types">-- Series • -- Movies</div>
-              </div>
-            </div>
-
-            <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-lg shrink-0 border border-blue-500/20">
-                📥
-              </div>
-              <div class="min-w-0">
-                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Tải Xuống (Video)</div>
-                <div class="text-base font-bold text-blue-400 font-mono" id="col-kpi-download">--</div>
-                <div class="text-[10px] text-zinc-400 truncate">Video cục bộ sẵn sàng</div>
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Draft</div>
+                <div class="text-base font-bold text-amber-400 font-mono" id="col-kpi-draft">--</div>
+                <div class="text-[10px] text-zinc-400 truncate" id="col-kpi-draft-detail">-- Movies • -- Series</div>
               </div>
             </div>
 
             <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
               <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-lg shrink-0 border border-emerald-500/20">
-                ☁️
+                🖥️
               </div>
               <div class="min-w-0">
-                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Đồng Bộ An Toàn</div>
-                <div class="text-base font-bold text-emerald-400 font-mono" id="col-kpi-synced">--</div>
-                <div class="text-[10px] text-emerald-400/80 truncate">🟢 Đã có cả NAS & Drive</div>
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">JellyPlex</div>
+                <div class="text-base font-bold text-emerald-400 font-mono" id="col-kpi-jellyplex">--</div>
+                <div class="text-[10px] text-zinc-400 truncate" id="col-kpi-jellyplex-detail">-- Movies • -- Series</div>
               </div>
             </div>
 
             <div class="p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold text-lg shrink-0 border border-purple-500/20">
-                🌐
+              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-lg shrink-0 border border-blue-500/20">
+                ☁️
               </div>
               <div class="min-w-0">
-                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Phụ Đề Vietsub</div>
-                <div class="text-base font-bold text-purple-400 font-mono" id="col-kpi-subtitles">--</div>
-                <div class="text-[10px] text-zinc-400 truncate">Hoàn tất 100% Vietsub</div>
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Drive</div>
+                <div class="text-base font-bold text-blue-400 font-mono" id="col-kpi-drive">--</div>
+                <div class="text-[10px] text-zinc-400 truncate" id="col-kpi-drive-detail">-- Movies • -- Series</div>
               </div>
             </div>
           </div>
@@ -103,10 +92,10 @@
               <div class="flex items-center gap-1.5 overflow-x-auto custom-scroll py-0.5">
                 <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider shrink-0">Kho Lưu Trữ:</span>
                 <button onclick="setCollectionSyncFilter('all')" id="col-sync-all" class="col-sync-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-white font-bold transition text-[11px] shrink-0">Tất Cả</button>
-                <button onclick="setCollectionSyncFilter('synced_both')" id="col-sync-both" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🟢 Cả NAS & Drive</button>
-                <button onclick="setCollectionSyncFilter('only_nas')" id="col-sync-nas" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🟡 Chỉ NAS</button>
+                <button onclick="setCollectionSyncFilter('synced_both')" id="col-sync-both" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🟢 Cả JellyPlex & Drive</button>
+                <button onclick="setCollectionSyncFilter('only_nas')" id="col-sync-nas" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🟡 Chỉ JellyPlex</button>
                 <button onclick="setCollectionSyncFilter('only_gdrive')" id="col-sync-drive" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🔵 Chỉ Drive</button>
-                <button onclick="setCollectionSyncFilter('unsynced')" id="col-sync-unsynced" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">⚪ Chưa Đồng Bộ</button>
+                <button onclick="setCollectionSyncFilter('unsynced')" id="col-sync-unsynced" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">📝 Chỉ Draft</button>
               </div>
 
               <!-- Subtitle Filter -->

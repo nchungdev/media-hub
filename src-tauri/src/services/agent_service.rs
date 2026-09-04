@@ -1,13 +1,13 @@
 use crate::domain::traits::ISettingsService;
 use serde_json::{json, Value};
 use std::path::PathBuf;
-use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct AgentService {
     settings: Arc<dyn ISettingsService>,
     live_logs: Mutex<Vec<Value>>,
+    agy: Arc<crate::services::agy_daemon::AgyDaemon>,
 }
 
 fn now_secs() -> f64 {
@@ -18,10 +18,14 @@ fn now_secs() -> f64 {
 }
 
 impl AgentService {
-    pub fn new(settings: Arc<dyn ISettingsService>) -> Self {
+    pub fn new(
+        settings: Arc<dyn ISettingsService>,
+        agy: Arc<crate::services::agy_daemon::AgyDaemon>,
+    ) -> Self {
         Self {
             settings,
             live_logs: Mutex::new(Vec::new()),
+            agy,
         }
     }
 
@@ -88,37 +92,64 @@ impl AgentService {
         new_item
     }
 
+    /// Day cac lenh dang cho vao daemon agy.
+    ///
+    /// Truoc day ham nay spawn `python3 agent_bridge.py --run-once` cho moi
+    /// lenh -- moi lan lai nap auth va quet workspace tu dau. Gio daemon da
+    /// song san nen chi can ghi mot dong NDJSON vao stdin cua no.
     pub fn trigger_worker(&self) {
-        let worker_script = "/Volumes/512GB/Studio Projects/media-hub/backend/core/agent_bridge.py";
-        crate::services::worker_status::begin("agent_bridge");
+        crate::services::worker_status::begin("agent_queue");
 
-        if !std::path::Path::new(worker_script).exists() {
-            crate::services::worker_status::err(
-                "agent_bridge",
-                "khong tim thay agent_bridge.py",
-            );
-            return;
+        let path = self.queue_file();
+        let txt = match std::fs::read_to_string(&path) {
+            Ok(t) => t,
+            Err(_) => {
+                crate::services::worker_status::ok("agent_queue", 0, "hang doi trong");
+                return;
+            }
+        };
+        let mut arr: Vec<Value> = serde_json::from_str(&txt).unwrap_or_default();
+
+        let mut sent = 0i64;
+        let mut failed: Option<String> = None;
+        for item in arr.iter_mut() {
+            if item.get("status").and_then(|s| s.as_str()) != Some("pending") {
+                continue;
+            }
+            let cmd = item
+                .get("command")
+                .and_then(|c| c.as_str())
+                .unwrap_or("")
+                .to_string();
+            if cmd.trim().is_empty() {
+                continue;
+            }
+            match self.agy.send(&cmd) {
+                Ok(_) => {
+                    item["status"] = json!("running");
+                    item["response"] = json!("Đã gửi vào daemon agy, đang xử lý…");
+                    sent += 1;
+                }
+                Err(e) => {
+                    failed = Some(e);
+                    break;
+                }
+            }
         }
 
-        match Command::new("python3")
-            .arg(worker_script)
-            .arg("--run-once")
-            .spawn()
-        {
-            Ok(child) => {
-                let pending = self.count_pending();
-                crate::services::worker_status::ok(
-                    "agent_bridge",
-                    pending,
-                    &format!("da khoi chay worker (pid {})", child.id()),
-                );
+        if sent > 0 {
+            if let Ok(txt) = serde_json::to_string_pretty(&arr) {
+                let _ = std::fs::write(&path, txt);
             }
-            Err(e) => {
-                crate::services::worker_status::err(
-                    "agent_bridge",
-                    &format!("khong chay duoc python3: {}", e),
-                );
-            }
+        }
+
+        match failed {
+            Some(e) => crate::services::worker_status::err("agent_queue", &e),
+            None => crate::services::worker_status::ok(
+                "agent_queue",
+                sent,
+                &format!("da day {} lenh vao daemon", sent),
+            ),
         }
     }
 
@@ -135,15 +166,6 @@ impl AgentService {
             .count() as i64
     }
 
-    /// Co tien trinh nao khop chuoi nay dang chay khong.
-    fn process_alive(pattern: &str) -> bool {
-        Command::new("pgrep")
-            .arg("-f")
-            .arg(pattern)
-            .output()
-            .map(|o| o.status.success() && !o.stdout.is_empty())
-            .unwrap_or(false)
-    }
 
     pub fn get_live_logs(&self) -> Value {
         let logs = self.live_logs.lock().unwrap();
@@ -186,40 +208,25 @@ impl AgentService {
         false
     }
 
-    /// Trang thai THAT cua agent bridge / agy CLI.
-    /// Truoc day ham nay tra ve cung mot cau "San sang" bat ke thuc te, nen
-    /// giao dien luon bao xanh ke ca khi khong co gi chay.
+    /// Trang thai that: bam vao daemon agy chu khong con tien trinh Python.
     pub fn ensure_service(&self) -> Value {
-        let worker_script = "/Volumes/512GB/Studio Projects/media-hub/backend/core/agent_bridge.py";
-        let script_ok = std::path::Path::new(worker_script).exists();
-        let bridge_running = Self::process_alive("agent_bridge.py");
-        let agy_running = Self::process_alive("bin/agy");
+        let st = self.agy.status();
+        let running = st.get("running").and_then(|v| v.as_bool()).unwrap_or(false);
+        let profile = st.get("profile").and_then(|v| v.as_str()).unwrap_or("");
         let pending = self.count_pending();
 
-        let message = if !script_ok {
-            "Thiếu agent_bridge.py — không xử lý được hàng đợi".to_string()
-        } else if bridge_running || agy_running {
-            format!("Đang xử lý ({} lệnh chờ)", pending)
+        let message = if !running {
+            "Daemon agy chưa sẵn sàng".to_string()
         } else if pending > 0 {
-            format!("Rảnh nhưng còn {} lệnh chờ", pending)
+            format!("Daemon '{}' đang chạy, {} lệnh chờ", profile, pending)
         } else {
-            "Sẵn sàng, hàng đợi trống".to_string()
+            format!("Daemon '{}' sẵn sàng, hàng đợi trống", profile)
         };
 
-        // Cap nhat luon vao bang worker de tab Dich Vu thay.
-        crate::services::worker_status::begin("agent_bridge");
-        if script_ok {
-            crate::services::worker_status::ok("agent_bridge", pending, &message);
-        } else {
-            crate::services::worker_status::err("agent_bridge", &message);
-        }
-
         json!({
-            "success": script_ok,
-            "running": bridge_running || agy_running,
-            "script_ok": script_ok,
-            "bridge_running": bridge_running,
-            "agy_running": agy_running,
+            "success": running,
+            "running": running,
+            "profile": profile,
             "pending": pending,
             "message": message
         })

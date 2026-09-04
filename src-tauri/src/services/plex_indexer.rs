@@ -105,11 +105,18 @@ fn sync_once(
     }
 
     let rows = parse_db(local_db)?;
-    let n = job_store
+    // Dem TITLE rieng biet chu khong dem dong: Plex cap ca tmdb + tvdb + imdb
+    // cho mot phim nen so dong gap ba so phim that.
+    let n_titles = rows
+        .iter()
+        .map(|r| r.6.clone())
+        .collect::<std::collections::HashSet<_>>()
+        .len();
+    job_store
         .replace_library_source("plex", &rows)
         .map_err(|e| e.to_string())?;
     let _ = std::fs::write(stamp_file, &stamp);
-    Ok(Some(n))
+    Ok(Some(n_titles))
 }
 
 fn parse_db(

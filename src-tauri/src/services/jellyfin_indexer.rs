@@ -115,12 +115,19 @@ fn sync_once(
         .unwrap_or(Path::new("."))
         .join("tmdb_collections.json");
     let rows = parse_db(local_db, &cfg.tmdb_api_key, &coll_cache)?;
-    let n = job_store
+    // Dem TITLE rieng biet chu khong dem dong: mot phim mang nhieu id
+    // (tmdb + tvdb + imdb) se sinh nhieu dong, bao so dong la gap doi su that.
+    let n_titles = rows
+        .iter()
+        .map(|r| r.6.clone())
+        .collect::<std::collections::HashSet<_>>()
+        .len();
+    job_store
         .replace_library_source("jellyfin", &rows)
         .map_err(|e| e.to_string())?;
 
     let _ = std::fs::write(stamp_file, &stamp);
-    Ok(Some(n))
+    Ok(Some(n_titles))
 }
 
 /// Rut tung phim/series kem Tmdb/Tvdb id, quy ve dung dinh dang media_key

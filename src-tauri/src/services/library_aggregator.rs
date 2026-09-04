@@ -40,7 +40,18 @@ pub struct UnifiedLibrary {
     pub franchises: Vec<UnifiedFranchise>,
     pub total_items: usize,
     pub counts_by_source: HashMap<String, usize>,
+    /// Tach Movies/Series cho tung kho: draft / jellyplex / drive.
+    /// JellyPlex la ten goi gop cho Jellyfin va Plex -- ca hai cung mo ta
+    /// thu vien NAS nen giao dien chi hien thanh mot kho duy nhat.
+    pub counts_detail: HashMap<String, SourceCount>,
     pub unclassified: usize,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SourceCount {
+    pub movies: usize,
+    pub series: usize,
+    pub total: usize,
 }
 
 /// Nhan cho nhung muc chi ton tai tren NAS/Drive: chung phang theo chuan Plex
@@ -170,8 +181,57 @@ pub fn aggregate_with_keymap(
 
     // Dem theo nguon: so TITLE rieng biet, khong phai so dong (mot title
     // mang nhieu id se sinh nhieu dong).
-    for (src, roots) in seen_title {
-        counts_by_source.insert(src, roots.len());
+    for (src, roots) in &seen_title {
+        counts_by_source.insert(src.clone(), roots.len());
+    }
+
+    // Tach Movies/Series cho tung kho. Jellyfin va Plex gop lam mot ("jellyplex")
+    // vi ca hai cung mo ta thu vien NAS -- tach ra chi lam nguoi dung roi.
+    let mut counts_detail: HashMap<String, SourceCount> = HashMap::new();
+    for (src, roots) in &seen_title {
+        let bucket = match src.as_str() {
+            "local" => "draft",
+            "jellyfin" | "plex" => "jellyplex",
+            "gdrive" => "drive",
+            _ => continue,
+        };
+        let entry = counts_detail.entry(bucket.to_string()).or_default();
+        for root in roots {
+            if let Some(it) = items.get(root) {
+                if it.media_type == "movie" {
+                    entry.movies += 1;
+                } else {
+                    entry.series += 1;
+                }
+            }
+        }
+    }
+    // Jellyfin + Plex cong don se dem trung title ma ca hai cung thay,
+    // nen dem lai theo tap hop hop nhat.
+    {
+        let mut nas_roots: HashSet<String> = HashSet::new();
+        for src in ["jellyfin", "plex"] {
+            if let Some(r) = seen_title.get(src) {
+                nas_roots.extend(r.iter().cloned());
+            }
+        }
+        let mut c = SourceCount::default();
+        for root in &nas_roots {
+            if let Some(it) = items.get(root) {
+                if it.media_type == "movie" {
+                    c.movies += 1;
+                } else {
+                    c.series += 1;
+                }
+            }
+        }
+        c.total = nas_roots.len();
+        counts_detail.insert("jellyplex".to_string(), c);
+    }
+    for (_k, v) in counts_detail.iter_mut() {
+        if v.total == 0 {
+            v.total = v.movies + v.series;
+        }
     }
 
     // Gom theo franchise
@@ -235,6 +295,7 @@ pub fn aggregate_with_keymap(
             franchises,
             total_items,
             counts_by_source,
+            counts_detail,
             unclassified,
         },
         key_map,

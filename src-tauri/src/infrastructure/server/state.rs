@@ -113,7 +113,7 @@ impl AppState {
             nas.clone(),
         ));
         let tmdb = Arc::new(TmdbService::new(settings.clone()));
-        let agent = Arc::new(AgentService::new(settings.clone()));
+        let agent = Arc::new(AgentService::new(settings.clone(), agy.clone()));
 
         Self {
             settings,
