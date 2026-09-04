@@ -81,6 +81,71 @@ async function loadMediaCollections(forceRefresh = false) {
   }
 }
 
+/**
+ * Quét lại tu dau: kich hoat 4 indexer nguon (local/jellyfin/plex/gdrive-nfo)
+ * roi den franchise_ai_classifier (agy suy luan franchise cho title khong co
+ * collection info tu TMDb/TVDB), cho tat ca chay xong roi doc lai db.
+ * Khac voi "Lam Moi" -- cai do chi doc lai bang da gom san, khong quet lai
+ * nguon hay goi AI.
+ */
+const SCAN_TARGET_WORKERS = [
+  'indexer/local',
+  'indexer/jellyfin',
+  'indexer/plex',
+  'indexer/gdrive-nfo',
+  'franchise_ai_classifier',
+];
+const SCAN_TIMEOUT_MS = 20 * 60 * 1000;
+
+function sleepMs(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function scanAndRebuildFranchises() {
+  const btn = document.getElementById('btn-scan-franchise');
+  const label = document.getElementById('btn-label-scan');
+  if (btn) btn.disabled = true;
+  if (label) label.innerText = 'Đang quét...';
+
+  try {
+    const requestedAt = Date.now() / 1000;
+    for (const name of SCAN_TARGET_WORKERS) {
+      await fetch(`/api/services/workers/${encodeURIComponent(name)}/start`, { method: 'POST' });
+    }
+
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < SCAN_TIMEOUT_MS) {
+      const res = await fetch('/api/services/workers');
+      const data = await res.json();
+      const workers = data.workers || [];
+
+      let doneCount = 0;
+      for (const name of SCAN_TARGET_WORKERS) {
+        const w = workers.find((x) => x.name === name);
+        if (w && w.state !== 'running' && w.last_finish >= requestedAt) doneCount++;
+      }
+      if (label) label.innerText = `Đang quét... (${doneCount}/${SCAN_TARGET_WORKERS.length})`;
+      if (doneCount === SCAN_TARGET_WORKERS.length) break;
+
+      await sleepMs(2000);
+    }
+
+    if (typeof window.showToast === 'function') {
+      window.showToast('Đã quét lại nguồn & dựng lại franchise xong', 'success');
+    }
+  } catch (e) {
+    console.error('scanAndRebuildFranchises error:', e);
+    if (typeof window.showToast === 'function') {
+      window.showToast('Lỗi khi quét lại thư viện', 'error');
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+    if (label) label.innerText = 'Scan';
+    await loadMediaCollections(true);
+  }
+}
+window.scanAndRebuildFranchises = scanAndRebuildFranchises;
+
 function populateFranchiseDropdown(collections) {
   const select = document.getElementById('col-franchise-select');
   if (!select) return;

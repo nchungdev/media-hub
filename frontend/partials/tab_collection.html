@@ -17,8 +17,8 @@
           </div>
 
           <div class="flex items-center gap-2 flex-wrap app-no-drag">
-            <button onclick="openCrossStorageModal()" class="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" title="Đối chiếu chi tiết 3 kho lưu trữ">
-              <span>⚖️</span> So Sánh Kho
+            <button id="btn-scan-franchise" onclick="scanAndRebuildFranchises()" class="px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm shrink-0" title="Quét lại 4 nguồn (Draft/Jellyfin/Plex/Drive) và dựng lại franchise bằng AI">
+              <span id="btn-icon-col-scan">🛠️</span> <span id="btn-label-scan">Scan</span>
             </button>
             <button onclick="loadMediaCollections(true)" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded-xl transition shadow-md shadow-amber-500/20 flex items-center gap-1.5 shrink-0">
               <span id="btn-icon-col-refresh">🔄</span> Làm Mới
