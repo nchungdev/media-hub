@@ -20,6 +20,11 @@ pub fn start(home: PathBuf, settings: Arc<dyn ISettingsService>, job_store: Arc<
             Ok(rows) => match job_store.replace_library_source("gdrive", &rows) {
                 Ok(n) => {
                     log::info!("[indexer/gdrive-nfo] {} muc", n);
+                    // Gom lai ngay sau khi nguon nay doi, thay vi hen gio.
+                    if let Err(e) = crate::services::library_aggregator::refresh_and_store(&job_store) {
+                        log::warn!("[aggregator] khong ghi duoc bang da gom: {}", e);
+                    }
+
                     crate::services::worker_status::ok(
                         "indexer/gdrive-nfo",
                         n as i64,
@@ -50,11 +55,38 @@ fn build_index(settings: &Arc<dyn ISettingsService>, cache: &Path) -> Result<Vec
     let rclone = which_rclone();
     let root = format!("{}:{}", cfg.gdrive_remote, cfg.gdrive_root.trim_matches('/'));
 
+    std::fs::create_dir_all(cache).map_err(|e| e.to_string())?;
+
+    // Do dau van tay truoc (ten + thoi diem sua cua cac .nfo) roi moi quyet dinh
+    // co keo ve khong. `lsf` nhe hon nhieu so voi `copy`, nen 15 phut mot lan
+    // gan nhu khong ton gi khi thu muc khong doi.
+    let stamp_file = cache.join(".nfo-stamp");
+    let listing = Command::new(&rclone)
+        .arg("lsf")
+        .arg("-R")
+        .arg("--include")
+        .arg("*.nfo")
+        .arg("--format")
+        .arg("pt")
+        .arg(&root)
+        .output()
+        .map_err(|e| e.to_string())?;
+    let stamp = if listing.status.success() {
+        String::from_utf8_lossy(&listing.stdout).to_string()
+    } else {
+        String::new()
+    };
+    let unchanged = !stamp.is_empty()
+        && std::fs::read_to_string(&stamp_file).unwrap_or_default() == stamp;
+
     // Goi rclone MOT lan de keo het .nfo ve. Truoc day moi thu muc mot lenh
     // `rclone cat`, do mat 38 giay/lan (nap config + xac thuc OAuth + di bo
     // tung cap) nen 28 thu muc thanh ~18 phut, lau hon ca chu ky lap.
-    std::fs::create_dir_all(cache).map_err(|e| e.to_string())?;
-    let out = Command::new(&rclone)
+    let out = if unchanged {
+        // Khong doi -> dung ban cache san co, khong goi copy.
+        Command::new("true").output().map_err(|e| e.to_string())?
+    } else {
+        Command::new(&rclone)
         .arg("copy")
         .arg(&root)
         .arg(cache)
@@ -67,12 +99,16 @@ fn build_index(settings: &Arc<dyn ISettingsService>, cache: &Path) -> Result<Vec
         .arg("--checkers")
         .arg("8")
         .output()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| e.to_string())?
+    };
     if !out.status.success() {
         return Err(format!(
             "rclone copy that bai: {}",
             String::from_utf8_lossy(&out.stderr).trim()
         ));
+    }
+    if !unchanged && !stamp.is_empty() {
+        let _ = std::fs::write(&stamp_file, &stamp);
     }
 
     // Doc ban cache local, khong cham toi Drive nua.

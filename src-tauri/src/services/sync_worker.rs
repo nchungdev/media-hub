@@ -27,24 +27,37 @@ pub fn start(aria2: Arc<Aria2Service>, job_store: Arc<JobStore>) {
         rt.block_on(async move {
             log::info!("[sync_worker] bat dau vong lap hang doi tai");
             loop {
-                let alive = aria2.is_alive().await;
-                let active = job_store.list_active().len() as i64;
-                if alive {
+                // Nhip thich ung: hang doi rong thi khong co gi de lam, khong can
+                // ping aria2 moi 3 giay. Chi doi nhanh khi that su co job dang chay.
+                let active = job_store.list_active();
+                let n_active = active.len() as i64;
+
+                if n_active == 0 {
                     crate::services::worker_status::begin("sync_worker");
+                    crate::services::worker_status::ok(
+                        "sync_worker",
+                        0,
+                        "hang doi rong, cho o nhip cham",
+                    );
+                    tokio::time::sleep(Duration::from_secs(30)).await;
+                    continue;
+                }
+
+                crate::services::worker_status::begin("sync_worker");
+                if aria2.is_alive().await {
                     tick(&aria2, &job_store).await;
                     crate::services::worker_status::ok(
                         "sync_worker",
-                        active,
-                        "aria2 RPC san sang",
+                        n_active,
+                        "dang xu ly hang doi",
                     );
                 } else {
-                    crate::services::worker_status::begin("sync_worker");
                     crate::services::worker_status::err(
                         "sync_worker",
                         "khong ket noi duoc aria2 RPC (aria2c --enable-rpc chua chay?)",
                     );
                 }
-                tokio::time::sleep(Duration::from_secs(3)).await;
+                tokio::time::sleep(Duration::from_secs(2)).await;
             }
         });
     });

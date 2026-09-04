@@ -56,7 +56,7 @@ impl AppState {
         let quota = Arc::new(QuotaService::new(app_state_dir.clone()));
         let artwork = Arc::new(ArtworkService::new(app_state_dir.clone()));
         let subtitles = Arc::new(SubtitleService::new());
-        let tunnel = Arc::new(TunnelService::new(app_state_dir.clone()));
+        let tunnel = Arc::new(TunnelService::new(app_state_dir.clone(), settings.clone()));
         let collections: Arc<dyn ICollectionService> = Arc::new(CollectionService::new(settings.clone()));
         let streaming = Arc::new(StreamingService::new(settings.clone()));
         let torbox = Arc::new(TorboxService::new(settings.clone()));

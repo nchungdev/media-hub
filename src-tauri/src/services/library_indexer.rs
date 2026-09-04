@@ -125,6 +125,9 @@ pub fn start(
                 Ok(n) => {
                     log::info!("[indexer/local] {} muc", n);
                     crate::services::worker_status::ok("indexer/local", n as i64, "quet _franchise/");
+                    if let Err(e) = crate::services::library_aggregator::refresh_and_store(&js) {
+                        log::warn!("[aggregator] khong ghi duoc bang da gom: {}", e);
+                    }
                 }
                 Err(e) => {
                     log::error!("[indexer/local] loi: {}", e);

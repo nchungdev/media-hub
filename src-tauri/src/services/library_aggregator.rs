@@ -74,6 +74,15 @@ impl Dsu {
 }
 
 pub fn aggregate(job_store: &Arc<JobStore>) -> UnifiedLibrary {
+    aggregate_with_keymap(job_store).0
+}
+
+/// Nhu aggregate() nhung tra ve them ban do media_key -> khoa goc.
+/// Ban do nay chi ton tai ben trong union-find; khong tra ra thi khong the
+/// tra cuu bang khoa thanh phan (vd imdb-tt123 cua mot phim co khoa goc tmdb-456).
+pub fn aggregate_with_keymap(
+    job_store: &Arc<JobStore>,
+) -> (UnifiedLibrary, HashMap<String, String>) {
     let rows = job_store.load_library_index();
 
     // Buoc 1: noi cac media_key thuoc cung mot title.
@@ -214,10 +223,48 @@ pub fn aggregate(job_store: &Arc<JobStore>) -> UnifiedLibrary {
         .map(|f| f.total)
         .unwrap_or(0);
 
-    UnifiedLibrary {
-        franchises,
-        total_items,
-        counts_by_source,
-        unclassified,
+    // Ban do day du: moi khoa da gap -> khoa goc cua nhom.
+    let mut key_map: HashMap<String, String> = HashMap::new();
+    for (_s, key, _f, _t, _fo, _mt, _p, _u) in &rows {
+        let root = dsu.find(key);
+        key_map.insert(key.clone(), root);
     }
+
+    (
+        UnifiedLibrary {
+            franchises,
+            total_items,
+            counts_by_source,
+            unclassified,
+        },
+        key_map,
+    )
+}
+
+/// Gom lai tu library_index roi ghi ket qua xuong DB.
+/// Goi sau moi lan mot indexer chay xong, thay vi hen gio -- de bang da gom
+/// luon phan anh dung trang thai moi nhat cua ca 3 nguon.
+pub fn refresh_and_store(job_store: &Arc<JobStore>) -> Result<usize, String> {
+    let (lib, key_map) = aggregate_with_keymap(job_store);
+
+    let mut items = Vec::new();
+    for fr in &lib.franchises {
+        for it in &fr.items {
+            items.push((
+                it.media_key.clone(),
+                it.title.clone(),
+                it.franchise.clone(),
+                it.media_type.clone(),
+                it.in_draft,
+                it.in_nas,
+                it.in_drive,
+                serde_json::to_string(&it.seen_by).unwrap_or_else(|_| "[]".into()),
+                serde_json::to_string(&it.folders).unwrap_or_else(|_| "{}".into()),
+                serde_json::to_string(&it.paths).unwrap_or_else(|_| "{}".into()),
+            ));
+        }
+    }
+
+    let pairs: Vec<(String, String)> = key_map.into_iter().collect();
+    job_store.save_unified(&items, &pairs)
 }

@@ -1,19 +1,21 @@
 use crate::domain::models::tunnel::TunnelStatus;
-use crate::domain::traits::ITunnelService;
+use crate::domain::traits::{ISettingsService, ITunnelService};
 use async_trait::async_trait;
 use regex::Regex;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
+use std::sync::Arc;
 
 pub struct TunnelService {
     state_file: PathBuf,
+    settings: Arc<dyn ISettingsService>,
 }
 
 impl TunnelService {
-    pub fn new(home: PathBuf) -> Self {
+    pub fn new(home: PathBuf, settings: Arc<dyn ISettingsService>) -> Self {
         let state_file = home.join("tunnel_state.json");
-        Self { state_file }
+        Self { state_file, settings }
     }
 
     fn find_cloudflared() -> Option<String> {
@@ -58,10 +60,25 @@ impl ITunnelService for TunnelService {
 
                     if let Some(p) = pid {
                         if Self::is_pid_alive(p) {
+                            // "Dang chay" phai suy tu tien trinh con song, khong
+                            // phai tu viec co URL hay khong. Named tunnel lay ten
+                            // mien tu cau hinh (co the de trong) nen dieu kien cu
+                            // bao sai la khong chay du tunnel dang ket noi tot.
+                            let url = url.or_else(|| {
+                                let h = self.settings.load().cloudflare_tunnel_hostname;
+                                let h = h.trim().to_string();
+                                if h.is_empty() {
+                                    None
+                                } else if h.starts_with("http") {
+                                    Some(h)
+                                } else {
+                                    Some(format!("https://{}", h))
+                                }
+                            });
                             return TunnelStatus {
                                 binary: bin.unwrap_or_default(),
                                 installed,
-                                running: url.is_some(),
+                                running: true,
                                 url,
                                 started_at,
                                 pid: Some(p),
@@ -104,8 +121,24 @@ impl ITunnelService for TunnelService {
             .map_err(|e| format!("Không mở được log file: {}", e))?;
         let log_err = log_out.try_clone().map_err(|e| format!("Không clone được log file handle: {}", e))?;
 
+        // Co token -> named tunnel (ten mien co dinh, khong doi moi lan khoi dong).
+        // Khong co -> tunnel tam trycloudflare nhu truoc.
+        let cfg = self.settings.load();
+        let token = cfg.cloudflare_tunnel_token.trim().to_string();
+        let named = !token.is_empty();
+
+        let args: Vec<String> = if named {
+            vec!["tunnel".into(), "run".into(), "--token".into(), token]
+        } else {
+            vec![
+                "tunnel".into(),
+                "--url".into(),
+                format!("http://127.0.0.1:{}", port),
+            ]
+        };
+
         let child = Command::new(&bin)
-            .args(["tunnel", "--url", &format!("http://127.0.0.1:{}", port)])
+            .args(&args)
             .stdin(std::process::Stdio::null())
             .stdout(std::process::Stdio::from(log_out))
             .stderr(std::process::Stdio::from(log_err))
@@ -115,9 +148,22 @@ impl ITunnelService for TunnelService {
         let pid = child.id();
         std::thread::sleep(std::time::Duration::from_millis(2000));
 
-        let mut discovered_url = None;
+        // Named tunnel khong in URL ra log -- dinh tuyen nam ben dashboard
+        // Cloudflare, nen lay ten mien tu cau hinh.
+        let mut discovered_url = if named {
+            let h = cfg.cloudflare_tunnel_hostname.trim();
+            if h.is_empty() {
+                None
+            } else if h.starts_with("http") {
+                Some(h.to_string())
+            } else {
+                Some(format!("https://{}", h))
+            }
+        } else {
+            None
+        };
 
-        if log_file.exists() {
+        if !named && log_file.exists() {
             if let Ok(content) = fs::read_to_string(&log_file) {
                 let re = Regex::new(r"https://([a-zA-Z0-9-]+)\.trycloudflare\.com").unwrap();
                 for cap in re.captures_iter(&content) {

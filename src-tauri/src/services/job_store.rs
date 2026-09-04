@@ -59,6 +59,30 @@ CREATE TABLE IF NOT EXISTS library_index (
 );
 CREATE INDEX IF NOT EXISTS idx_lib_key ON library_index(media_key);
 
+-- Ket qua da gom: moi dong la MOT title sau khi hop nhat cac ID trung nhau.
+CREATE TABLE IF NOT EXISTS library_unified (
+    root_key    TEXT    NOT NULL PRIMARY KEY,
+    title       TEXT    NOT NULL DEFAULT '',
+    franchise   TEXT    NOT NULL DEFAULT '',
+    media_type  TEXT    NOT NULL DEFAULT 'series',
+    in_draft    INTEGER NOT NULL DEFAULT 0,
+    in_nas      INTEGER NOT NULL DEFAULT 0,
+    in_drive    INTEGER NOT NULL DEFAULT 0,
+    seen_by     TEXT    NOT NULL DEFAULT '[]',
+    folders     TEXT    NOT NULL DEFAULT '{}',
+    paths       TEXT    NOT NULL DEFAULT '{}',
+    updated_at  REAL    NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_unified_franchise ON library_unified(franchise);
+
+-- Tra bang BAT KY id nao (tmdb/tvdb/imdb) cung ra dung title, nho bang nay
+-- anh xa moi khoa thanh phan ve khoa goc cua nhom sau union-find.
+CREATE TABLE IF NOT EXISTS library_key_map (
+    media_key   TEXT    NOT NULL PRIMARY KEY,
+    root_key    TEXT    NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_keymap_root ON library_key_map(root_key);
+
 CREATE TABLE IF NOT EXISTS collections_cache (
     id          INTEGER PRIMARY KEY CHECK (id = 1),
     payload     TEXT    NOT NULL,
@@ -318,6 +342,83 @@ impl JobStore {
             Ok(it) => it.filter_map(|r| r.ok()).collect(),
             Err(_) => Vec::new(),
         }
+    }
+
+    /// Ghi de toan bo ket qua da gom trong 1 transaction.
+    pub fn save_unified(
+        &self,
+        items: &[(String, String, String, String, bool, bool, bool, String, String, String)],
+        key_map: &[(String, String)],
+    ) -> Result<usize, String> {
+        let mut conn = self.conn.lock().unwrap();
+        let tx = conn.transaction().map_err(|e| e.to_string())?;
+        tx.execute("DELETE FROM library_unified", []).map_err(|e| e.to_string())?;
+        tx.execute("DELETE FROM library_key_map", []).map_err(|e| e.to_string())?;
+
+        let now = now_secs();
+        let mut n = 0usize;
+        for (root, title, franchise, mtype, draft, nas, drive, seen, folders, paths) in items {
+            let r = tx.execute(
+                "INSERT OR REPLACE INTO library_unified
+                 (root_key, title, franchise, media_type, in_draft, in_nas, in_drive,
+                  seen_by, folders, paths, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                params![
+                    root, title, franchise, mtype,
+                    *draft as i64, *nas as i64, *drive as i64,
+                    seen, folders, paths, now
+                ],
+            );
+            if r.is_ok() {
+                n += 1;
+            }
+        }
+        for (key, root) in key_map {
+            let _ = tx.execute(
+                "INSERT OR REPLACE INTO library_key_map (media_key, root_key) VALUES (?, ?)",
+                params![key, root],
+            );
+        }
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(n)
+    }
+
+    /// Tra mot media id bat ky -> title da gom.
+    /// Tra ve: (root_key, title, franchise, media_type, draft, nas, drive, seen_by, folders, paths)
+    pub fn lookup_media(
+        &self,
+        media_key: &str,
+    ) -> Option<(String, String, String, String, bool, bool, bool, String, String, String)> {
+        let conn = self.conn.lock().unwrap();
+        conn.query_row(
+            "SELECT u.root_key, u.title, u.franchise, u.media_type,
+                    u.in_draft, u.in_nas, u.in_drive, u.seen_by, u.folders, u.paths
+               FROM library_key_map m
+               JOIN library_unified u ON u.root_key = m.root_key
+              WHERE m.media_key = ?",
+            params![media_key],
+            |r| {
+                Ok((
+                    r.get::<_, String>(0)?,
+                    r.get::<_, String>(1)?,
+                    r.get::<_, String>(2)?,
+                    r.get::<_, String>(3)?,
+                    r.get::<_, i64>(4)? == 1,
+                    r.get::<_, i64>(5)? == 1,
+                    r.get::<_, i64>(6)? == 1,
+                    r.get::<_, String>(7)?,
+                    r.get::<_, String>(8)?,
+                    r.get::<_, String>(9)?,
+                ))
+            },
+        )
+        .ok()
+    }
+
+    pub fn unified_count(&self) -> i64 {
+        let conn = self.conn.lock().unwrap();
+        conn.query_row("SELECT COUNT(*) FROM library_unified", [], |r| r.get(0))
+            .unwrap_or(0)
     }
 
     pub fn save_collections_snapshot(&self, payload: &str) {

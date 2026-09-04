@@ -46,6 +46,8 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .route("/api/library/cross_check", get(handle_cross_check).post(handle_cross_check))
         .route("/api/library/stats", get(handle_library_stats))
         .route("/api/library/unified", get(handle_unified_library))
+        .route("/api/library/lookup", post(handle_library_lookup_batch))
+        .route("/api/library/lookup/:media_id", get(handle_library_lookup))
         .route("/api/library/build/status", get(handle_library_build_status))
         .route("/api/library/build", post(handle_library_build))
         .route("/api/library/refresh", post(handle_library_refresh))
@@ -104,6 +106,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         "/tokens", "/token-usage", "/analytics", "/console", "/logs", "/terminal",
         "/settings", "/config", "/agent", "/chat",
         "/services", "/service", "/workers", "/daemon",
+        // Thieu may route nay khien mo truc tiep hoac F5 tren tab do bi 404,
+        // du dieu huong trong app van chay (setTab day URL len roi server tu choi).
+        "/collection", "/collections", "/downloads", "/cli",
     ];
     let mut spa_router = Router::new();
     for route in spa_routes {

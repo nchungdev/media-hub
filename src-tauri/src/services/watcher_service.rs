@@ -69,11 +69,16 @@ fn reindex_local(home: &PathBuf, job_store: &Arc<JobStore>) {
     crate::services::worker_status::begin("indexer/local");
     let rows = library_indexer::index_local(home);
     match job_store.replace_library_source("local", &rows) {
-        Ok(n) => crate::services::worker_status::ok(
-            "indexer/local",
-            n as i64,
-            "chay theo su kien tu watcher",
-        ),
+        Ok(n) => {
+            crate::services::worker_status::ok(
+                "indexer/local",
+                n as i64,
+                "chay theo su kien tu watcher",
+            );
+            if let Err(e) = crate::services::library_aggregator::refresh_and_store(job_store) {
+                log::warn!("[aggregator] khong ghi duoc bang da gom: {}", e);
+            }
+        }
         Err(e) => crate::services::worker_status::err("indexer/local", &e),
     }
 }

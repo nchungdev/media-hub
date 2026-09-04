@@ -29,6 +29,11 @@ pub fn start(home: PathBuf, settings: Arc<dyn ISettingsService>, job_store: Arc<
             match sync_once(&settings, &local_db, &stamp_file, &job_store) {
                 Ok(Some(n)) => {
                     log::info!("[indexer/jellyfin] cap nhat: {} muc", n);
+                    // Gom lai ngay sau khi nguon nay doi, thay vi hen gio.
+                    if let Err(e) = crate::services::library_aggregator::refresh_and_store(&job_store) {
+                        log::warn!("[aggregator] khong ghi duoc bang da gom: {}", e);
+                    }
+
                     crate::services::worker_status::ok(
                         "indexer/jellyfin",
                         n as i64,

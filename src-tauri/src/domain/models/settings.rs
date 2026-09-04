@@ -30,6 +30,16 @@ pub struct AppSettings {
     pub aria2_rpc_port: u16,
     #[serde(default)]
     pub aria2_rpc_secret: String,
+
+    /// Token cua Cloudflare Named Tunnel. Co token thi chay
+    /// `cloudflared tunnel run --token ...` (ten mien co dinh);
+    /// de trong thi quay ve tunnel tam trycloudflare.com.
+    #[serde(default)]
+    pub cloudflare_tunnel_token: String,
+    /// Ten mien cong khai cua named tunnel. Named tunnel KHONG in URL ra log
+    /// (dinh tuyen cau hinh ben dashboard Cloudflare) nen phai khai bao o day.
+    #[serde(default)]
+    pub cloudflare_tunnel_hostname: String,
     #[serde(default)]
     pub nas_host: String,
     #[serde(default = "default_nas_user")]
@@ -125,6 +135,8 @@ impl Default for AppSettings {
             aria2_rpc_host: default_aria2_host(),
             aria2_rpc_port: default_aria2_port(),
             aria2_rpc_secret: String::new(),
+            cloudflare_tunnel_token: String::new(),
+            cloudflare_tunnel_hostname: String::new(),
             nas_host: String::new(),
             nas_user: default_nas_user(),
             nas_port: default_nas_port(),
