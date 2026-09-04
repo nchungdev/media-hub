@@ -235,10 +235,17 @@ pub fn start(
         let home = home.clone();
         let js = job_store.clone();
         std::thread::spawn(move || loop {
+            crate::services::worker_status::begin("indexer/local");
             let rows = index_local(&home);
             match js.replace_library_source("local", &rows) {
-                Ok(n) => log::info!("[indexer/local] {} muc", n),
-                Err(e) => log::error!("[indexer/local] loi: {}", e),
+                Ok(n) => {
+                    log::info!("[indexer/local] {} muc", n);
+                    crate::services::worker_status::ok("indexer/local", n as i64, "quet _franchise/");
+                }
+                Err(e) => {
+                    log::error!("[indexer/local] loi: {}", e);
+                    crate::services::worker_status::err("indexer/local", &e);
+                }
             }
             std::thread::sleep(Duration::from_secs(60));
         });
@@ -249,26 +256,22 @@ pub fn start(
         let st = settings.clone();
         let js = job_store.clone();
         std::thread::spawn(move || loop {
+            crate::services::worker_status::begin("indexer/nas");
             let rows = index_nas(&st);
             match js.replace_library_source("nas", &rows) {
-                Ok(n) => log::info!("[indexer/nas] {} muc", n),
-                Err(e) => log::error!("[indexer/nas] loi: {}", e),
+                Ok(n) => {
+                    log::info!("[indexer/nas] {} muc", n);
+                    crate::services::worker_status::ok("indexer/nas", n as i64, "ls qua SSH");
+                }
+                Err(e) => {
+                    log::error!("[indexer/nas] loi: {}", e);
+                    crate::services::worker_status::err("indexer/nas", &e);
+                }
             }
             std::thread::sleep(Duration::from_secs(600));
         });
     }
 
-    // Google Drive: goi rclone, ton quota nen thua nhat.
-    {
-        let st = settings.clone();
-        let js = job_store.clone();
-        std::thread::spawn(move || loop {
-            let rows = index_gdrive(&st);
-            match js.replace_library_source("gdrive", &rows) {
-                Ok(n) => log::info!("[indexer/gdrive] {} muc", n),
-                Err(e) => log::error!("[indexer/gdrive] loi: {}", e),
-            }
-            std::thread::sleep(Duration::from_secs(900));
-        });
-    }
+    // Google Drive do gdrive_nfo_indexer dam nhiem: no doc <uniqueid> trong
+    // file .nfo that thay vi doan id tu ten thu muc, chinh xac hon.
 }

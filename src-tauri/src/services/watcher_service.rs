@@ -57,10 +57,16 @@ pub fn start(franchise_root: PathBuf, collections: Arc<dyn ICollectionService>, 
 }
 
 fn refresh_and_persist(collections: &Arc<dyn ICollectionService>, job_store: &Arc<JobStore>) {
+    crate::services::worker_status::begin("watcher/_franchise");
     let resp = collections.get_collections(true);
     match serde_json::to_string(&resp) {
         Ok(payload) => {
             job_store.save_collections_snapshot(&payload);
+            crate::services::worker_status::ok(
+                "watcher/_franchise",
+                resp.summary.total_items as i64,
+                "theo doi thay doi file",
+            );
             log::info!(
                 "[watcher] da luu collections_cache ({} muc)",
                 resp.summary.total_items

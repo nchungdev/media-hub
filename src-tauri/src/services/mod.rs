@@ -3,6 +3,7 @@ pub mod aria2_service;
 pub mod artwork_service;
 pub mod collection_service;
 pub mod dashboard_service;
+pub mod gdrive_nfo_indexer;
 pub mod gdrive_service;
 pub mod health_service;
 pub mod jellyfin_indexer;
@@ -20,4 +21,5 @@ pub mod tmdb_service;
 pub mod torbox_service;
 pub mod tunnel_service;
 pub mod watcher_service;
+pub mod worker_status;
 

@@ -2,7 +2,8 @@ use crate::domain::traits::{
     ICollectionService, IQuotaService, ISettingsService, ISubtitleService, ITunnelService,
 };
 use crate::services::{
-    aria2_service::Aria2Service, jellyfin_indexer, library_indexer, sync_worker,
+    aria2_service::Aria2Service, gdrive_nfo_indexer, jellyfin_indexer, library_indexer,
+    sync_worker,
     watcher_service,
     agent_service::AgentService, artwork_service::ArtworkService,
     collection_service::CollectionService, dashboard_service::DashboardService,
@@ -82,6 +83,10 @@ impl AppState {
         // thu vien va luu Tmdb/Tvdb id cho tung muc, nen day la bang tra cuu
         // "NAS da co phim nay chua" dang tin hon doc ten thu muc.
         jellyfin_indexer::start(home.clone(), settings.clone(), job_store.clone());
+
+        // Google Drive khong co Plex/Jellyfin quet san nen phai tu doc .nfo
+        // trong tung thu muc de lay <uniqueid> that.
+        gdrive_nfo_indexer::start(home.clone(), settings.clone(), job_store.clone());
         let dashboard = Arc::new(DashboardService::new(settings.clone(), job_store.clone()));
         let gdrive = Arc::new(GDriveService::new(settings.clone()));
         let nas = Arc::new(NasService::new(settings.clone()));

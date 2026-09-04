@@ -44,8 +44,27 @@ pub const UNCLASSIFIED: &str = "Chưa phân loại";
 pub fn aggregate(job_store: &Arc<JobStore>) -> UnifiedLibrary {
     let rows = job_store.load_library_index();
 
-    // Ban do media_key -> franchise, chi local moi biet.
+    // Ban do media_key -> franchise.
+    // Uu tien local (thu muc do chinh nguoi dung sap xep), sau do moi den
+    // BoxSet cua Jellyfin -- nho vay nhung title chi co tren NAS van co
+    // franchise thay vi roi hết vao nhom "Chua phan loai".
     let mut franchise_of: HashMap<String, String> = HashMap::new();
+    for (source, key, franchise, _t, _f, _mt, _p) in &rows {
+        if franchise.is_empty() {
+            continue;
+        }
+        match source.as_str() {
+            "local" => {
+                franchise_of.insert(key.clone(), franchise.clone());
+            }
+            _ => {
+                franchise_of
+                    .entry(key.clone())
+                    .or_insert_with(|| franchise.clone());
+            }
+        }
+    }
+    // Chay lai vong nua de local luon thang neu co ca hai.
     for (source, key, franchise, _t, _f, _mt, _p) in &rows {
         if source == "local" && !franchise.is_empty() {
             franchise_of.insert(key.clone(), franchise.clone());

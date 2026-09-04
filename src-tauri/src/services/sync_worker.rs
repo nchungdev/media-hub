@@ -27,7 +27,23 @@ pub fn start(aria2: Arc<Aria2Service>, job_store: Arc<JobStore>) {
         rt.block_on(async move {
             log::info!("[sync_worker] bat dau vong lap hang doi tai");
             loop {
-                tick(&aria2, &job_store).await;
+                let alive = aria2.is_alive().await;
+                let active = job_store.list_active().len() as i64;
+                if alive {
+                    crate::services::worker_status::begin("sync_worker");
+                    tick(&aria2, &job_store).await;
+                    crate::services::worker_status::ok(
+                        "sync_worker",
+                        active,
+                        "aria2 RPC san sang",
+                    );
+                } else {
+                    crate::services::worker_status::begin("sync_worker");
+                    crate::services::worker_status::err(
+                        "sync_worker",
+                        "khong ket noi duoc aria2 RPC (aria2c --enable-rpc chua chay?)",
+                    );
+                }
                 tokio::time::sleep(Duration::from_secs(3)).await;
             }
         });

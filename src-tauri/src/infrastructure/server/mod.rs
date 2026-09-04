@@ -10,7 +10,7 @@ use axum::{
 };
 use routes::{
     agent_routes::*, artwork_routes::handle_poster, collection_routes::handle_get_collections,
-    dashboard_routes::handle_dashboard_overview, gdrive_routes::*, health_routes::handle_services_status,
+    dashboard_routes::handle_dashboard_overview, gdrive_routes::*, health_routes::{handle_services_status, handle_worker_status},
     job_routes::*, library_routes::*, nas_routes::handle_nas_scan,
     quota_routes::{handle_get_quota, handle_increment_quota},
     settings_routes::{handle_get_settings, handle_save_settings},
@@ -31,6 +31,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         // Dashboard & Health
         .route("/api/dashboard/overview", get(handle_dashboard_overview))
         .route("/api/services/status", get(handle_services_status))
+        .route("/api/services/workers", get(handle_worker_status))
         // Jobs & Pipeline
         .route("/api/download/jobs", get(handle_list_jobs))
         .route("/api/pipelines", get(handle_pipelines))
