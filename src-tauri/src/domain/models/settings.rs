@@ -30,6 +30,16 @@ pub struct AppSettings {
     pub aria2_rpc_port: u16,
     #[serde(default)]
     pub aria2_rpc_secret: String,
+
+    /// Token cua Cloudflare Named Tunnel. Co token thi chay
+    /// `cloudflared tunnel run --token ...` (ten mien co dinh);
+    /// de trong thi quay ve tunnel tam trycloudflare.com.
+    #[serde(default)]
+    pub cloudflare_tunnel_token: String,
+    /// Ten mien cong khai cua named tunnel. Named tunnel KHONG in URL ra log
+    /// (dinh tuyen cau hinh ben dashboard Cloudflare) nen phai khai bao o day.
+    #[serde(default)]
+    pub cloudflare_tunnel_hostname: String,
     #[serde(default)]
     pub nas_host: String,
     #[serde(default = "default_nas_user")]
@@ -50,6 +60,10 @@ pub struct AppSettings {
     pub sync_transfers: u32,
     #[serde(default = "default_auto_purge")]
     pub auto_purge: bool,
+    /// Which Antigravity CLI instance dispatches agent commands: "auto" | "agy2" | "agy".
+    /// agent_bridge re-reads this on every dispatch, so a change takes effect on the next command.
+    #[serde(default = "default_agy_profile")]
+    pub agy_cli_profile: String,
 }
 
 fn default_provider() -> String {
@@ -100,6 +114,9 @@ fn default_sync_transfers() -> u32 {
 fn default_auto_purge() -> bool {
     true
 }
+fn default_agy_profile() -> String {
+    "auto".to_string()
+}
 
 impl Default for AppSettings {
     fn default() -> Self {
@@ -118,6 +135,8 @@ impl Default for AppSettings {
             aria2_rpc_host: default_aria2_host(),
             aria2_rpc_port: default_aria2_port(),
             aria2_rpc_secret: String::new(),
+            cloudflare_tunnel_token: String::new(),
+            cloudflare_tunnel_hostname: String::new(),
             nas_host: String::new(),
             nas_user: default_nas_user(),
             nas_port: default_nas_port(),
@@ -128,6 +147,7 @@ impl Default for AppSettings {
             sync_targets: default_sync_targets(),
             sync_transfers: default_sync_transfers(),
             auto_purge: default_auto_purge(),
+            agy_cli_profile: default_agy_profile(),
         }
     }
 }

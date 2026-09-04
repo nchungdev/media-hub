@@ -1,0 +1,85 @@
+  <!-- Full Screen Dedicated Video Player View (No popup, edge-to-edge web app layout) -->
+  <div id="modal-video-player" class="fixed inset-0 z-50 bg-[#09090b] hidden flex flex-col overflow-y-auto custom-scroll w-full h-full safe-top safe-bottom">
+    <div id="player-modal-box" class="w-full flex-1 flex flex-col">
+      
+      <!-- Top Navigation Bar -->
+      <div class="sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 min-h-14 flex items-center justify-between gap-3 shadow-md">
+        <div class="flex items-center gap-3 min-w-0 pr-2">
+          <button onclick="closeVideoPlayer()" class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-bold text-amber-400 hover:text-amber-300 transition flex items-center gap-1.5 shadow-sm shrink-0">
+            <span>←</span> <span>Quay Lại</span>
+          </button>
+          <div class="h-5 w-px bg-zinc-800 hidden sm:block"></div>
+          <div class="min-w-0">
+            <h3 class="font-bold text-xs sm:text-sm text-white truncate flex items-center gap-1.5" id="player-title">
+              <span class="text-amber-400">▶️</span> Đang phát video
+            </h3>
+            <p class="text-[10px] sm:text-[11px] text-zinc-400 truncate mt-0.5" id="player-subtitle">Direct Cloud Stream</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="player-mini-btn" onclick="toggleMiniPlayer()" class="w-8 h-8 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center text-xs font-bold transition border border-zinc-800" title="Thu nhỏ góc màn hình">
+            🗕
+          </button>
+          <button onclick="closeVideoPlayer()" class="w-8 h-8 rounded-xl bg-zinc-900 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 flex items-center justify-center text-sm font-bold transition border border-zinc-800" title="Đóng">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Edge-to-edge / Full Width Video Stage -->
+      <div id="player-video-wrapper" class="relative bg-black w-full flex items-center justify-center border-b border-zinc-800 shadow-2xl shrink-0 aspect-video max-h-[50vh] sm:max-h-[68vh]">
+        <div id="artplayer-container" class="w-full h-full"></div>
+      </div>
+
+      <!-- Video Control & Action Section Below Player -->
+      <div id="player-controls-bottom" class="p-4 sm:p-6 space-y-5 w-full pb-32">
+        <!-- Quick App Launchers & Download -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="openInVLC()" class="px-3.5 py-2 bg-orange-500/10 hover:bg-orange-600 text-orange-400 hover:text-white border border-orange-500/30 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+            <span>🟠</span> Mở trong VLC
+          </button>
+          <button onclick="openInIINA()" class="px-3.5 py-2 bg-sky-500/10 hover:bg-sky-600 text-sky-400 hover:text-white border border-sky-500/30 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+            <span>🔵</span> Mở trong IINA
+          </button>
+          <button onclick="downloadM3U()" class="px-3.5 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white rounded-xl text-xs font-medium transition flex items-center gap-1.5" title="Tải file M3U mở được cả VLC/IINA/Infuse">
+            <span>📺</span> File .M3U
+          </button>
+          <a id="player-download-btn" href="#" download="" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-md shadow-blue-600/20">
+            <span>⬇️</span> Tải File Gốc
+          </a>
+          <button id="player-copy-stream-btn" onclick="copyActiveStreamUrl()" class="px-3.5 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white rounded-xl text-xs font-medium transition flex items-center gap-1.5">
+            <span>📋</span> Copy Link
+          </button>
+        </div>
+        
+        <!-- Buffer & Subtitles Controllers Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80">
+          <!-- Buffer Size Controller -->
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
+              <span>⚡</span> Buffer Size:
+            </div>
+            <select id="player-buffer-select" onchange="changePlayerBuffer(this.value)" class="bg-zinc-950 border border-zinc-800 text-amber-400 text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-amber-500">
+              <option value="16">16 MB (~5s)</option>
+              <option value="32" selected>32 MB (~15s Chuẩn)</option>
+              <option value="64">64 MB (~30s Mượt)</option>
+              <option value="128">128 MB (~60s Max)</option>
+              <option value="256">256 MB (Cực Đại)</option>
+            </select>
+          </div>
+
+          <!-- Subtitles Controller -->
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
+              <span>💬</span> Phụ Đề (Subs):
+            </div>
+            <select id="player-sub-select" onchange="changeSubtitle(this.value)" class="bg-zinc-950 border border-zinc-800 text-emerald-400 text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500 max-w-[200px] truncate">
+              <option value="none">⚪ Tắt Phụ Đề</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+

@@ -2,6 +2,11 @@ use crate::domain::traits::{
     ICollectionService, IQuotaService, ISettingsService, ISubtitleService, ITunnelService,
 };
 use crate::services::{
+    agy_daemon::AgyDaemon, aria2_service::Aria2Service, franchise_ai_classifier,
+    gdrive_nfo_indexer, jellyfin_indexer,
+    library_indexer,
+    plex_indexer, sync_worker,
+    watcher_service,
     agent_service::AgentService, artwork_service::ArtworkService,
     collection_service::CollectionService, dashboard_service::DashboardService,
     gdrive_service::GDriveService, health_service::HealthService, job_store::JobStore,
@@ -10,6 +15,7 @@ use crate::services::{
     subtitle_service::SubtitleService, tmdb_service::TmdbService, torbox_service::TorboxService,
     tunnel_service::TunnelService,
 };
+use std::path::PathBuf;
 use std::sync::Arc;
 
 pub struct AppState {
@@ -29,20 +35,82 @@ pub struct AppState {
     pub library: Arc<LibraryService>,
     pub tmdb: Arc<TmdbService>,
     pub agent: Arc<AgentService>,
+    pub aria2: Arc<Aria2Service>,
+    pub agy: Arc<AgyDaemon>,
 }
 
 impl AppState {
     pub fn new() -> Self {
         let settings = Arc::new(SettingsService::new());
-        let quota = Arc::new(QuotaService::new());
-        let artwork = Arc::new(ArtworkService::new());
+
+        // Mot noi duy nhat cho toan bo trang thai: media_hub_home tu config.json,
+        // hoac $HOME/.media-hub neu chua cau hinh.
+        let cfg = settings.load();
+        let home: PathBuf = if !cfg.media_hub_home.is_empty() {
+            PathBuf::from(cfg.media_hub_home.clone())
+        } else {
+            dirs::home_dir()
+                .unwrap_or_else(|| PathBuf::from("."))
+                .join(".media-hub")
+        };
+        let app_state_dir = home.join("_app");
+        let _ = std::fs::create_dir_all(&app_state_dir);
+
+        let quota = Arc::new(QuotaService::new(app_state_dir.clone()));
+        let artwork = Arc::new(ArtworkService::new(app_state_dir.clone()));
         let subtitles = Arc::new(SubtitleService::new());
-        let tunnel = Arc::new(TunnelService::new());
-        let collections = Arc::new(CollectionService::new(settings.clone()));
+        let tunnel = Arc::new(TunnelService::new(app_state_dir.clone(), settings.clone()));
+
+        let job_store = Arc::new(
+            JobStore::new(Some(app_state_dir.join("media_hub.db"))).expect("Failed to init JobStore"),
+        );
+        let collections: Arc<dyn ICollectionService> =
+            Arc::new(CollectionService::new(settings.clone(), Some(job_store.clone())));
         let streaming = Arc::new(StreamingService::new(settings.clone()));
         let torbox = Arc::new(TorboxService::new(settings.clone()));
 
-        let job_store = Arc::new(JobStore::new(None).expect("Failed to init JobStore"));
+        // Watcher nen: theo doi .media-hub/_franchise, tu dong lam moi + luu
+        // collections_cache vao DB moi khi co thay doi file (them/xoa/doi ten).
+        watcher_service::start(
+            home.join("_franchise"),
+            home.clone(),
+            collections.clone(),
+            job_store.clone(),
+        );
+
+        // Hang doi tai: aria2 nhan ca magnet lan link https (TorBox cap hoac DDL),
+        // nen worker khong can phan biet nguon.
+        // Mot tien trinh agy song thuong truc o che do stream-json, thay vi
+        // spawn lai cho moi lenh. Profile lay tu config (agy hoac agy2).
+        let agy = Arc::new(AgyDaemon::new(settings.clone()));
+        agy.start();
+
+        let aria2 = Arc::new(Aria2Service::new(settings.clone()));
+        sync_worker::start(aria2.clone(), job_store.clone());
+
+        // Ba worker index doc lap cho 3 nguon (local / NAS / Google Drive).
+        // Nguon nao cham hay hong thi chi nguon do thieu du lieu, khong keo
+        // sap ca thu vien; aggregator gop lai khi co API goi toi.
+        library_indexer::start(home.clone(), settings.clone(), job_store.clone());
+
+        // Worker thu 4: theo doi DB cua Jellyfin tren NAS. Jellyfin da quet san
+        // thu vien va luu Tmdb/Tvdb id cho tung muc, nen day la bang tra cuu
+        // "NAS da co phim nay chua" dang tin hon doc ten thu muc.
+        jellyfin_indexer::start(home.clone(), settings.clone(), job_store.clone());
+
+        // Google Drive khong co Plex/Jellyfin quet san nen phai tu doc .nfo
+        // trong tung thu muc de lay <uniqueid> that.
+        gdrive_nfo_indexer::start(home.clone(), settings.clone(), job_store.clone());
+
+        // Plex quet cung thu vien NAS nhung nhan dien khac Jellyfin, nen title
+        // ben nay chua nhan ra thi ben kia co the da co.
+        plex_indexer::start(home.clone(), settings.clone(), job_store.clone());
+
+        // Phan loai franchise bang AI cho title khong co API nao tra duoc
+        // (TMDb/TVDB khong co "collection" cho series). Tat mac dinh, nguoi
+        // dung tu bam Start trong tab Dich Vu khi can, vi moi lan chay ton
+        // token that.
+        franchise_ai_classifier::start(agy.clone(), job_store.clone());
         let dashboard = Arc::new(DashboardService::new(settings.clone(), job_store.clone()));
         let gdrive = Arc::new(GDriveService::new(settings.clone()));
         let nas = Arc::new(NasService::new(settings.clone()));
@@ -53,7 +121,7 @@ impl AppState {
             nas.clone(),
         ));
         let tmdb = Arc::new(TmdbService::new(settings.clone()));
-        let agent = Arc::new(AgentService::new(settings.clone()));
+        let agent = Arc::new(AgentService::new(settings.clone(), agy.clone()));
 
         Self {
             settings,
@@ -72,6 +140,8 @@ impl AppState {
             library,
             tmdb,
             agent,
+            aria2,
+            agy,
         }
     }
 }

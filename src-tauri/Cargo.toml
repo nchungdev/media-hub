@@ -33,4 +33,6 @@ dirs = "5.0"
 async-trait = "0.1"
 rusqlite = { version = "0.32", features = ["bundled"] }
 mime_guess = "2.0"
+notify = "6"
+notify-debouncer-mini = "0.4"
 

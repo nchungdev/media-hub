@@ -1,0 +1,117 @@
+      <!-- ==================== TAB 2: TẢI XUỐNG ==================== -->
+      <div id="tab-torbox" class="hidden space-y-0">
+        
+        <!-- Pinned Header (Sticky Top-0 Flush) -->
+        <div class="sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 desktop-titlebar-pad flex flex-wrap items-center justify-between gap-3 shadow-sm app-drag-region">
+          <div class="flex items-center gap-3 app-no-drag">
+            <div class="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold text-base border border-purple-500/20 shadow-inner shrink-0">
+              📥
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-sm sm:text-base text-white">Quản Lý Tải Xuống</h3>
+                <span class="px-2 py-0.2 text-[9px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30 rounded-full font-mono" id="torbox-count">25 mục</span>
+              </div>
+              <p class="text-xs text-zinc-400 hidden sm:block">Kho dữ liệu TorBox Cloud & Aria2 • Đồng bộ cuốn chiếu 1-click lên Google Drive & NAS Storage</p>
+            </div>
+          </div>
+
+          <!-- Top Action (Add Magnet & Clear Cache) -->
+          <div class="flex items-center gap-2">
+            <button onclick="clearTorboxCache()" title="Xoá cache và tải lại dữ liệu mới nhất từ TorBox Cloud & Aria2" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+              <span id="btn-icon-torbox-cache">🔄</span> <span>Xoá Cache</span>
+            </button>
+            <button onclick="openModal('modal-add-magnet')" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-purple-600/20 flex items-center gap-1.5 shrink-0">
+              <span>➕</span> Thêm Mới
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 sm:p-6 pb-28 lg:pb-10 space-y-4 w-full">
+          
+          <!-- Dual Filter Bar: Engine Type + Dynamic Status Bar -->
+          <div class="space-y-2.5">
+            <!-- Row 1: Engine Filter Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-zinc-900/60 border border-zinc-800/80 p-1.5 rounded-2xl">
+              <div class="flex items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800/80 text-xs font-semibold overflow-x-auto custom-scroll max-w-full">
+                <span class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider px-2 shrink-0">Nguồn:</span>
+                <button onclick="setEngineFilter('all')" id="engine-btn-all" class="engine-tab-btn px-3 py-1.5 rounded-lg bg-purple-600 text-white font-bold transition shadow-sm shrink-0">
+                  Tất Cả
+                </button>
+                <button onclick="setEngineFilter('torbox')" id="engine-btn-torbox" class="engine-tab-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                  TorBox Cloud
+                </button>
+                <button onclick="setEngineFilter('aria2')" id="engine-btn-aria2" class="engine-tab-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                  Aria2c P2P
+                </button>
+                <button onclick="setEngineFilter('direct')" id="engine-btn-direct" class="engine-tab-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                  Direct / DDL
+                </button>
+              </div>
+            </div>
+
+            <!-- Row 2: Status Sub-Filter (Filter purely by Download Progress) -->
+            <div id="status-filter-container" class="flex items-center gap-1 bg-zinc-950/80 p-1 rounded-xl border border-zinc-800/80 text-xs font-semibold overflow-x-auto custom-scroll max-w-full">
+              <span class="text-[11px] font-bold text-zinc-500 uppercase tracking-wider px-2 shrink-0">Trạng Thái Tải:</span>
+              <button onclick="filterTorboxStatus('all')" id="tbfilter-all" class="torbox-filter-btn px-3 py-1.5 rounded-lg bg-zinc-800 text-white font-bold transition shadow-sm shrink-0">
+                Tất Cả (<span id="tbcount-all">25</span>)
+              </button>
+              <button onclick="filterTorboxStatus('cached')" id="tbfilter-cached" class="torbox-filter-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                ⚡ Cached Cloud (<span id="tbcount-cached">25</span>)
+              </button>
+              <button onclick="filterTorboxStatus('active')" id="tbfilter-active" class="torbox-filter-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                ⚡ Đang Tải (<span id="tbcount-active">0</span>)
+              </button>
+              <button onclick="filterTorboxStatus('queued')" id="tbfilter-queued" class="torbox-filter-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                ⏳ Hàng Đợi (<span id="tbcount-queued">0</span>)
+              </button>
+            </div>
+          </div>
+
+          <!-- Clean Modern Table List with Integrated Header Action Toolbar -->
+          <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-xl">
+            <!-- Table Header Action Toolbar -->
+            <div class="bg-zinc-950 px-4 py-3 border-b border-zinc-800/80 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-2 flex-1 min-w-[200px] max-w-sm">
+                <input type="text" id="torbox-search" oninput="filterTorbox()" placeholder="🔍 Tìm kiếm torrent..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500">
+              </div>
+
+              <div class="flex items-center gap-2 flex-wrap">
+                <!-- Batch Selection Toolbar (When checkboxes are checked) -->
+                <div id="torbox-batch-toolbar" class="hidden items-center gap-2 bg-zinc-900 border border-purple-500/30 rounded-xl px-3 py-1 text-xs shadow-md">
+                  <span class="text-zinc-300 font-semibold font-mono text-[11px]" id="torbox-selected-count">0 chọn</span>
+                  <div class="h-3.5 w-px bg-zinc-800 mx-0.5"></div>
+                  <button onclick="deleteSelectedTorbox()" class="px-2 py-1 text-red-400 hover:bg-red-500/20 rounded-lg transition font-semibold">
+                    Xóa Khỏi Hàng Đợi
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Table Body -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-zinc-300">
+                <thead class="bg-zinc-950/80 text-zinc-400 uppercase text-[10px] tracking-wider border-b border-zinc-800/80">
+                  <tr>
+                    <th class="px-3 py-3 w-10 text-center">
+                      <input type="checkbox" id="torbox-select-all" onchange="toggleSelectAllTorbox(this.checked)" class="w-4 h-4 rounded border-zinc-700 bg-zinc-900 text-purple-600 focus:ring-0 cursor-pointer">
+                    </th>
+                    <th class="px-3 py-3 w-60 sm:w-72 lg:w-80">Tên Phim / Torrent</th>
+                    <th class="px-3 py-3 w-24 whitespace-nowrap">Dung Lượng</th>
+                    <th class="px-3 py-3 w-36 whitespace-nowrap text-center">Trạng Thái</th>
+                    <th class="px-3 py-3 text-right whitespace-nowrap">Thao Tác Tải Xuống</th>
+                  </tr>
+                </thead>
+                <tbody id="torbox-tbody" class="divide-y divide-zinc-800/60">
+                  <!-- JS will populate -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Mobile Clearance Spacer -->
+          <div class="h-10 lg:hidden"></div>
+        </div>
+
+      </div>
+

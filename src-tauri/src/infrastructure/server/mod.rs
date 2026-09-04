@@ -10,11 +10,11 @@ use axum::{
 };
 use routes::{
     agent_routes::*, artwork_routes::handle_poster, collection_routes::handle_get_collections,
-    dashboard_routes::handle_dashboard_overview, gdrive_routes::*, health_routes::handle_services_status,
+    dashboard_routes::handle_dashboard_overview, gdrive_routes::*, health_routes::{handle_services_status, handle_worker_control, handle_worker_status},
     job_routes::*, library_routes::*, nas_routes::handle_nas_scan,
     quota_routes::{handle_get_quota, handle_increment_quota},
     settings_routes::{handle_get_settings, handle_save_settings},
-    staging_routes::*, stream_routes::handle_stream, subtitle_routes::handle_subtitle,
+    staging_routes::*, stream_routes::handle_stream, subtitle_routes::{handle_subtitle, handle_subtitle_projects},
     tmdb_routes::handle_tmdb_search,
     torbox_routes::{handle_add_torrent, handle_delete_torrent, handle_list_torrents},
     tunnel_routes::{handle_tunnel_start, handle_tunnel_status, handle_tunnel_stop},
@@ -31,6 +31,11 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         // Dashboard & Health
         .route("/api/dashboard/overview", get(handle_dashboard_overview))
         .route("/api/services/status", get(handle_services_status))
+        .route("/api/services/workers", get(handle_worker_status))
+        .route(
+            "/api/services/workers/:name/:action",
+            post(handle_worker_control),
+        )
         // Jobs & Pipeline
         .route("/api/download/jobs", get(handle_list_jobs))
         .route("/api/pipelines", get(handle_pipelines))
@@ -44,6 +49,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         // Library
         .route("/api/library/cross_check", get(handle_cross_check).post(handle_cross_check))
         .route("/api/library/stats", get(handle_library_stats))
+        .route("/api/library/unified", get(handle_unified_library))
+        .route("/api/library/lookup", post(handle_library_lookup_batch))
+        .route("/api/library/lookup/:media_id", get(handle_library_lookup))
         .route("/api/library/build/status", get(handle_library_build_status))
         .route("/api/library/build", post(handle_library_build))
         .route("/api/library/refresh", post(handle_library_refresh))
@@ -53,6 +61,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .route("/api/stream", get(handle_stream))
         .route("/api/media/collections", get(handle_get_collections))
         .route("/api/subtitles/vtt", get(handle_subtitle))
+        .route("/api/subtitles/projects", get(handle_subtitle_projects))
         .route("/api/tmdb/search", get(handle_tmdb_search))
         // TorBox
         .route("/api/torbox", get(handle_list_torrents))
@@ -76,6 +85,9 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .route("/api/tunnel/stop", post(handle_tunnel_stop))
         // AI Agent Bridge
         .route("/api/agent/queue", get(handle_agent_queue))
+        .route("/api/agy/status", get(handle_agy_status))
+        .route("/api/agy/events", get(handle_agy_events))
+        .route("/api/agy/send", post(handle_agy_send))
         .route("/api/agent/token_usage", get(handle_token_usage))
         .route("/api/agent/live_logs", get(handle_agent_live_logs))
         .route("/api/agent/live_logs/clear", post(handle_agent_logs_clear))
@@ -100,6 +112,10 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         "/gdrive", "/library", "/plex", "/pipelines", "/sync", "/subtitles", "/subtitle-studio",
         "/tokens", "/token-usage", "/analytics", "/console", "/logs", "/terminal",
         "/settings", "/config", "/agent", "/chat",
+        "/services", "/service", "/workers", "/daemon",
+        // Thieu may route nay khien mo truc tiep hoac F5 tren tab do bi 404,
+        // du dieu huong trong app van chay (setTab day URL len roi server tu choi).
+        "/collection", "/collections", "/downloads", "/cli",
     ];
     let mut spa_router = Router::new();
     for route in spa_routes {

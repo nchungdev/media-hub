@@ -38,6 +38,15 @@ pub async fn handle_poster(
         )
             .into_response()
     } else {
-        StatusCode::NOT_FOUND.into_response()
+        static PLACEHOLDER_SVG: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" width="200" height="300"><rect width="200" height="300" fill="#18181b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="40" fill="#71717a">🎬</text></svg>"##;
+        (
+            StatusCode::OK,
+            [
+                (header::CONTENT_TYPE, "image/svg+xml"),
+                (header::CACHE_CONTROL, "public, max-age=86400"),
+            ],
+            PLACEHOLDER_SVG.as_bytes().to_vec(),
+        )
+            .into_response()
     }
 }

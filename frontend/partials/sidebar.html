@@ -1,0 +1,193 @@
+  <!-- Left Sidebar Navigation (Desktop / Tablet lg+ only) -->
+  <aside class="hidden lg:flex w-64 bg-zinc-950 border-r border-zinc-800 flex-col justify-between shrink-0 select-none z-30">
+    <div>
+      <!-- Brand Logo Header (with dedicated macOS Traffic Light space) -->
+      <div class="desktop-titlebar-pad shrink-0 px-5 border-b border-zinc-800 flex items-center gap-3 app-drag-region">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20 font-bold text-lg app-no-drag">
+          🪐
+        </div>
+        <div class="app-no-drag">
+          <div class="flex items-center gap-1.5">
+            <h1 class="font-bold text-sm text-white tracking-wide">Antigravity</h1>
+            <span class="px-1.5 py-0.2 text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">v2.4</span>
+          </div>
+          <p class="text-[10px] text-zinc-400">Media Hub & Pipelines</p>
+        </div>
+      </div>
+
+      <!-- Navigation Menu Groups (Two-Tier Architecture: Pipeline + Toolbox) -->
+      <div class="p-3 space-y-4">
+        
+        <!-- GROUP 1: CORE PIPELINE -->
+        <div>
+          <div class="px-3 pb-1.5 text-[9px] font-bold uppercase tracking-wider text-zinc-500 flex items-center justify-between">
+            <span>QUY TRÌNH CHÍNH</span>
+          </div>
+          <nav class="space-y-1 text-xs font-semibold">
+            <!-- 1. Home / Tổng Quan -->
+            <button onclick="setTab('home')" id="tab-btn-home" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer bg-blue-600/10 text-blue-400 border border-blue-500/20 font-bold shadow-sm group">
+              <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
+                <span class="text-base shrink-0">🏠</span>
+                <span id="tab-label-home" class="text-xs text-blue-400 font-bold truncate">Tổng Quan Hệ Thống</span>
+              </div>
+              <span id="tab-dot-home" class="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>
+            </button>
+
+            <!-- 2. Quản Lý Tải Xuống (Pure Downloader) -->
+            <button onclick="setTab('torbox')" id="tab-btn-torbox" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-white hover:bg-zinc-900 group">
+              <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
+                <span class="text-base shrink-0">📥</span>
+                <span id="tab-label-torbox" class="text-xs text-zinc-300 group-hover:text-white font-bold truncate">Quản Lý Tải Xuống</span>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0 pointer-events-none">
+                <span class="px-1.5 py-0.2 text-[9px] bg-purple-500/10 text-purple-400 rounded border border-purple-500/20 font-mono" id="sidebar-tb-count">--</span>
+                <span id="tab-dot-torbox" class="w-1.5 h-1.5 rounded-full bg-blue-400 hidden"></span>
+              </div>
+            </button>
+
+            <!-- 3. Bộ Sưu Tập Media (Unified Collection: Movies + TV Series + 3 Trạng Thái) -->
+            <button onclick="setTab('collection')" id="tab-btn-collection" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-white hover:bg-zinc-900 group">
+              <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
+                <span class="text-base shrink-0">🎬</span>
+                <span id="tab-label-collection" class="text-xs text-zinc-300 group-hover:text-white font-bold truncate">Bộ Sưu Tập Media</span>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0 pointer-events-none">
+                <span class="px-1.5 py-0.2 text-[9px] bg-amber-500/10 text-amber-400 rounded border border-amber-500/20 font-mono" id="sidebar-collection-count">--</span>
+                <span id="tab-dot-collection" class="w-1.5 h-1.5 rounded-full bg-blue-400 hidden"></span>
+              </div>
+            </button>
+
+            <!-- 4. Subtitle Studio / Dịch Thuật Phụ Đề Tab -->
+            <button onclick="setTab('subtitles')" id="tab-btn-subtitles" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-white hover:bg-zinc-900 group">
+              <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
+                <span class="text-base shrink-0">🌐</span>
+                <span id="tab-label-subtitles" class="text-xs text-zinc-300 group-hover:text-white font-bold truncate">Dịch Thuật Phụ Đề</span>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0 pointer-events-none">
+                <span class="px-1.5 py-0.2 text-[9px] bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/20 font-mono" id="sidebar-sub-count">Studio</span>
+                <span id="tab-dot-subtitles" class="w-1.5 h-1.5 rounded-full bg-emerald-400 hidden"></span>
+              </div>
+            </button>
+          </nav>
+        </div>
+
+        <!-- GROUP 2: MEDIA TOOLBOX -->
+        <div>
+          <div class="px-3 pb-1.5 text-[9px] font-bold uppercase tracking-wider text-zinc-500 flex items-center justify-between">
+            <span>HỘP CÔNG CỤ</span>
+          </div>
+          <nav class="space-y-1 text-xs font-semibold">
+            <!-- Collector -->
+            <button onclick="openModal('modal-toolbox-collector')" class="w-full px-3 py-2 rounded-xl flex items-center justify-between transition text-zinc-400 hover:text-white hover:bg-zinc-900/80 group text-left">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="text-base shrink-0">🔍</span>
+                <span class="text-xs text-zinc-300 group-hover:text-white font-semibold truncate">Thu Thập & Lập Sơ Đồ</span>
+              </div>
+              <span class="text-[10px] text-zinc-600 group-hover:text-zinc-400">⚡</span>
+            </button>
+
+            <!-- TMDb Lookup -->
+            <button onclick="openModal('modal-toolbox-tmdb')" class="w-full px-3 py-2 rounded-xl flex items-center justify-between transition text-zinc-400 hover:text-white hover:bg-zinc-900/80 group text-left">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="text-base shrink-0">🎬</span>
+                <span class="text-xs text-zinc-300 group-hover:text-white font-semibold truncate">Tra Cứu Siêu Dữ Liệu</span>
+              </div>
+              <span class="text-[10px] text-zinc-600 group-hover:text-zinc-400">⚡</span>
+            </button>
+          </nav>
+        </div>
+
+        <!-- GROUP 3: SYSTEM & AI -->
+        <div>
+          <div class="px-3 pb-1.5 text-[9px] font-bold uppercase tracking-wider text-zinc-500 flex items-center justify-between">
+            <span>HỆ THỐNG & AI</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          </div>
+          <div class="space-y-1">
+            <!-- Token Usage & Analytics -->
+            <button onclick="setTab('tokens')" id="tab-btn-tokens" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-white hover:bg-zinc-900 font-semibold text-xs group">
+              <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
+                <span class="text-base shrink-0">📊</span>
+                <span id="tab-label-tokens" class="text-xs text-zinc-300 group-hover:text-white font-bold truncate">Báo Cáo Token & Chi Phí</span>
+              </div>
+              <span id="tab-dot-tokens" class="w-1.5 h-1.5 rounded-full bg-blue-400 hidden shrink-0"></span>
+            </button>
+
+            <!-- Live CLI Console Tab -->
+            <button onclick="setTab('console')" id="tab-btn-console" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-emerald-400 hover:bg-zinc-900 font-semibold text-xs group">
+              <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
+                <span class="text-base shrink-0">📟</span>
+                <span id="tab-label-console" class="text-xs text-zinc-300 group-hover:text-emerald-400 font-bold truncate">Live CLI Console</span>
+              </div>
+              <span id="tab-dot-console" class="w-2 h-2 rounded-full bg-zinc-600 shrink-0"></span>
+            </button>
+
+            <!-- Dịch Vụ Đang Chạy -->
+            <button onclick="setTab('services')" id="tab-btn-services" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-white hover:bg-zinc-900 font-semibold text-xs group">
+              <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
+                <span class="text-base shrink-0">⚙️</span>
+                <span id="tab-label-services" class="text-xs text-zinc-300 group-hover:text-white font-bold truncate">Dịch Vụ Đang Chạy</span>
+              </div>
+              <span id="tab-dot-services" class="w-1.5 h-1.5 rounded-full bg-violet-400 hidden shrink-0"></span>
+            </button>
+
+            <!-- Settings -->
+            <button onclick="setTab('settings')" id="tab-btn-settings" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-white hover:bg-zinc-900 font-semibold text-xs group">
+              <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
+                <span class="text-base shrink-0">⚙️</span>
+                <span id="tab-label-settings" class="text-xs text-zinc-300 group-hover:text-white font-bold truncate">Cài Đặt & Cấu Hình</span>
+              </div>
+              <span id="tab-dot-settings" class="w-1.5 h-1.5 rounded-full bg-blue-400 hidden shrink-0"></span>
+            </button>
+
+            <!-- AI Agent -->
+            <button onclick="setTab('agent')" id="tab-btn-agent" class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition cursor-pointer text-zinc-400 hover:text-white hover:bg-zinc-900 font-semibold text-xs group">
+              <div class="flex items-center gap-2.5 min-w-0 pointer-events-none">
+                <span class="text-base group-hover:animate-bounce shrink-0">🤖</span>
+                <span id="tab-label-agent" class="text-xs text-zinc-300 group-hover:text-white font-bold truncate">Trợ Lý AI Điều Phối</span>
+              </div>
+              <span id="tab-dot-agent" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Bottom Sidebar Workspace & Status Card -->
+    <div class="p-3 border-t border-zinc-800/80 bg-zinc-950/60 space-y-2">
+      <!-- Workspace Directory Selector Card -->
+      <div onclick="openWorkspaceSetupModal()" class="p-2.5 rounded-2xl bg-gradient-to-r from-blue-950/40 to-indigo-950/40 border border-blue-500/30 hover:border-blue-400/60 cursor-pointer transition group shadow-sm">
+        <div class="flex items-center justify-between text-[11px] mb-1">
+          <span class="text-blue-400 font-bold flex items-center gap-1.5">
+            <span>📁</span> Workspace
+          </span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 group-hover:bg-blue-500 group-hover:text-white transition font-semibold">Đổi</span>
+        </div>
+        <p id="sidebar-workspace-name" class="text-[11px] font-mono text-zinc-200 truncate font-semibold">AI Workspace</p>
+        <p id="sidebar-workspace-path" class="text-[9px] font-mono text-zinc-500 truncate" title="/Volumes/512GB/AI Workspace">/Volumes/512GB/AI Workspace</p>
+      </div>
+
+      <div class="p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 space-y-1 text-[10px]">
+        <div class="flex items-center justify-between">
+          <span class="text-zinc-400">Server Host:</span>
+          <span class="font-mono text-white text-[9px]">127.0.0.1:8888</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-zinc-400">Trạng Thái:</span>
+          <span class="text-emerald-400 font-bold flex items-center gap-1 text-[9px]">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Sẵn Sàng
+          </span>
+        </div>
+        <div class="flex items-center justify-between pt-1 border-t border-zinc-800/60" id="sidebar-tunnel-row">
+          <span class="text-zinc-400 flex items-center gap-1"><span>🌐</span> Remote:</span>
+          <span id="sidebar-tunnel-badge" onclick="setTab('settings')" class="cursor-pointer font-mono text-[9px] text-zinc-500 hover:text-amber-400 transition" title="Bấm để xem/bật Remote Tunnel">Offline</span>
+        </div>
+        <div class="flex items-center justify-between pt-1 border-t border-zinc-800/60" id="sidebar-desktop-row" style="display: none;">
+          <span class="text-zinc-400 flex items-center gap-1"><span>🖥️</span> Desktop:</span>
+          <span id="sidebar-desktop-badge" class="font-mono text-[9px] text-blue-400 font-bold">Electron Native</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+

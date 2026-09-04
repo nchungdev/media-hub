@@ -10,9 +10,8 @@ pub struct ArtworkService {
 }
 
 impl ArtworkService {
-    pub fn new() -> Self {
-        let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
-        let cache_dir = home.join(".media-hub").join(".cache").join("posters");
+    pub fn new(home: PathBuf) -> Self {
+        let cache_dir = home.join(".cache").join("posters");
         let _ = fs::create_dir_all(&cache_dir);
         Self {
             client: reqwest::Client::new(),
@@ -21,11 +20,6 @@ impl ArtworkService {
     }
 }
 
-impl Default for ArtworkService {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 #[async_trait]
 impl IArtworkService for ArtworkService {

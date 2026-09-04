@@ -10,8 +10,6 @@ BIN_SOURCE="$DIR/bin/media-hub"
 TARGET_DIR="${HOME}/.local/bin"
 APP_TARGET="${HOME}/Applications"
 
-export PATH="/Users/chungnh/.local/share/fnm/node-versions/v24.20.0/installation/bin:$HOME/.local/bin:$PATH"
-
 mkdir -p "$TARGET_DIR"
 mkdir -p "$APP_TARGET"
 
@@ -29,11 +27,49 @@ if [ -d "$TAURI_APP" ]; then
   echo "✅ Đã cài đặt ứng dụng Native Desktop (Rust & Tauri 2.0) vào: $APP_TARGET/Media Hub.app (12MB)"
 fi
 
-# 3. Check PATH
+# 3. Check & configure PATH
+SHELL_NAME="$(basename "${SHELL:-bash}")"
+case "$SHELL_NAME" in
+  zsh)
+    SHELL_RC="${ZDOTDIR:-$HOME}/.zshrc"
+    ENV_CMD='export PATH="$HOME/.local/bin:$PATH"'
+    ;;
+  bash)
+    if [ -f "${HOME}/.bash_profile" ]; then
+      SHELL_RC="${HOME}/.bash_profile"
+    else
+      SHELL_RC="${HOME}/.bashrc"
+    fi
+    ENV_CMD='export PATH="$HOME/.local/bin:$PATH"'
+    ;;
+  fish)
+    SHELL_RC="${HOME}/.config/fish/config.fish"
+    ENV_CMD='fish_add_path "$HOME/.local/bin"'
+    ;;
+  *)
+    SHELL_RC="${HOME}/.profile"
+    ENV_CMD='export PATH="$HOME/.local/bin:$PATH"'
+    ;;
+esac
+
 if [[ ":$PATH:" != *":$TARGET_DIR:"* ]]; then
   echo "⚠️ Lưu ý: $TARGET_DIR chưa có trong PATH của shell hiện tại."
-  echo "👉 Hãy thêm dòng sau vào ~/.zshrc hoặc ~/.bashrc:"
-  echo '   export PATH="$HOME/.local/bin:$PATH"'
+  if [ -n "$SHELL_RC" ] && [ -f "$SHELL_RC" ] && grep -qs "\.local/bin" "$SHELL_RC"; then
+    echo "💡 Đường dẫn đã được cấu hình trong $SHELL_RC nhưng chưa được tải."
+    echo "👉 Hãy áp dụng thay đổi bằng lệnh: source $SHELL_RC"
+  elif [ -n "$SHELL_RC" ] && { [ -w "$SHELL_RC" ] || [ ! -e "$SHELL_RC" ]; }; then
+    echo "" >> "$SHELL_RC"
+    echo "# Antigravity Media Hub CLI" >> "$SHELL_RC"
+    echo "$ENV_CMD" >> "$SHELL_RC"
+    echo "✅ Đã tự động cấu hình PATH vào $SHELL_RC"
+    echo "👉 Hãy tải lại shell bằng lệnh: source $SHELL_RC"
+  else
+    echo "👉 Hãy thêm dòng sau vào $SHELL_RC:"
+    echo "   $ENV_CMD"
+    echo "👉 Sau đó chạy: source $SHELL_RC"
+  fi
+else
+  echo "✅ $TARGET_DIR đã sẵn sàng trong PATH."
 fi
 
 echo ""

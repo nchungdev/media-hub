@@ -1,0 +1,162 @@
+  <!-- Modal Add Magnet -->
+  <div id="modal-add-magnet" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+        <h3 class="font-bold text-sm text-white flex items-center gap-2">
+          <span>➕</span> Thêm Magnet Link Lên TorBox Cloud
+        </h3>
+        <button onclick="closeModal('modal-add-magnet')" class="text-zinc-400 hover:text-white text-lg font-bold">×</button>
+      </div>
+
+      <textarea id="magnet-input" rows="4" placeholder="Dán link magnet:?xt=urn:btih:... vào đây" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-blue-500"></textarea>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('modal-add-magnet')" class="px-4 py-2 text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition">Hủy</button>
+        <button onclick="submitMagnet()" class="px-5 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition shadow-md shadow-blue-600/20">Bắt Đầu Tải</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLBOX MODAL 1: MEDIA COLLECTOR & CENSUS -->
+  <div id="modal-toolbox-collector" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll">
+      <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-sm border border-blue-500/20">🔍</div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Media Collector & Lập Sơ Đồ Nguồn</h3>
+            <p class="text-[11px] text-zinc-400 font-mono">media-collector • Kiểm tra magnet, kích thước & census bản quyền</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-toolbox-collector')" class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center text-sm font-bold">×</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-zinc-400 font-medium mb-1.5">Nhập Magnet Link hoặc Tên Phim:</label>
+          <textarea id="collector-input" rows="3" placeholder="magnet:?xt=urn:btih:... hoặc tên series..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white font-mono focus:outline-none focus:border-blue-500"></textarea>
+        </div>
+        <button onclick="inspectCollectorSource()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-blue-600/30">
+          <span>⚡</span> Phân Tích & Kiểm Tra Sơ Đồ
+        </button>
+
+        <div id="collector-results" class="hidden p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLBOX MODAL 2: TMDB METADATA LOOKUP -->
+  <div id="modal-toolbox-tmdb" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-3xl w-full p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll">
+      <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold text-sm border border-purple-500/20">🎬</div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Tra Cứu Siêu Dữ Liệu TMDb</h3>
+            <p class="text-[11px] text-zinc-400 font-mono">tmdb-lookup • Poster HD, tóm tắt, diễn viên & ID chuẩn Plex</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-toolbox-tmdb')" class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center text-sm font-bold">×</button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div class="flex gap-2">
+          <input type="text" id="tmdb-search-input" onkeydown="if(event.key==='Enter') searchTmdbLive()" placeholder="Nhập tên phim (ví dụ: Monster, Kindaichi, Transformers...)" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-purple-500">
+          <button onclick="searchTmdbLive()" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-md shadow-purple-600/30">
+            <span>🔍</span> Tra Cứu
+          </button>
+        </div>
+
+        <div id="tmdb-search-results" class="space-y-3 max-h-96 overflow-y-auto custom-scroll">
+          <div class="p-8 text-center text-zinc-500 text-xs">
+            Nhập tên phim để bắt đầu tìm kiếm thông tin và poster chất lượng cao từ TMDb API.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLBOX MODAL 3: SUBTITLE TRANSLATION & UTILITIES -->
+  <div id="modal-toolbox-subtitles" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-3xl w-full p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll">
+      <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-sm border border-emerald-500/20">🌐</div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Xử Lý & Dịch Thuật Phụ Đề</h3>
+            <p class="text-[11px] text-zinc-400 font-mono">subtitle-extractor • sub-to-webvtt • translate-subtitle</p>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-toolbox-subtitles')" class="w-7 h-7 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white flex items-center justify-center text-sm font-bold">×</button>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <div class="flex gap-2 border-b border-zinc-800 pb-2 text-xs">
+        <button onclick="switchSubTab('extractor')" id="subtab-btn-extractor" class="px-3.5 py-1.5 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 font-bold transition">
+          ✂️ Bóc Tách Sub Nhúng (MKV)
+        </button>
+        <button onclick="switchSubTab('webvtt')" id="subtab-btn-webvtt" class="px-3.5 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white transition">
+          ⚡ Chuẩn Hóa WebVTT
+        </button>
+        <button onclick="switchSubTab('translate')" id="subtab-btn-translate" class="px-3.5 py-1.5 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white transition">
+          💬 Dịch Vietsub AI
+        </button>
+      </div>
+
+      <!-- Tab Content 1: Sub Extractor -->
+      <div id="subtab-content-extractor" class="space-y-3 text-xs">
+        <div class="flex justify-between items-center">
+          <span class="text-zinc-400 font-medium">Danh sách video trong thư mục bộ đệm đệm (Staging):</span>
+          <button onclick="loadSubtitlesStaging()" class="text-emerald-400 hover:underline">🔄 Quét Lại</button>
+        </div>
+        <div id="sub-staging-videos-list" class="space-y-2 max-h-64 overflow-y-auto custom-scroll">
+          <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-center text-zinc-500">Đang quét thư mục...</div>
+        </div>
+      </div>
+
+      <!-- Tab Content 2: WebVTT Converter -->
+      <div id="subtab-content-webvtt" class="hidden space-y-3 text-xs">
+        <div class="flex justify-between items-center">
+          <span class="text-zinc-400 font-medium">Các file phụ đề (.srt / .ass) cần chuyển sang .vtt:</span>
+          <button onclick="loadSubtitlesStaging()" class="text-emerald-400 hover:underline">🔄 Quét Lại</button>
+        </div>
+        <div id="sub-staging-subs-list" class="space-y-2 max-h-64 overflow-y-auto custom-scroll">
+          <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-center text-zinc-500">Đang quét file phụ đề...</div>
+        </div>
+      </div>
+
+      <!-- Tab Content 3: Vietsub AI Translation & Progress Tracker -->
+      <div id="subtab-content-translate" class="hidden space-y-4 text-xs">
+        <div class="flex justify-between items-center bg-zinc-950/80 p-3 rounded-2xl border border-zinc-800">
+          <div>
+            <div class="font-bold text-white text-xs flex items-center gap-1.5">
+              <span>📊</span> Tiến Độ Dự Án Dịch Thuật Phụ Đề (translate-subtitle)
+            </div>
+            <div class="text-[10px] text-zinc-400 mt-0.5">Theo dõi tiến độ dịch từng tập, quản lý glossary và kích hoạt batch 5 tập tuần tự</div>
+          </div>
+          <button onclick="loadSubtitleTranslationProjects()" class="px-3 py-1.5 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600/30 rounded-xl font-bold text-xs transition flex items-center gap-1">
+            <span>🔄</span> Quét Tiến Độ
+          </button>
+        </div>
+
+        <!-- Project Cards List -->
+        <div id="sub-translation-projects-list" class="space-y-3 max-h-80 overflow-y-auto custom-scroll pr-1">
+          <div class="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-center text-zinc-500">
+            ⏳ Đang tải danh sách tiến độ các dự án dịch phụ đề...
+          </div>
+        </div>
+
+        <!-- Manual Command Input -->
+        <div class="pt-2 border-t border-zinc-800 space-y-2">
+          <label class="block text-zinc-400 font-medium">Hoặc gửi yêu cầu dịch phụ đề tùy chỉnh cho AI Agent:</label>
+          <textarea id="sub-translate-input" rows="3" placeholder="Ví dụ: translate-subtitle dịch tiếp các tập còn lại của Monster (2004) theo batch 5 tập..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white font-mono focus:outline-none focus:border-emerald-500"></textarea>
+          <button onclick="sendSubTranslateToAgent()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-emerald-600/30">
+            <span>🚀</span> Gửi Lệnh Dịch Phụ Đề Cho AI Agent
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+

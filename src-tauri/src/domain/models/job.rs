@@ -51,6 +51,10 @@ impl std::fmt::Display for JobPhase {
 pub struct SyncJob {
     pub id: i64,
     pub torrent_id: String,
+    /// Franchise dich cua job nay -- tab tai xuong gom nhom theo truong nay.
+    pub franchise: String,
+    /// magnet:?xt=... hoac https://... (link TorBox cap, hoac DDL bat ky)
+    pub source_uri: String,
     pub name: String,
     pub status: JobStatus,
     pub phase: JobPhase,

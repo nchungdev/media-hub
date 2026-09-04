@@ -1,0 +1,70 @@
+      <!-- ==================== TAB 4: AI AGENT ASSISTANT FULL VIEW ==================== -->
+      <div id="tab-agent" style="display: none;" class="flex-1 flex-col min-h-0 h-full space-y-0 relative">
+        
+        <!-- Pinned Header (Sticky Top-0 Flush) -->
+        <div class="sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 desktop-titlebar-pad flex flex-wrap items-center justify-between gap-3 shadow-sm shrink-0 app-drag-region">
+          <div class="flex items-center gap-3 app-no-drag">
+            <div class="w-8 h-8 rounded-xl bg-blue-600/10 text-blue-400 flex items-center justify-center font-bold text-base border border-blue-500/20 shrink-0">
+              🤖
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-sm text-white">AI Agent Assistant</h3>
+                <span class="px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-bold">Online</span>
+              </div>
+              <p class="text-xs text-zinc-400 hidden sm:block">Điều phối luồng stream, giải mã phụ đề tự động và quản lý kho phim thông minh</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 app-no-drag">
+            <button onclick="loadAgentQueueFull()" class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-300 transition flex items-center gap-1.5 shadow-sm">
+              <span>🔄</span> <span class="hidden sm:inline">Làm Mới</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Prompts Pills Bar (Skill Domains) -->
+        <div class="px-4 py-2 border-b border-zinc-800/60 bg-zinc-950/80 shrink-0">
+          <div class="flex gap-2 overflow-x-auto custom-scroll pb-0.5 text-xs w-full">
+            <button onclick="sendQuickCommand('Kiểm tra các task trong torbox có khả năng tải về')" class="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:text-white transition shrink-0 text-[11px] font-medium flex items-center gap-1.5">
+              <span>⚡</span> TorBox Ready
+            </button>
+            <button onclick="sendQuickCommand('Kiểm tra xem các phim đã đủ collection chưa?')" class="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-white transition shrink-0 text-[11px] font-medium flex items-center gap-1.5">
+              <span>🚀</span> Tiến Độ Phim
+            </button>
+            <button onclick="sendQuickCommand('kiểm tra WUKONG (2025) và The westward có phải cùng 1 series không?')" class="px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 hover:text-white transition shrink-0 text-[11px] font-medium flex items-center gap-1.5">
+              <span>📁</span> Kiểm Tra Series
+            </button>
+            <button onclick="sendQuickCommand('Tìm và bổ sung phụ đề tiếng Việt cho các tập mới nhất')" class="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 hover:text-white transition shrink-0 text-[11px] font-medium flex items-center gap-1.5">
+              <span>💬</span> Vietsub Subs
+            </button>
+            <button onclick="sendQuickCommand('Dọn dẹp thư mục đệm tạm sau khi sync hoàn tất')" class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition shrink-0 text-[11px] font-medium flex items-center gap-1.5">
+              <span>🧹</span> Dọn Bộ Nhớ
+            </button>
+          </div>
+        </div>
+
+        <!-- Messages Trajectory List (Full Height Scrollable) -->
+        <div id="full-agent-messages" class="flex-1 p-4 sm:p-6 overflow-y-auto space-y-3 sm:space-y-4 custom-scroll text-xs w-full pb-48 lg:pb-28">
+          <div class="flex items-start gap-2.5 sm:gap-3">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs sm:text-sm shrink-0 font-bold">🤖</div>
+            <div class="p-3.5 sm:p-4 rounded-2xl rounded-tl-none bg-zinc-900 border border-zinc-800 text-zinc-300 space-y-1.5 sm:space-y-2 max-w-2xl">
+              <p class="font-bold text-white">Xin chào! Tôi là Antigravity AI Agent.</p>
+              <p class="leading-relaxed text-zinc-400 text-xs">Bạn có thể gửi bất kỳ yêu cầu điều khiển hệ thống, tra cứu torrent hoặc xử lý video tại đây.</p>
+              <div class="text-[9px] sm:text-[10px] text-zinc-500 font-mono">Hệ thống sẵn sàng tiếp nhận lệnh</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Box Anchored / Docked Directly on top of Bottom Navigation Bar -->
+        <div id="agent-input-dock" style="display: none;" class="fixed left-0 right-0 z-30 lg:relative mobile-docked-input bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800/80 px-3 py-3 sm:px-4 sm:py-3.5 shadow-2xl">
+          <div class="w-full flex gap-2.5 sm:gap-3 items-center">
+            <input type="text" id="full-agent-input" onkeydown="if(event.key==='Enter') sendFullAgentMessage()" placeholder="Nhập câu lệnh cho AI Agent..." class="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-2.5 sm:py-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 shadow-inner">
+            <button onclick="sendFullAgentMessage()" class="px-4 py-2.5 sm:px-5 sm:py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-2xl transition flex items-center gap-1.5 sm:gap-2 shadow-lg shadow-blue-600/30 shrink-0">
+              <span class="hidden sm:inline">Gửi</span>
+              <span>➤</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+

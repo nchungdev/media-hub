@@ -15,7 +15,7 @@ done
 BIN_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 APP_DIR="$( cd -P "$BIN_DIR/.." >/dev/null 2>&1 && pwd )"
 TAURI_DIR="$APP_DIR/src-tauri"
-SERVER_SCRIPT="$APP_DIR/scripts/server.py"
+SERVER_SCRIPT="$APP_DIR/backend/server.py"
 RUST_RELEASE_BIN="$APP_DIR/target/release/media-hub"
 RUST_DEBUG_BIN="$APP_DIR/target/debug/media-hub"
 
@@ -40,7 +40,7 @@ find_state_dir() {
   echo "$target/.media-hub"
 }
 
-STATE_DIR="$(find_state_dir)"
+STATE_DIR="$(find_state_dir)/_app"
 mkdir -p "$STATE_DIR"
 PID_FILE="$STATE_DIR/media_hub.pid"
 LOG_FILE="$STATE_DIR/server.log"
@@ -55,7 +55,7 @@ get_running_pid() {
     fi
   fi
   local lsof_pid
-  lsof_pid=$(lsof -ti:$DEFAULT_PORT 2>/dev/null || true)
+  lsof_pid=$(lsof -tiTCP:$DEFAULT_PORT -sTCP:LISTEN 2>/dev/null || true)
   if [ -n "$lsof_pid" ]; then
     echo "$lsof_pid" | head -n1
     return 0
@@ -79,7 +79,7 @@ cmd_start() {
         ;;
       --workspace|-w)
         export MEDIA_HUB_WORKSPACE="$2"
-        STATE_DIR="$(find_state_dir)"
+        STATE_DIR="$(find_state_dir)/_app"
         PID_FILE="$STATE_DIR/media_hub.pid"
         LOG_FILE="$STATE_DIR/server.log"
         shift 2
@@ -422,7 +422,7 @@ cmd_help() {
   echo "Cú pháp: media-hub <command> [options]"
   echo ""
   echo "Lệnh hỗ trợ:"
-  echo "  app / desktop                  Mở ứng dụng Electron Desktop độc lập"
+  echo "  app / desktop                  Mở ứng dụng Desktop độc lập (Tauri 2 & Rust)"
   echo "  start [--open] [--port 8888]   Khởi chạy server Media Hub ngầm"
   echo "  stop                           Dừng server Media Hub"
   echo "  restart                        Khởi động lại server"

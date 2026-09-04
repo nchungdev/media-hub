@@ -143,3 +143,33 @@ pub async fn handle_agent_quota_reset(
     let q = state.quota.get_status();
     Json(json!({ "success": true, "message": "Đã reset bộ đếm Quota", "quota": q }))
 }
+
+/// Trang thai daemon agy (stream-json).
+pub async fn handle_agy_status(State(state): State<Arc<AppState>>) -> Json<serde_json::Value> {
+    Json(state.agy.status())
+}
+
+/// Su kien gan nhat agy ban ra (NDJSON da parse) -- nguon cho Live Console.
+pub async fn handle_agy_events(State(state): State<Arc<AppState>>) -> Json<serde_json::Value> {
+    let events = state.agy.recent_events(200);
+    Json(serde_json::json!({ "events": events, "count": events.len() }))
+}
+
+/// Gui mot luot vao daemon dang chay.
+pub async fn handle_agy_send(
+    State(state): State<Arc<AppState>>,
+    Json(body): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    let content = body
+        .get("content")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    if content.trim().is_empty() {
+        return Json(serde_json::json!({ "success": false, "error": "thieu content" }));
+    }
+    match state.agy.send(&content) {
+        Ok(_) => Json(serde_json::json!({ "success": true })),
+        Err(e) => Json(serde_json::json!({ "success": false, "error": e })),
+    }
+}

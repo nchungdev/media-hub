@@ -1,0 +1,128 @@
+      <!-- ==================== TAB 3: BỘ SƯU TẬP MEDIA (UNIFIED COLLECTION) ==================== -->
+      <div id="tab-collection" class="hidden space-y-0">
+        
+        <!-- Pinned Header (Sticky Top-0 Flush) -->
+        <div class="sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 desktop-titlebar-pad flex flex-wrap items-center justify-between gap-3 shadow-sm app-drag-region">
+          <div class="flex items-center gap-3 app-no-drag">
+            <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-base border border-amber-500/20 shadow-inner shrink-0">
+              🎬
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-bold text-sm sm:text-base text-white">Bộ Sưu Tập Media</h3>
+                <span id="collection-kpi-badge" class="px-2 py-0.5 text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-full font-mono">-- Mục</span>
+              </div>
+              <p class="text-xs text-zinc-400 hidden sm:block">Quản lý thống nhất Movies & TV Series • Giám sát 3 trạng thái Tải - Sync - Subtitle từng tập</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap app-no-drag">
+            <button id="btn-scan-franchise" onclick="scanAndRebuildFranchises()" class="px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm shrink-0" title="Quét lại 4 nguồn (Draft/Jellyfin/Plex/Drive) và dựng lại franchise bằng AI">
+              <span id="btn-icon-col-scan">🛠️</span> <span id="btn-label-scan">Scan</span>
+            </button>
+            <button onclick="loadMediaCollections(true)" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded-xl transition shadow-md shadow-amber-500/20 flex items-center gap-1.5 shrink-0">
+              <span id="btn-icon-col-refresh">🔄</span> Làm Mới
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 sm:p-6 pb-28 lg:pb-10 space-y-4 w-full">
+          
+          <!-- Ba kho lưu trữ: Draft (chưa publish) / JellyPlex (NAS) / Drive -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div onclick="setCollectionSyncFilter('unsynced')" class="cursor-pointer hover:border-amber-500/50 hover:bg-zinc-900/50 transition p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3 group" title="Bấm để lọc các mục Draft local">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-lg shrink-0 border border-amber-500/20 group-hover:scale-105 transition">
+                📝
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider group-hover:text-amber-400 transition">Draft</div>
+                <div class="text-base font-bold text-amber-400 font-mono" id="col-kpi-draft">--</div>
+                <div class="text-[10px] text-zinc-400 truncate" id="col-kpi-draft-detail">-- Movies • -- Series</div>
+              </div>
+            </div>
+
+            <div onclick="setCollectionSyncFilter('only_nas')" class="cursor-pointer hover:border-emerald-500/50 hover:bg-zinc-900/50 transition p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3 group" title="Bấm để lọc các mục trên JellyPlex">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-lg shrink-0 border border-emerald-500/20 group-hover:scale-105 transition">
+                🖥️
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider group-hover:text-emerald-400 transition">JellyPlex</div>
+                <div class="text-base font-bold text-emerald-400 font-mono" id="col-kpi-jellyplex">--</div>
+                <div class="text-[10px] text-zinc-400 truncate" id="col-kpi-jellyplex-detail">-- Movies • -- Series</div>
+              </div>
+            </div>
+
+            <div onclick="setCollectionSyncFilter('only_gdrive')" class="cursor-pointer hover:border-blue-500/50 hover:bg-zinc-900/50 transition p-3.5 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 shadow-sm flex items-center gap-3 group" title="Bấm để lọc các mục trên Google Drive">
+              <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-lg shrink-0 border border-blue-500/20 group-hover:scale-105 transition">
+                ☁️
+              </div>
+              <div class="min-w-0">
+                <div class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider group-hover:text-blue-400 transition">Drive</div>
+                <div class="text-base font-bold text-blue-400 font-mono" id="col-kpi-drive">--</div>
+                <div class="text-[10px] text-zinc-400 truncate" id="col-kpi-drive-detail">-- Movies • -- Series</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter & Search Toolbar -->
+          <div class="bg-zinc-950/90 border border-zinc-800/80 p-3 rounded-2xl space-y-2.5 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <!-- Search Box -->
+              <div class="flex-1 min-w-[200px] max-w-sm relative">
+                <input type="text" id="collection-search" oninput="applyCollectionFilters()" placeholder="🔍 Tìm theo tên phim, tiếng Việt, TVDB ID..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500 shadow-inner">
+              </div>
+
+              <!-- Franchise Selector Dropdown -->
+              <div class="shrink-0 min-w-[160px] max-w-[220px]">
+                <select id="col-franchise-select" onchange="setCollectionFranchiseFilter(this.value)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-2 text-xs text-amber-400 font-semibold focus:outline-none focus:border-amber-500 shadow-inner cursor-pointer truncate" title="Lọc theo Franchise">
+                  <option value="all">👑 Tất Cả Franchise</option>
+                </select>
+              </div>
+
+              <!-- Type Tabs -->
+              <div class="flex items-center gap-1 bg-zinc-900/80 p-1 rounded-xl border border-zinc-800 text-xs font-semibold overflow-x-auto custom-scroll">
+                <button onclick="setCollectionTypeFilter('all')" id="col-type-all" class="col-type-btn px-3 py-1.5 rounded-lg bg-amber-500 text-black font-bold transition shadow-sm shrink-0">
+                  Tất Cả
+                </button>
+                <button onclick="setCollectionTypeFilter('series')" id="col-type-series" class="col-type-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                  📺 TV Series
+                </button>
+                <button onclick="setCollectionTypeFilter('movie')" id="col-type-movie" class="col-type-btn px-3 py-1.5 rounded-lg text-zinc-400 hover:text-white transition shrink-0">
+                  🎬 Movies / OVA
+                </button>
+              </div>
+            </div>
+
+            <!-- Sub Filters: Sync Status & Subtitle Status -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-zinc-900 text-xs">
+              <!-- Sync Filter -->
+              <div class="flex items-center gap-1.5 overflow-x-auto custom-scroll py-0.5">
+                <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider shrink-0">Kho Lưu Trữ:</span>
+                <button onclick="setCollectionSyncFilter('all')" id="col-sync-all" class="col-sync-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-white font-bold transition text-[11px] shrink-0">Tất Cả</button>
+                <button onclick="setCollectionSyncFilter('synced_both')" id="col-sync-both" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🟢 Cả JellyPlex & Drive</button>
+                <button onclick="setCollectionSyncFilter('only_nas')" id="col-sync-nas" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🟡 Chỉ JellyPlex</button>
+                <button onclick="setCollectionSyncFilter('only_gdrive')" id="col-sync-drive" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🔵 Chỉ Drive</button>
+                <button onclick="setCollectionSyncFilter('unsynced')" id="col-sync-unsynced" class="col-sync-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">📝 Chỉ Draft</button>
+              </div>
+
+              <!-- Subtitle Filter -->
+              <div class="flex items-center gap-1.5 overflow-x-auto custom-scroll py-0.5">
+                <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider shrink-0">Phụ Đề:</span>
+                <button onclick="setCollectionSubFilter('all')" id="col-sub-all" class="col-sub-btn px-2.5 py-1 rounded-lg bg-zinc-800 text-white font-bold transition text-[11px] shrink-0">Tất Cả</button>
+                <button onclick="setCollectionSubFilter('complete')" id="col-sub-complete" class="col-sub-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">🎉 100% Vietsub</button>
+                <button onclick="setCollectionSubFilter('translating')" id="col-sub-translating" class="col-sub-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">⏳ Đang Dịch</button>
+                <button onclick="setCollectionSubFilter('missing')" id="col-sub-missing" class="col-sub-btn px-2.5 py-1 rounded-lg text-zinc-400 hover:text-white transition text-[11px] shrink-0">⚪ Chưa Dịch</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Collection Cards List -->
+          <div id="collections-list-container" class="space-y-3.5">
+            <!-- Populated dynamically by JS -->
+          </div>
+
+          <!-- Mobile Clearance Spacer -->
+          <div class="h-10 lg:hidden"></div>
+        </div>
+      </div>
+

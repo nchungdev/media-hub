@@ -12,9 +12,8 @@ pub struct QuotaService {
 }
 
 impl QuotaService {
-    pub fn new() -> Self {
-        let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
-        let state_file = home.join(".media-hub").join("translation_quota.json");
+    pub fn new(home: PathBuf) -> Self {
+        let state_file = home.join("translation_quota.json");
         let initial_data = Self::load_file(&state_file);
         Self {
             state_file,
@@ -67,11 +66,6 @@ impl QuotaService {
     }
 }
 
-impl Default for QuotaService {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 #[async_trait]
 impl IQuotaService for QuotaService {

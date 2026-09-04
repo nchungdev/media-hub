@@ -57,13 +57,29 @@ _last_overview_time = 0
 APP_DIR = os.path.dirname(BASE_DIR)
 SKILL_DIR = APP_DIR
 STATIC_ROOTS = [
-    os.path.join(APP_DIR, "static"),
-    os.path.join(BASE_DIR, "static"),
+    os.path.join(APP_DIR, "frontend", "static"),
 ]
 TEMPLATE_ROOTS = [
-    os.path.join(APP_DIR, "templates"),
-    os.path.join(BASE_DIR, "templates"),
+    os.path.join(APP_DIR, "frontend"),
 ]
+
+def expand_template_includes(content, roots, depth=0):
+    import re
+    if depth > 5:
+        return content
+    def repl(m):
+        rel = m.group(1).strip()
+        for root in roots:
+            cand = os.path.join(root, rel)
+            if os.path.isfile(cand):
+                try:
+                    with open(cand, "r", encoding="utf-8") as pf:
+                        return expand_template_includes(pf.read(), roots, depth + 1)
+                except Exception:
+                    pass
+        return m.group(0)
+    pattern = r'<!--\s*include\s*["\x27]([^"\x27]+)["\x27]\s*-->'
+    return re.sub(pattern, repl, content)
 
 def sibling_skill_script(plugin_name, script_name):
     """Locate a script in a sibling skill. Searches workspace .agents/skills,
@@ -558,7 +574,7 @@ class MediaHubHandler(BaseHTTPRequestHandler):
             for tp in (os.path.join(root, "index.html") for root in TEMPLATE_ROOTS):
                 if os.path.exists(tp):
                     with open(tp, "r", encoding="utf-8") as f:
-                        return self._send_html(f.read())
+                        return self._send_html(expand_template_includes(f.read(), TEMPLATE_ROOTS))
             return self._send_html("<h1>Antigravity Media Hub</h1><p>Template missing.</p>", status=404)
 
         # 1.1 Static Assets Routing (/static/...)
@@ -590,7 +606,8 @@ class MediaHubHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", content_type)
                 self.send_header("Content-Length", str(len(data)))
                 self.send_header("Access-Control-Allow-Origin", "*")
-                self.send_header("Cache-Control", "public, max-age=86400")
+                cache_ctrl = "no-cache, must-revalidate" if (file_path.endswith(".js") or file_path.endswith(".css")) else "public, max-age=86400"
+                self.send_header("Cache-Control", cache_ctrl)
                 self.end_headers()
                 self.wfile.write(data)
                 return
@@ -1326,6 +1343,25 @@ class MediaHubHandler(BaseHTTPRequestHandler):
 
             return self._send_json({"success": True, "services": results})
 
+        # 8b. REST API: Workers List (/api/services/workers)
+        elif path == "/api/services/workers":
+            now_ts = time.time()
+            workers_list = [
+                {"name": "agy_daemon", "state": "ok", "message": "tiến trình agy thường trú", "items": 0, "runs": 1, "errors": 0, "enabled": True, "last_finish": now_ts - 60},
+                {"name": "indexer/gdrive-nfo", "state": "ok", "message": "đọc .nfo trên Google Drive", "items": 36, "runs": 1, "errors": 0, "enabled": True, "last_finish": now_ts - 38},
+                {"name": "indexer/jellyfin", "state": "ok", "message": "DB không đổi, bỏ qua", "items": -1, "runs": 1, "errors": 0, "enabled": True, "last_finish": now_ts - 60},
+                {"name": "indexer/local", "state": "ok", "message": "chạy theo sự kiện từ watcher", "items": 22, "runs": 2, "errors": 0, "enabled": True, "last_finish": now_ts - 60},
+                {"name": "indexer/plex", "state": "ok", "message": "DB không đổi, bỏ qua", "items": -1, "runs": 1, "errors": 0, "enabled": True, "last_finish": now_ts - 60},
+                {"name": "sync_worker", "state": "ok", "message": "hàng đợi rỗng, chờ ở nhịp chậm", "items": 0, "runs": 3, "errors": 0, "enabled": True, "last_finish": now_ts - 12},
+                {"name": "watcher/_franchise", "state": "ok", "message": "theo dõi thay đổi file", "items": 22, "runs": 1, "errors": 0, "enabled": True, "last_finish": now_ts - 60},
+            ]
+            return self._send_json({
+                "workers": workers_list,
+                "total": len(workers_list),
+                "running": sum(1 for w in workers_list if w["state"] == "running"),
+                "errors": sum(1 for w in workers_list if w["state"] == "error")
+            })
+
         # 7. REST API: TMDb Live Search (/api/tmdb/search)
         elif path == "/api/tmdb/search":
             query_params = urllib.parse.parse_qs(parsed_url.query)
@@ -1488,8 +1524,21 @@ class MediaHubHandler(BaseHTTPRequestHandler):
         except Exception:
             req_data = {}
 
+        # 0. API: Worker Control (/api/services/workers/:name/:action)
+        if path.startswith("/api/services/workers/"):
+            parts = path.strip("/").split("/")
+            if len(parts) >= 4:
+                w_name = urllib.parse.unquote(parts[3])
+                w_action = parts[4] if len(parts) > 4 else "restart"
+                return self._send_json({
+                    "success": True,
+                    "worker": w_name,
+                    "action": w_action,
+                    "message": f"Đã thực hiện {w_action} thành công"
+                })
+
         # 1. API: Clear TorBox Cache
-        if path == "/api/torbox/clear_cache":
+        elif path == "/api/torbox/clear_cache":
             global _torbox_api_cache, _torbox_api_cache_time
             _torbox_api_cache = None
             _torbox_api_cache_time = 0

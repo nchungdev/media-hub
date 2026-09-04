@@ -1,0 +1,139 @@
+      <!-- ==================== TAB: SUBTITLE STUDIO / DỊCH THUẬT PHỤ ĐỀ ==================== -->
+      <div id="tab-subtitles" class="hidden space-y-0">
+        
+        <!-- Pinned Header (Sticky Top-0 Flush) -->
+        <div class="sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 desktop-titlebar-pad flex flex-wrap items-center justify-between gap-3 shadow-sm app-drag-region">
+          <div class="flex items-center gap-3 app-no-drag">
+            <div class="w-9 h-9 rounded-xl bg-emerald-600/10 text-emerald-400 flex items-center justify-center font-bold text-base border border-emerald-500/20 shrink-0">
+              🌐
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-sm text-white">Xử Lý & Dịch Thuật Phụ Đề (Subtitle Studio)</h3>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 font-mono">
+                  translate-subtitle
+                </span>
+              </div>
+              <p class="text-xs text-zinc-400 hidden sm:block">Theo dõi tiến độ dịch Vietsub AI theo batch 5 tập tuần tự, bóc tách MKV và chuẩn hóa WebVTT zero-latency</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 app-no-drag">
+            <button onclick="loadSubtitleStudioData()" class="px-3.5 py-2 text-xs font-bold bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+              <span>🔄</span> Quét Lại Tiến Độ
+            </button>
+            <button onclick="setTab('agent')" class="px-3.5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition flex items-center gap-1.5 shadow-md shadow-emerald-600/30">
+              <span>💬</span> AI Agent Console
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 sm:p-6 pb-28 lg:pb-10 space-y-6 w-full">
+          
+          <!-- 1. KPI TOP STATS CARDS -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div class="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+              <div class="text-[11px] text-zinc-400 font-medium">Tổng Dự Án Phụ Đề</div>
+              <div class="text-2xl font-black text-white font-mono" id="sub-stat-total-projects">--</div>
+              <div class="text-[10px] text-zinc-500">Trong kho workspace</div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+              <div class="text-[11px] text-zinc-400 font-medium">Tập Đã Có Vietsub</div>
+              <div class="text-2xl font-black text-emerald-400 font-mono" id="sub-stat-completed-eps">--</div>
+              <div class="text-[10px] text-emerald-500/80">✅ .vi.ass / .vi.srt / .vi.vtt</div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+              <div class="text-[11px] text-zinc-400 font-medium">Tập Đang Chờ Dịch</div>
+              <div class="text-2xl font-black text-amber-400 font-mono" id="sub-stat-pending-eps">--</div>
+              <div class="text-[10px] text-amber-500/80">⏳ Sẵn sàng chạy batch</div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 space-y-1">
+              <div class="text-[11px] text-zinc-400 font-medium">Quy Chuẩn Batching</div>
+              <div class="text-lg font-bold text-purple-400 font-mono">Tối đa 5 tập</div>
+              <div class="text-[10px] text-zinc-500">Chạy ngầm tuần tự</div>
+            </div>
+          </div>
+
+          <!-- 1.1 TRANSLATION QUOTA GUARD BANNER -->
+          <div id="sub-quota-guard-banner" class="p-4 sm:p-5 rounded-3xl bg-zinc-900/80 border border-zinc-800 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div id="sub-quota-status-icon" class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-lg font-bold shrink-0 shadow-inner">
+                🛡️
+              </div>
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-sm text-white">Translation Quota Guard</span>
+                  <span id="sub-quota-badge" class="text-[10px] px-2 py-0.5 rounded-full font-bold font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    🟢 AN TOÀN (READY)
+                  </span>
+                </div>
+                <p class="text-xs text-zinc-400">
+                  Bảo vệ hạn mức tuần (40% Flash Budget) • Tự động hoãn dịch khi chạm trần 30 tập/ngày hoặc 150 tập/tuần
+                </p>
+              </div>
+            </div>
+
+            <!-- Progress Bars -->
+            <div class="flex items-center gap-4 sm:gap-6 w-full md:w-auto shrink-0 flex-wrap sm:flex-nowrap">
+              <!-- Day bar -->
+              <div class="w-full sm:w-44 space-y-1.5">
+                <div class="flex items-center justify-between text-[11px] font-mono">
+                  <span class="text-zinc-400">Hôm nay:</span>
+                  <span class="font-bold text-white"><span id="sub-quota-day-used">0</span> / <span id="sub-quota-day-limit">30</span> tập</span>
+                </div>
+                <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                  <div id="sub-quota-day-bar" class="h-full bg-emerald-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="text-[10px] text-zinc-500 flex justify-between font-mono">
+                  <span id="sub-quota-day-pct">0%</span>
+                  <span id="sub-quota-day-reset">Reset: --</span>
+                </div>
+              </div>
+
+              <!-- Week bar -->
+              <div class="w-full sm:w-44 space-y-1.5">
+                <div class="flex items-center justify-between text-[11px] font-mono">
+                  <span class="text-zinc-400">Tuần này:</span>
+                  <span class="font-bold text-white"><span id="sub-quota-week-used">0</span> / <span id="sub-quota-week-limit">150</span> tập</span>
+                </div>
+                <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                  <div id="sub-quota-week-bar" class="h-full bg-cyan-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="text-[10px] text-zinc-500 flex justify-between font-mono">
+                  <span id="sub-quota-week-pct">0%</span>
+                  <span id="sub-quota-week-reset">Reset: --</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. MAIN PROJECTS & PROGRESS TRACKER -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-zinc-800 shadow-xl space-y-5">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3.5 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-emerald-600/10 text-emerald-400 flex items-center justify-center font-bold text-base border border-emerald-500/20 shadow-inner">📊</div>
+                <div>
+                  <h4 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                    Tiến Độ Dịch Thuật Từng Bộ Phim (Translation Projects)
+                    <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] border border-emerald-500/20 font-mono font-bold" id="sub-projects-badge-count">Live</span>
+                  </h4>
+                  <p class="text-xs text-zinc-400">Tự động phát hiện file phụ đề đã dịch (.vi.ass / .vi.srt / .vi.vtt) và kích hoạt batch dịch tuần tự</p>
+                </div>
+              </div>
+              <button onclick="loadSubtitleStudioData()" class="text-xs text-emerald-400 hover:underline flex items-center gap-1 font-bold">
+                <span>🔄</span> Làm Mới
+              </button>
+            </div>
+
+            <!-- List of Projects Cards -->
+            <div id="sub-studio-projects-container" class="space-y-4">
+              <div class="p-6 text-center text-zinc-500 text-xs animate-pulse">⏳ Đang phân tích kho phim và quét tiến độ phụ đề...</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+

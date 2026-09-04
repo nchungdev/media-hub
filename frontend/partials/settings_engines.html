@@ -1,0 +1,167 @@
+          <!-- ==================== 4. QUẢN LÝ BỘ TẢI & 4 DOWNLOAD ENGINES ==================== -->
+          <div class="p-5 sm:p-6 rounded-3xl bg-zinc-900/70 border border-purple-500/20 shadow-xl space-y-5 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-48 h-48 bg-purple-500/5 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <!-- Section Header -->
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3.5 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-purple-600/10 text-purple-400 flex items-center justify-center font-bold text-base border border-purple-500/20 shadow-inner">📥</div>
+                <div>
+                  <h4 class="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                    Bộ Tải Xuống & Download Engines
+                    <span class="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 text-[10px] border border-purple-500/20 font-mono font-bold">4 Engines</span>
+                  </h4>
+                  <p class="text-[11px] text-zinc-400">Giám sát trạng thái và cấu hình 4 Engine tải đa nguồn (Cloud Debrid, P2P, Direct Link, Web Stream)</p>
+                </div>
+              </div>
+
+              <!-- Quick General Settings Dropdown -->
+              <div class="flex items-center gap-3">
+                <span class="text-[11px] text-zinc-400 font-medium hidden sm:inline">Engine Mặc Định:</span>
+                <select id="cfg-default-provider" class="bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500 font-medium">
+                  <option value="torbox">⚡ TorBox Cloud (Mặc định)</option>
+                  <option value="aria2">🧲 Aria2c P2P (Máy cục bộ)</option>
+                  <option value="direct">🌐 Direct Link (HTTP/DDL)</option>
+                  <option value="ytdlp">📺 yt-dlp (Web Stream)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- General Config Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2 border-b border-zinc-800/60 text-xs">
+              <div>
+                <label class="block text-zinc-400 font-medium mb-1">Số Luồng Tải Đồng Thời (Max Concurrent Tasks)</label>
+                <select id="cfg-max-downloads" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-purple-500">
+                  <option value="1">1 Tập (Cuốn chiếu an toàn nhất cho băng thông)</option>
+                  <option value="2" selected>2 Tập (Tối ưu tốc độ tải & sync song song)</option>
+                  <option value="4">4 Tập (Băng thông Gigabit)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-zinc-400 font-medium mb-1">Thư Mục Đệm Tải Về (Staging Buffer)</label>
+                <div class="flex items-center gap-1.5">
+                  <input type="text" id="cfg-staging-dir" placeholder="(để trống = .staging trong workspace)" class="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-purple-500">
+                  <button type="button" onclick="chooseNativeDirectory('cfg-staging-dir')" class="px-2.5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-400 hover:text-white rounded-xl text-xs transition shrink-0" title="Chọn thư mục đệm">
+                    📂
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4 Engine Cards Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 text-xs">
+              
+              <!-- Engine 1: TorBox Debrid Cloud -->
+              <div class="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800/90 space-y-3 relative group hover:border-purple-500/40 transition">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-base">⚡</span>
+                    <span class="font-bold text-white text-xs">1. TorBox Debrid Cloud</span>
+                  </div>
+                  <span id="status-badge-torbox" class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700 flex items-center gap-1.5 transition-all">
+                    <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Đang kiểm tra...
+                  </span>
+                </div>
+                <p class="text-[11px] text-zinc-400">Kéo torrent tốc độ cao trên Cloud, tự động cache và stream link DDL không tốn mạng nhà.</p>
+                <div>
+                  <label class="block text-zinc-500 text-[10px] mb-1 font-medium">TorBox API Token (Bearer)</label>
+                  <input type="password" id="cfg-torbox-token" placeholder="Dán TorBox Token từ torbox.app..." class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-white font-mono focus:outline-none focus:border-purple-500 text-xs">
+                </div>
+              </div>
+
+              <!-- Engine 2: Aria2c P2P Client -->
+              <div class="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800/90 space-y-3 relative group hover:border-blue-500/40 transition">
+                <div class="flex items-center justify-between flex-wrap gap-1">
+                  <div class="flex items-center gap-2">
+                    <span class="text-base">🧲</span>
+                    <span class="font-bold text-white text-xs">2. Aria2c P2P Client</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span id="status-badge-aria2" class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700 flex items-center gap-1.5 transition-all">
+                      <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span> Đang kiểm tra...
+                    </span>
+                    <button type="button" onclick="startAria2Daemon()" class="px-2 py-0.5 rounded-lg bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-500/30 text-[10px] font-semibold transition" title="Khởi chạy tiến trình Aria2 RPC">
+                      ▶️ Bật Daemon
+                    </button>
+                  </div>
+                </div>
+                <p class="text-[11px] text-zinc-400">Tải BitTorrent/P2P nội bộ trực tiếp trên máy Mac qua giao thức JSON-RPC cổng 6800.</p>
+                <div class="grid grid-cols-3 gap-2">
+                  <div class="col-span-1">
+                    <label class="block text-zinc-500 text-[10px] mb-1">Host</label>
+                    <input type="text" id="cfg-aria2-host" value="127.0.0.1" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-white font-mono text-[11px] focus:outline-none focus:border-blue-500">
+                  </div>
+                  <div class="col-span-1">
+                    <label class="block text-zinc-500 text-[10px] mb-1">Port</label>
+                    <input type="number" id="cfg-aria2-port" value="6800" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-white font-mono text-[11px] focus:outline-none focus:border-blue-500">
+                  </div>
+                  <div class="col-span-1">
+                    <label class="block text-zinc-500 text-[10px] mb-1">RPC Secret</label>
+                    <input type="password" id="cfg-aria2-secret" placeholder="Secret (nếu có)" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-white font-mono text-[11px] focus:outline-none focus:border-blue-500">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Engine 3: Direct Downloader (DDL) -->
+              <div class="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800/90 space-y-3 relative group hover:border-emerald-500/40 transition">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-base">🌐</span>
+                    <span class="font-bold text-white text-xs">3. Direct Downloader (DDL)</span>
+                  </div>
+                  <span id="status-badge-direct" class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Sẵn sàng
+                  </span>
+                </div>
+                <p class="text-[11px] text-zinc-400">Tải link HTTP/HTTPS trực tiếp, hỗ trợ phân mảnh đa luồng (Multi-part chunk streaming).</p>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-zinc-500 text-[10px] mb-1">Số Kết Nối Tối Đa/File</label>
+                    <select id="cfg-direct-conns" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-white focus:outline-none focus:border-emerald-500 text-[11px]">
+                      <option value="2">2 Luồng (Tiêu chuẩn)</option>
+                      <option value="4" selected>4 Luồng (Tăng tốc DDL)</option>
+                      <option value="8">8 Luồng (Tối đa)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-zinc-500 text-[10px] mb-1">Buffer Size</label>
+                    <select id="cfg-direct-buffer" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-white focus:outline-none focus:border-emerald-500 text-[11px]">
+                      <option value="8">8 MB</option>
+                      <option value="16" selected>16 MB (Mặc định)</option>
+                      <option value="32">32 MB (RAM cao)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Engine 4: yt-dlp Video Stream Extractor -->
+              <div class="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800/90 space-y-3 relative group hover:border-amber-500/40 transition">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-base">📺</span>
+                    <span class="font-bold text-white text-xs">4. yt-dlp Stream Extractor</span>
+                  </div>
+                  <span id="status-badge-ytdlp" class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Sẵn sàng (v2026.07.04)
+                  </span>
+                </div>
+                <p class="text-[11px] text-zinc-400">Trích xuất luồng video và phụ đề trực tiếp từ các nền tảng streaming (YouTube, Bilibili, Web anime).</p>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-zinc-500 text-[10px] mb-1">Chất Lượng Video Ưu Tiên</label>
+                    <select id="cfg-ytdlp-quality" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-white focus:outline-none focus:border-amber-500 text-[11px]">
+                      <option value="1080p" selected>1080p Full HD (Khuyên dùng)</option>
+                      <option value="best">Tốt nhất (Best / 4K)</option>
+                      <option value="720p">720p HD</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-zinc-500 text-[10px] mb-1">Đường Dẫn Binary</label>
+                    <input type="text" id="cfg-ytdlp-bin" value="/opt/homebrew/bin/yt-dlp" class="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-white font-mono text-[11px] focus:outline-none focus:border-amber-500">
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>

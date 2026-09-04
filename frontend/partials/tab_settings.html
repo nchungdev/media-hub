@@ -1,0 +1,41 @@
+<!-- ==================== TAB 5: SETTINGS ==================== -->
+<div id="tab-settings" class="hidden space-y-0">
+  <!-- Pinned Header (Sticky Top-0 Flush) -->
+  <div class="sticky top-0 z-30 w-full bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/80 px-4 sm:px-6 py-3 desktop-titlebar-pad flex flex-wrap items-center justify-between gap-3 shadow-sm app-drag-region">
+    <div class="flex items-center gap-3 app-no-drag">
+      <div class="w-9 h-9 rounded-xl bg-purple-600/10 text-purple-400 flex items-center justify-center font-bold text-base border border-purple-500/20 shrink-0">
+        ⚙️
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h3 class="font-bold text-sm text-white">Cài Đặt & Cấu Hình Hệ Thống</h3>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 font-bold border border-blue-500/20 font-mono">
+            settings.json
+          </span>
+        </div>
+        <p class="text-xs text-zinc-400 hidden sm:block">Quản trị kết nối TorBox, Aria2, SSH NAS, Google Drive, số luồng tải/sync và dọn dẹp</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 app-no-drag">
+      <button onclick="saveSettings()" class="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition flex items-center gap-1.5 shadow-md shadow-blue-600/30">
+        <span>💾</span> Lưu Cài Đặt
+      </button>
+    </div>
+  </div>
+
+  <div class="p-4 sm:p-6 pb-28 lg:pb-10 space-y-6 w-full">
+    <!-- include "partials/settings_workspace.html" -->
+    <!-- include "partials/settings_engines.html" -->
+    <!-- include "partials/settings_cloud.html" -->
+
+    <!-- Bottom Action Buttons -->
+    <div class="flex justify-end gap-3 pt-2">
+      <button onclick="fetchSettings()" class="px-5 py-2.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-300 transition shadow-sm">
+        Khôi Phục Mặc Định
+      </button>
+      <button onclick="saveSettings()" class="px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-blue-600/30">
+        <span>💾</span> Lưu Toàn Bộ Cấu Hình
+      </button>
+    </div>
+  </div>
+</div>

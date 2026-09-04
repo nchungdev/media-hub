@@ -12,7 +12,7 @@ pub struct SettingsService {
 
 impl SettingsService {
     pub fn new() -> Self {
-        let ws_config = PathBuf::from("/Volumes/512GB/AI Workspace/.media-hub/config.json");
+        let ws_config = PathBuf::from("/Volumes/512GB/AI Workspace/.media-hub/_app/config.json");
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
         let home_config = home.join(".media-hub").join("settings.json");
 
@@ -56,9 +56,16 @@ impl ISettingsService for SettingsService {
             AppSettings::default()
         };
 
-        // Ensure staging_dir is outside the .app bundle so it is never deleted when updating/reinstalling the app
-        if settings.staging_dir.is_empty() || settings.staging_dir.contains("Contents/Resources") {
-            settings.staging_dir = "/Volumes/512GB/AI Workspace/.media-hub/.staging".to_string();
+        // Ensure staging_dir is outside the .app bundle so it is never deleted when updating/reinstalling the app.
+        // Khong con .staging rieng o root nua -- moi noi tai ve deu nam trong _franchise/,
+        // ke ca truong hop chua xac dinh duoc franchise (_Unsorted).
+        let old_root_staging = "/Volumes/512GB/AI Workspace/.media-hub/.staging";
+        if settings.staging_dir.is_empty()
+            || settings.staging_dir.contains("Contents/Resources")
+            || settings.staging_dir == old_root_staging
+        {
+            settings.staging_dir =
+                "/Volumes/512GB/AI Workspace/.media-hub/_franchise/_Unsorted/.staging".to_string();
         }
 
         if let Ok(mut guard) = self.cache.write() {
