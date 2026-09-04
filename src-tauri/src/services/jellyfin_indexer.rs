@@ -24,7 +24,15 @@ pub fn start(home: PathBuf, settings: Arc<dyn ISettingsService>, job_store: Arc<
         let local_db = cache_dir.join("jellyfin.db");
         let stamp_file = cache_dir.join("jellyfin.db.stamp");
 
+        crate::services::worker_status::register("indexer/jellyfin");
         loop {
+            if !crate::services::worker_status::is_enabled("indexer/jellyfin") {
+                crate::services::worker_status::sleep_interruptible(
+                    "indexer/jellyfin",
+                    Duration::from_secs(5),
+                );
+                continue;
+            }
             crate::services::worker_status::begin("indexer/jellyfin");
             match sync_once(&settings, &local_db, &stamp_file, &job_store) {
                 Ok(Some(n)) => {
@@ -52,7 +60,10 @@ pub fn start(home: PathBuf, settings: Arc<dyn ISettingsService>, job_store: Arc<
                     crate::services::worker_status::err("indexer/jellyfin", &e);
                 }
             }
-            std::thread::sleep(Duration::from_secs(300));
+            crate::services::worker_status::sleep_interruptible(
+                "indexer/jellyfin",
+                Duration::from_secs(300),
+            );
         }
     });
 }

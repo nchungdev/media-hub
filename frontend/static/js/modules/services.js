@@ -7,12 +7,14 @@ import { apiFetch } from '../core/api.js';
 let servicesTimer = null;
 
 const WORKER_META = {
-  'indexer/local':      { icon: '💻', label: 'Index thư viện Local',    desc: 'Quét .media-hub/_franchise mỗi 60 giây' },
-  'indexer/nas':        { icon: '🖥️', label: 'Index thư viện NAS',      desc: 'Liệt kê qua SSH mỗi 10 phút' },
+  'indexer/local':      { icon: '📝', label: 'Index kho Draft',         desc: 'Chạy theo sự kiện từ watcher, lưới an toàn 15 phút' },
   'indexer/jellyfin':   { icon: '🎬', label: 'Index Jellyfin',          desc: 'Đọc jellyfin.db, chỉ tải khi DB đổi' },
-  'indexer/gdrive-nfo': { icon: '☁️', label: 'Index Google Drive',      desc: 'Đọc <uniqueid> trong .nfo mỗi 15 phút' },
-  'sync_worker':        { icon: '⬇️', label: 'Hàng đợi tải xuống',      desc: 'Điều phối aria2 RPC mỗi 3 giây' },
-  'watcher/_franchise': { icon: '👁️', label: 'Theo dõi thay đổi file',  desc: 'Tự làm mới khi thư mục đổi' },
+  'indexer/plex':       { icon: '🍿', label: 'Index Plex',              desc: 'Đọc thư viện Plex, chỉ tải khi DB đổi' },
+  'indexer/gdrive-nfo': { icon: '☁️', label: 'Index Google Drive',      desc: 'Đọc <uniqueid> trong .nfo, chỉ tải khi đổi' },
+  'sync_worker':        { icon: '⬇️', label: 'Hàng đợi tải xuống',      desc: 'Điều phối aria2 RPC — 2 giây khi bận, 30 giây khi rỗng' },
+  'watcher/_franchise': { icon: '👁️', label: 'Theo dõi thay đổi file',  desc: 'Tự làm mới khi thư mục _franchise đổi' },
+  'agy_daemon':         { icon: '🤖', label: 'Daemon agy',              desc: 'Tiến trình agy thường trú, giao tiếp qua stream-json' },
+  'agent_queue':        { icon: '📨', label: 'Hàng đợi lệnh AI',        desc: 'Đẩy lệnh chờ vào daemon agy' },
 };
 
 const STATE_STYLE = {
@@ -96,6 +98,12 @@ export async function loadServicesStatus() {
               <div class="text-xs font-semibold text-zinc-400">${timeAgo(w.last_finish)}</div>
               <div class="text-[10px] text-zinc-500 uppercase tracking-wide">lần cuối</div>
             </div>
+            <div class="flex items-center gap-1.5">
+              ${w.enabled === false
+                ? `<button onclick="controlWorker('${esc(w.name)}','start')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition">▶ Bật</button>`
+                : `<button onclick="controlWorker('${esc(w.name)}','stop')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 transition">⏸ Dừng</button>`}
+              <button onclick="controlWorker('${esc(w.name)}','restart')" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-violet-500/10 text-violet-400 border border-violet-500/20 hover:bg-violet-500/20 transition">↻ Chạy lại</button>
+            </div>
           </div>
         </div>
       </div>`;
@@ -121,8 +129,34 @@ export function stopServicesAutoRefresh() {
   }
 }
 
+/**
+ * Bật / dừng / chạy lại ngay một worker nền.
+ * Dừng không làm thread thoát — chỉ hạ cờ enabled, nên bật lại được ngay
+ * mà không phải khởi động lại app.
+ */
+export async function controlWorker(name, action) {
+  try {
+    const res = await fetch(
+      `/api/services/workers/${encodeURIComponent(name)}/${action}`,
+      { method: 'POST' }
+    );
+    const d = await res.json();
+    if (typeof window.showToast === 'function') {
+      window.showToast(
+        d.success ? `${name}: ${d.message}` : `Lỗi: ${d.message || 'không rõ'}`,
+        d.success ? 'success' : 'error'
+      );
+    }
+  } catch (e) {
+    console.error('controlWorker error:', e);
+  }
+  // Đọc lại ngay để nút đổi trạng thái, không chờ vòng làm mới 5 giây.
+  loadServicesStatus();
+}
+
 Object.assign(window, {
   loadServicesStatus,
   startServicesAutoRefresh,
   stopServicesAutoRefresh,
+  controlWorker,
 });

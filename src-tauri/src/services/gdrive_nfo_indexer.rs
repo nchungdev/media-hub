@@ -14,7 +14,16 @@ use std::time::Duration;
 /// con NFO la thu Jellyfin/Plex thuc su dung de nhan dien.
 pub fn start(home: PathBuf, settings: Arc<dyn ISettingsService>, job_store: Arc<JobStore>) {
     let cache = home.join("_app").join("cache").join("gdrive-nfo");
-    std::thread::spawn(move || loop {
+    std::thread::spawn(move || {
+        crate::services::worker_status::register("indexer/gdrive-nfo");
+        loop {
+        if !crate::services::worker_status::is_enabled("indexer/gdrive-nfo") {
+            crate::services::worker_status::sleep_interruptible(
+                "indexer/gdrive-nfo",
+                Duration::from_secs(5),
+            );
+            continue;
+        }
         crate::services::worker_status::begin("indexer/gdrive-nfo");
         match build_index(&settings, &cache) {
             Ok(rows) => match job_store.replace_library_source("gdrive", &rows) {
@@ -41,7 +50,11 @@ pub fn start(home: PathBuf, settings: Arc<dyn ISettingsService>, job_store: Arc<
                 crate::services::worker_status::err("indexer/gdrive-nfo", &e);
             }
         }
-        std::thread::sleep(Duration::from_secs(900));
+        crate::services::worker_status::sleep_interruptible(
+            "indexer/gdrive-nfo",
+            Duration::from_secs(900),
+        );
+        }
     });
 }
 

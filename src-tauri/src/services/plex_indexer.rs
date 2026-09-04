@@ -23,7 +23,15 @@ pub fn start(home: PathBuf, settings: Arc<dyn ISettingsService>, job_store: Arc<
         let local_db = cache_dir.join("plex.db");
         let stamp_file = cache_dir.join("plex.db.stamp");
 
+        crate::services::worker_status::register("indexer/plex");
         loop {
+            if !crate::services::worker_status::is_enabled("indexer/plex") {
+                crate::services::worker_status::sleep_interruptible(
+                    "indexer/plex",
+                    Duration::from_secs(5),
+                );
+                continue;
+            }
             crate::services::worker_status::begin("indexer/plex");
             match sync_once(&settings, &local_db, &stamp_file, &job_store) {
                 Ok(Some(n)) => {
@@ -47,7 +55,10 @@ pub fn start(home: PathBuf, settings: Arc<dyn ISettingsService>, job_store: Arc<
                     crate::services::worker_status::err("indexer/plex", &e);
                 }
             }
-            std::thread::sleep(Duration::from_secs(300));
+            crate::services::worker_status::sleep_interruptible(
+                "indexer/plex",
+                Duration::from_secs(300),
+            );
         }
     });
 }

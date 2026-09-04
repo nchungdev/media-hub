@@ -118,7 +118,15 @@ pub fn start(
     {
         let home = home.clone();
         let js = job_store.clone();
+        crate::services::worker_status::register("indexer/local");
         std::thread::spawn(move || loop {
+            if !crate::services::worker_status::is_enabled("indexer/local") {
+                crate::services::worker_status::sleep_interruptible(
+                    "indexer/local",
+                    Duration::from_secs(5),
+                );
+                continue;
+            }
             crate::services::worker_status::begin("indexer/local");
             let rows = index_local(&home);
             match js.replace_library_source("local", &rows) {
@@ -134,7 +142,10 @@ pub fn start(
                     crate::services::worker_status::err("indexer/local", &e);
                 }
             }
-            std::thread::sleep(Duration::from_secs(900));
+            crate::services::worker_status::sleep_interruptible(
+                "indexer/local",
+                Duration::from_secs(900),
+            );
         });
     }
 

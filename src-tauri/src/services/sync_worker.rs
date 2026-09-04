@@ -26,7 +26,14 @@ pub fn start(aria2: Arc<Aria2Service>, job_store: Arc<JobStore>) {
 
         rt.block_on(async move {
             log::info!("[sync_worker] bat dau vong lap hang doi tai");
+            crate::services::worker_status::register("sync_worker");
             loop {
+                if !crate::services::worker_status::is_enabled("sync_worker") {
+                    tokio::time::sleep(Duration::from_secs(3)).await;
+                    let _ = crate::services::worker_status::take_run_request("sync_worker");
+                    continue;
+                }
+
                 // Nhip thich ung: hang doi rong thi khong co gi de lam, khong can
                 // ping aria2 moi 3 giay. Chi doi nhanh khi that su co job dang chay.
                 let active = job_store.list_active();
